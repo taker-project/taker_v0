@@ -5,7 +5,7 @@ First version of Taker problem preparation system
 
 It's a competitive programming contest preparation system, just like [Polygon](https://polygon.codeforces.com). But it will have some advantages, like possibility to use it locally, being more modular (core tools can be run everywhere, and some web/GUI interface can be built upon them). And, in the end it's released as free software.
 
-# Why it is called Taker?
+## Why it is called Taker?
 
 The answer is: `taker = task + maker`. Also, the name is simillar to `make`, which will be used to conrol the dependencies.
 
