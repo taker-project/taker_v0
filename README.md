@@ -1,5 +1,5 @@
 # Taker-v0
-First version of Taker problem preparation system
+First version of Taker problem preparation system.
 
 ## What is it?
 
