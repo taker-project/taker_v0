@@ -1,4 +1,6 @@
-.PHONY: help venv build clean venv_install test
+.PHONY: help venv build clean test
+
+# TODO: Add format option to reformat code
 
 help:
 	@echo Usage:
@@ -6,29 +8,27 @@ help:
 	@echo help - show this help
 	@echo clean - purge the directory
 	@echo venv - rebuild venv
-	@echo build - build the egg
-	@echo venv_install - install into venv
+	@echo build - build and install into venv
 	@echo test - run tests
 
-.PHONY: make_targets
-
-make_targets:
+.make_targets/.dir:
 	mkdir -p .make_targets
+	touch .make_targets/.dir
 
 venv: .make_targets/venv
-.make_targets/venv: make_targets
+.make_targets/venv: .make_targets/.dir
 	rm -rf venv/
 	python3 -m venv venv
-
-build: venv
-	bash -c '. pyenv.sh && python setup.py build'
+	touch .make_targets/venv
+	bash -c '. pyenv.sh && pip install -U pip'
 
 clean:
 	rm -rf venv/ build/ dist/
 	rm -rf *.egg-info/
+	rm -rf .make_targets
 
-venv_install: venv
+build: venv
 	bash -c '. pyenv.sh && python setup.py install'
 
-test: venv_install
+test: venv build
 	bash -c '. pyenv.sh && pytest'
