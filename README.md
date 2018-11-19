@@ -1,2 +1,25 @@
-# taker-iter0
+# Taker-v0
 First version of Taker problem preparation system
+
+## What is it?
+
+It's a competitive programming contest preparation system, just like [https://polygon.codeforces.com](Polygon). But it will have some advantages, like possibility to use it locally, being more modular (core tools can be run everywhere, and some web/GUI interface can be built upon them). And, in the end it's released as free software.
+
+# Why it is called Taker?
+
+The answer is: `taker = task + maker`. Also, the name is simillar to `make`, which will be used to conrol the dependencies.
+
+Also, there are some concepts on how to rename it.
+
+## Specification
+
+Some initial work was [https://github.com/taker-project/taker-specs](in this repo). The format will evolve from these docs.
+
+## Work plan
+
+The plan for the project development is improving by code rewriting in several iterations. Initial plan for iterations is (this may change):
+- v0&mdash; basic prototype: add main functionality, start creating the problem format. This will be written on Python
+- v1&mdash; more production-ready version: stabilize the problem format, add more functionality, write some tests
+- v2&mdash; final version: rewrite to C++ (?), fully stabilize the format
+
+Initially, Taker will be command-line. After the initial stable release, work on GUI tools can be started.
