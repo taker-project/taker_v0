@@ -102,3 +102,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# project-specific
+.make_targets/
+
+# KDevelop
+*.kdev*
+.kdev*/
