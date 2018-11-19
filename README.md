@@ -3,7 +3,7 @@ First version of Taker problem preparation system
 
 ## What is it?
 
-It's a competitive programming contest preparation system, just like [https://polygon.codeforces.com](Polygon). But it will have some advantages, like possibility to use it locally, being more modular (core tools can be run everywhere, and some web/GUI interface can be built upon them). And, in the end it's released as free software.
+It's a competitive programming contest preparation system, just like [Polygon](https://polygon.codeforces.com). But it will have some advantages, like possibility to use it locally, being more modular (core tools can be run everywhere, and some web/GUI interface can be built upon them). And, in the end it's released as free software.
 
 # Why it is called Taker?
 
@@ -13,7 +13,7 @@ Also, there are some concepts on how to rename it.
 
 ## Specification
 
-Some initial work was [https://github.com/taker-project/taker-specs](in this repo). The format will evolve from these docs.
+Some initial work was [in this repo](https://github.com/taker-project/taker-specs). The format will evolve from these docs.
 
 ## Work plan
 
@@ -23,3 +23,7 @@ The plan for the project development is improving by code rewriting in several i
 - v2&mdash; final version: rewrite to C++ (?), fully stabilize the format
 
 Initially, Taker will be command-line. After the initial stable release, work on GUI tools can be started.
+
+## When will it become 1.0?
+
+I don't know.
