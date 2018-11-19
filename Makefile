@@ -1,4 +1,4 @@
-.PHONY: help venv build clean test autopep8
+.PHONY: help venv build clean test autopep8 pep8
 
 help:
 	@echo Usage:
@@ -9,6 +9,7 @@ help:
 	@echo build - build and install into venv
 	@echo test - run tests
 	@echo autopep8 - apply autopep8 to the code
+	@echo pep8 - run code style analysis
 
 .make_targets/.dir:
 	mkdir -p .make_targets
@@ -33,4 +34,7 @@ test: venv build
 	bash -c '. pyenv.sh && pytest'
 
 autopep8: venv
-	scripts/autopep8.sh
+	bash -c 'scripts/autopep8.sh'
+
+pep8: venv
+	bash -c 'scripts/pep8.sh'

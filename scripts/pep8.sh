@@ -1,9 +1,10 @@
 . pyenv.sh
 
-pip -q install autopep8
+pip -q install pycodestyle
 
 for DIR in *; do
   [[ ! -d "$DIR" ||  "$DIR" == "." || "$DIR" == ".." ]] && continue
   git check-ignore -q "$DIR" && continue
-  autopep8 -ri "$DIR"
+  find "$DIR" -name "*.py" -exec pycodestyle '{}' + || exit 1
 done
+
