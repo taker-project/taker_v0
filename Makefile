@@ -1,6 +1,4 @@
-.PHONY: help venv build clean test
-
-# TODO: Add format option to reformat code
+.PHONY: help venv build clean test autopep8
 
 help:
 	@echo Usage:
@@ -10,6 +8,7 @@ help:
 	@echo venv - rebuild venv
 	@echo build - build and install into venv
 	@echo test - run tests
+	@echo autopep8 - apply autopep8 to the code
 
 .make_targets/.dir:
 	mkdir -p .make_targets
@@ -32,3 +31,6 @@ build: venv
 
 test: venv build
 	bash -c '. pyenv.sh && pytest'
+
+autopep8: venv
+	scripts/autopep8.sh
