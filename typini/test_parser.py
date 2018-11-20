@@ -95,3 +95,11 @@ def test_array():
     char_array = ArrayValue(CharValue)
     char_array.value = ['"', "'"]
     assert char_array.save() == '[\'"\', "\'"]'
+
+
+def test_type_binder():
+    binder = TypeBinder()
+    assert binder.create_value('int').type_name() == 'int'
+    assert binder.create_value('int[]').type_name() == 'int[]'
+    with pytest.raises(KeyError):
+        binder.create_value('q')

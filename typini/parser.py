@@ -18,7 +18,8 @@ class EmptyNode:
         line += '#' + self.comment
         return line
 
-    def __init__(self, comment=''):
+    def __init__(self, parent, comment=''):
+        self.parent = parent
         self.comment = comment
 
 
@@ -27,6 +28,9 @@ class VariableValue:
         if self.value is None:
             return True
         return type(self.value) == self.var_type()
+
+    def type_name(self):
+        raise NotImplementedError()
 
     def var_type(self):
         raise NotImplementedError()
@@ -76,6 +80,9 @@ class IntValue(NumberValue):
     def var_type(self):
         return int
 
+    def type_name(self):
+        return 'int'
+
     def _do_validate(self):
         if type(self.value) is int:
             return INT_MIN <= self.value and self.value <= INT_MAX
@@ -87,10 +94,16 @@ class FloatValue(NumberValue):
     def var_type(self):
         return float
 
+    def type_name(self):
+        return 'float'
+
 
 class BoolValue(VariableValue):
     def var_type(self):
         return bool
+
+    def type_name(self):
+        return 'bool'
 
     def _do_load(self, line, pos=0):
         pos, word = extract_word(line, pos)
@@ -112,6 +125,9 @@ class StrValue(VariableValue):
     def var_type(self):
         return str
 
+    def type_name(self):
+        return 'string'
+
     def _do_load(self, line, pos=0):
         pos, self.value = extract_string(line, pos)
         return pos
@@ -126,6 +142,9 @@ class CharValue(StrValue):
             return False
         return super()._do_validate()
 
+    def type_name(self):
+        return 'char'
+
     def _do_load(self, line, pos=0):
         pos = super()._do_load(line, pos)
         if len(self.value) != 1:
@@ -139,12 +158,15 @@ class ArrayValue(VariableValue):
     def var_type(self):
         return list
 
+    def type_name(self):
+        return self.item_value.type_name() + '[]'
+
     def _do_validate(self):
         if super()._do_validate():
             return True
         for item in self.value:
-            item_value.value = item
-            if not item_value._do_validate():
+            self.item_value.value = item
+            if not self.item_value._do_validate():
                 return False
         return True
 
@@ -177,6 +199,35 @@ class ArrayValue(VariableValue):
     def __init__(self, item_class, value=None):
         self.item_class = item_class
         self.item_value = item_class()
+
+
+class TypeBinder:
+    binding = {}
+
+    def _bind_type(self, type_class):
+        type_name = type_class().type_name()
+        self.binding[type_name] = type_class
+
+    def create_value(self, type):
+        # TODO: Add multi-dimensional array support (?)
+        if len(type) > 2 and type[-2:] == '[]':
+            return ArrayValue(self.binding[type[:-2]])
+        else:
+            return self.binding[type]()
+
+    def __init__(self):
+        self._bind_type(IntValue)
+        self._bind_type(FloatValue)
+        self._bind_type(CharValue)
+        self._bind_type(BoolValue)
+        self._bind_type(StrValue)
+
+
+class VariableNode(EmptyNode):
+    def __init__(self, parent, key='', value='', comment=''):
+        super().__init_(parent, comment)
+        self.key = key
+        self.value = value
 
 
 class TypiniTree:
