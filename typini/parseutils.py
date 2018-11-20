@@ -59,3 +59,8 @@ def line_expect(line, pos, c):
         raise ParseError(-1, pos, '{} expected'.format(repr(c)))
     pos += 1
     return pos
+
+
+def next_nonspace(line, pos=0):
+    pos = skip_spaces(line, pos)
+    return '' if pos == len(line) else line[pos]

@@ -3,6 +3,11 @@ from .parseutils import *
 
 
 class EmptyNode:
+    @classmethod
+    def can_load(cls, line):
+        c = next_nonspace(line)
+        return c == '' or c == '#'
+
     def load(self, line, pos=0):
         pos = skip_spaces(line, pos)
         if pos == len(line):
@@ -220,6 +225,10 @@ class TypeBinder:
 
 
 class VariableNode(EmptyNode):
+    @classmethod
+    def can_load(cls, line):
+        return is_char_valid(next_nonspace(line))
+
     def load(self, line, pos=0):
         pos, self.key = extract_word(line, pos)
         if not is_var_name_valid(self.key):
@@ -244,6 +253,10 @@ class VariableNode(EmptyNode):
 
 
 class SectionNode(EmptyNode):
+    @classmethod
+    def can_load(cls, line):
+        return next_nonspace(line) == '['
+
     def load(self, line, pos=0):
         pos = skip_spaces(line, pos)
         pos = line_expect(line, pos, '[')
@@ -261,6 +274,51 @@ class SectionNode(EmptyNode):
         self.key = key
 
 
-class TypiniTree:
-    def __init_(self):
+class NodeList:
+    def _do_process_node(self, node):
         pass
+
+    def append_line(self, line):
+        line_number = len(self.nodes)
+        try:
+            node = None
+            for node_type in self.node_types:
+                if node_type.can_load(line):
+                    node = node_type(self)
+                    break
+            if node is None:
+                node = self.node_types[0](self)
+            node.load(line)
+        except ParseError as parse_error:
+            parse_error.row = line_number
+            raise parse_error
+
+    def dump(self):
+        return '\n'.join(map((lambda x: x.save()), self.nodes))
+
+    def clear(self):
+        self.nodes = []
+
+    def load_from_file(self, file_name):
+        self.clear()
+        for line in open(file_name, 'r'):
+            self.append_line(line)
+
+    def save_to_file(self, file_name):
+        open(file_name, 'w').write(self.dump())
+
+    def __init__(self):
+        self.binder = TypeBinder()
+        self.node_types = [VariableNode, EmptyNode, SectionNode]
+        self.nodes = []
+        self.clear()
+
+# TODO: Test NodeList()
+
+
+class TypiniSection:
+    pass
+
+
+class TypiniFile(NodeList):
+    pass
