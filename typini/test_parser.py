@@ -103,3 +103,22 @@ def test_type_binder():
     assert binder.create_value('int[]').type_name() == 'int[]'
     with pytest.raises(KeyError):
         binder.create_value('q')
+
+
+class BinderContainer:
+    def __init__(self):
+        self.binder = TypeBinder()
+
+
+def test_nodes():
+    binder_container = BinderContainer()
+    empty_node = EmptyNode(binder_container)
+    empty_node.load('   # komment   ')
+    assert empty_node.comment == ' komment   '
+    var_node = VariableNode(binder_container)
+    var_node.load('a.:int[]=[1,2,3]')
+    assert var_node.key == 'a.'
+    assert var_node.value.value == [1, 2, 3]
+    section_node = SectionNode(binder_container)
+    section_node.load(' [  42  ]  ')
+    assert section_node.key == '42'

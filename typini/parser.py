@@ -4,7 +4,7 @@ from .parseutils import *
 
 class EmptyNode:
     def load(self, line, pos=0):
-        skip_spaces(line, pos)
+        pos = skip_spaces(line, pos)
         if pos == len(line):
             return
         if line[pos] != '#':
@@ -172,9 +172,7 @@ class ArrayValue(VariableValue):
 
     def _do_load(self, line, pos=0):
         pos = skip_spaces(line, pos)
-        if pos >= len(line) or line[pos] != '[':
-            raise ParseError(-1, pos, 'expected \'[\'')
-        pos += 1
+        pos = line_expect(line, pos, '[')
         self.value = []
         while True:
             pos = skip_spaces(line, pos)
@@ -183,9 +181,7 @@ class ArrayValue(VariableValue):
             if line[pos] == ']':
                 return pos + 1
             if len(self.value) != 0:
-                if line[pos] != ',':
-                    raise ParseError(-1, pos, 'comma expected')
-                pos += 1
+                pos = line_expect(line, pos, ',')
             pos = self.item_value.load(line, pos)
             self.value += [self.item_value.value]
 
@@ -224,10 +220,45 @@ class TypeBinder:
 
 
 class VariableNode(EmptyNode):
+    def load(self, line, pos=0):
+        pos, self.key = extract_word(line, pos)
+        if not is_var_name_valid(self.key):
+            raise ParseError(-1, pos,
+                             'invalid variable name: {}'.format(self.key))
+        pos = skip_spaces(line, pos)
+        pos = line_expect(line, pos, ':')
+        pos, type_name = extract_word(line, pos, DELIM_CHARS_TYPE)
+        try:
+            self.value = self.parent.binder.create_value(type_name)
+        except KeyError:
+            raise ParseError(-1, pos, 'unknown type {}'.format(type_name))
+        pos = skip_spaces(line, pos)
+        pos = line_expect(line, pos, '=')
+        pos = self.value.load(line, pos)
+        return super().load(line, pos)
+
     def __init__(self, parent, key='', value='', comment=''):
-        super().__init_(parent, comment)
+        super().__init__(parent, comment)
         self.key = key
         self.value = value
+
+
+class SectionNode(EmptyNode):
+    def load(self, line, pos=0):
+        pos = skip_spaces(line, pos)
+        pos = line_expect(line, pos, '[')
+        pos = skip_spaces(line, pos)
+        pos, self.key = extract_word(line, pos)
+        if not is_var_name_valid(self.key):
+            raise ParseError(-1, pos,
+                             'invalid section name: {}'.format(self.key))
+        pos = skip_spaces(line, pos)
+        pos = line_expect(line, pos, ']')
+        return super().load(line, pos)
+
+    def __init__(self, parent, key='', comment=''):
+        super().__init__(parent, comment)
+        self.key = key
 
 
 class TypiniTree:

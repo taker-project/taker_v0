@@ -13,7 +13,8 @@ class ParseError(Exception):
 
 
 SPACE_CHARS = set([' ', '\t'])
-DELIM_CHARS = SPACE_CHARS | set(',;[]()')
+DELIM_CHARS = SPACE_CHARS | set(',:;[]()=')
+DELIM_CHARS_TYPE = SPACE_CHARS | set(':=,')
 INT_MIN = -(2 ** 63)
 INT_MAX = 2 ** 63 - 1
 
@@ -28,10 +29,10 @@ def skip_spaces(line, pos):
     return pos
 
 
-def extract_word(line, pos):
+def extract_word(line, pos, delim=DELIM_CHARS):
     pos = skip_spaces(line, pos)
     lpos = pos
-    while (pos < len(line)) and (line[pos] not in DELIM_CHARS):
+    while (pos < len(line)) and (line[pos] not in delim):
         pos += 1
     return (pos, line[lpos:pos])
 
@@ -51,3 +52,10 @@ def extract_string(line, pos):
             return (pos+1, unescape_str(line[lpos:pos]))
         pos += 1
     raise ParseError(-1, pos, 'string is not terminated')
+
+
+def line_expect(line, pos, c):
+    if pos == len(line) or line[pos] != c:
+        raise ParseError(-1, pos, '{} expected'.format(repr(c)))
+    pos += 1
+    return pos
