@@ -1,6 +1,5 @@
 from .names import *
 from .parseutils import *
-from re import escape
 
 
 class EmptyNode:
@@ -118,7 +117,7 @@ class StrValue(VariableValue):
         return pos
 
     def _do_save(self):
-        return escape(self.value)
+        return repr(self.value)
 
 
 class CharValue(StrValue):
@@ -167,7 +166,7 @@ class ArrayValue(VariableValue):
                 pos += 1
             pos = self.item_value.load(line, pos)
             self.value += [self.item_value.value]
-            
+
     def _do_save(self):
         res = '['
         for item in self.value:

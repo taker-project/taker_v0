@@ -1,3 +1,5 @@
+import codecs
+
 
 class ParseError(Exception):
     def __init__(self, row, column, text):
@@ -14,6 +16,10 @@ SPACE_CHARS = set([' ', '\t'])
 DELIM_CHARS = SPACE_CHARS | set(',;[]()')
 INT_MIN = -(2 ** 63)
 INT_MAX = 2 ** 63 - 1
+
+
+def unescape_str(s):
+    return codecs.escape_decode(s.encode())[0].decode()
 
 
 def skip_spaces(line, pos):
@@ -42,7 +48,6 @@ def extract_string(line, pos):
             pos += 2
             continue
         if line[pos] == quote:
-            return (pos+1, line[lpos:pos].encode('utf-8')
-                                         .decode('unicode_escape'))
+            return (pos+1, unescape_str(line[lpos:pos]))
         pos += 1
     raise ParseError(-1, pos, 'string is not terminated')

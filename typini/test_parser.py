@@ -4,6 +4,12 @@ import pytest
 import math
 
 
+def test_unescape():
+    assert unescape_str('\\033') == '\033'
+    assert unescape_str('Строка\\n') == 'Строка\n'
+    assert unescape_str('\\\'\\"') == '\'"'
+
+
 def test_parse_error():
     assert str(ParseError(3, 4, 'test')) == 'error:4:5: test'
 
@@ -60,9 +66,12 @@ def test_string():
     str_value = StrValue()
     str_value.load(' \"Demo\\\"string\"  ')
     assert str_value.value == 'Demo\"string'
-    assert str_value.save() == 'Demo\\\"string'
+    assert str_value.save() == '\'Demo"string\''
     str_value.load(' \"\"    ')
     assert str_value.value == ''
+    str_value.load('"Стр\'ока"')
+    assert str_value.value == 'Стр\'ока'
+    assert str_value.save() == '"Стр\'ока"'
 
 
 def test_char():
@@ -79,3 +88,10 @@ def test_array():
     int_array.load(' [  1,2,3, 4,   5]')
     assert int_array.value == [1, 2, 3, 4, 5]
     assert int_array.save() == '[1, 2, 3, 4, 5]'
+    str_array = ArrayValue(StrValue)
+    str_array.load(' [null, "a", \'42\\\'\\\\1\',"3",   "#longlongln"   ] ')
+    assert str_array.value == [None, 'a', "42'\\1", '3', '#longlongln']
+    assert str_array.save() == "[null, 'a', \"42'\\\\1\", '3', '#longlongln']"
+    char_array = ArrayValue(CharValue)
+    char_array.value = ['"', "'"]
+    assert char_array.save() == '[\'"\', "\'"]'
