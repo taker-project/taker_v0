@@ -17,10 +17,12 @@ def test_parse_error():
 def test_extract_string():
     assert extract_string(' \"Hello \\\"hello\\\"!\" ',
                           0) == (19, 'Hello \"hello\"!')
-    with pytest.raises(ParseError):
+    with pytest.raises(ParseError) as excinfo:
         extract_string(' \"42\'', 0)
-    with pytest.raises(ParseError):
+    assert excinfo.value.text == 'string is not terminated'
+    with pytest.raises(ParseError) as excinfo:
         extract_string(' \"42\\\"', 0)
+    assert excinfo.value.text == 'string is not terminated'
 
 
 def test_null():
@@ -35,10 +37,12 @@ def test_int():
     int_value.load('   42   ')
     assert int_value.value == 42
     assert int_value.save() == '42'
-    with pytest.raises(ParseError):
+    with pytest.raises(ParseError) as excinfo:
         int_value.load('123456789012345678901234567')
-    with pytest.raises(ParseError):
+    assert excinfo.value.text == 'int expected, 123456789012345678901234567 found'
+    with pytest.raises(ParseError) as excinfo:
         int_value.load('-123456789012345678901234567')
+    assert excinfo.value.text == 'int expected, -123456789012345678901234567 found'
 
 
 def test_float():
@@ -77,10 +81,12 @@ def test_string():
 def test_char():
     char_value = CharValue()
     char_value.load(' \"4\"  ')
-    with pytest.raises(ParseError):
+    with pytest.raises(ParseError) as excinfo:
         char_value.load('\'ab\'')
-    with pytest.raises(ParseError):
+    assert excinfo.value.text == 'one character in char type excepted, 2 character(s) found'
+    with pytest.raises(ParseError) as excinfo:
         char_value.load('\'\'')
+    assert excinfo.value.text == 'one character in char type excepted, 0 character(s) found'
 
 
 def test_array():

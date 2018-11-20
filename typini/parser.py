@@ -154,7 +154,7 @@ class CharValue(StrValue):
         pos = super()._do_load(line, pos)
         if len(self.value) != 1:
             raise ParseError(-1, pos,
-                             'excepted one character in char type, {} found'
+                             'one character in char type excepted, {} character(s) found'
                              .format(len(self.value)))
         return pos
 
