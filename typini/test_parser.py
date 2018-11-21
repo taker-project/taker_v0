@@ -11,7 +11,7 @@ def test_unescape():
 
 
 def test_parse_error():
-    assert str(ParseError(3, 4, 'test')) == 'error:4:5: test'
+    assert str(ParseError(3, 4, 'test')) == '4:5: error: test'
 
 
 def test_extract_string():
@@ -39,10 +39,12 @@ def test_int():
     assert int_value.save() == '42'
     with pytest.raises(ParseError) as excinfo:
         int_value.load('123456789012345678901234567')
-    assert excinfo.value.text == 'int expected, 123456789012345678901234567 found'
+    assert (excinfo.value.text ==
+            'int expected, 123456789012345678901234567 found')
     with pytest.raises(ParseError) as excinfo:
         int_value.load('-123456789012345678901234567')
-    assert excinfo.value.text == 'int expected, -123456789012345678901234567 found'
+    assert (excinfo.value.text ==
+            'int expected, -123456789012345678901234567 found')
 
 
 def test_float():
@@ -83,10 +85,12 @@ def test_char():
     char_value.load(' \"4\"  ')
     with pytest.raises(ParseError) as excinfo:
         char_value.load('\'ab\'')
-    assert excinfo.value.text == 'one character in char type excepted, 2 character(s) found'
+    assert (excinfo.value.text ==
+            'one character in char type excepted, 2 character(s) found')
     with pytest.raises(ParseError) as excinfo:
         char_value.load('\'\'')
-    assert excinfo.value.text == 'one character in char type excepted, 0 character(s) found'
+    assert (excinfo.value.text ==
+            'one character in char type excepted, 0 character(s) found')
 
 
 def test_array():

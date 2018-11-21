@@ -9,7 +9,7 @@ class ParseError(Exception):
         self.text = text
 
     def __str__(self):
-        return 'error:{}:{}: {}'.format(self.row+1, self.column+1, self.text)
+        return '{}:{}: error: {}'.format(self.row+1, self.column+1, self.text)
 
 
 SPACE_CHARS = set([' ', '\t'])
