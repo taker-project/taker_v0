@@ -126,9 +126,67 @@ def test_nodes():
     empty_node.load('   # komment   ')
     assert empty_node.comment == ' komment   '
     var_node = VariableNode(binder_container)
+    with pytest.raises(TypeError):
+        var_node.reset('a', 'int', 'gnu')
+    with pytest.raises(KeyError):
+        var_node.reset('int', 'a', 'gnu')
     var_node.load('a.:int[]=[1,2,3]')
     assert var_node.key == 'a.'
     assert var_node.value.value == [1, 2, 3]
+    assert var_node.save() == 'a.: int[] = [1, 2, 3]'
+    var_node.load('a: int = null')
+    assert var_node.value.value is None
+    assert var_node.save() == 'a: int'
+    var_node.load('a   :int')
+    assert var_node.save() == 'a: int'
     section_node = SectionNode(binder_container)
     section_node.load(' [  42  ]  ')
     assert section_node.key == '42'
+
+
+def test_section():
+    binder_container = BinderContainer()
+    section = TypiniSection(
+        binder_container, SectionNode(binder_container, 'head'))
+    section.reset('KEY', 'string', 'value')
+    assert section['KEY'] == 'value'
+    with pytest.raises(KeyError):
+        section['key']
+    with pytest.raises(KeyError):
+        section['key'] = '42'
+    with pytest.raises(KeyError):
+        section.erase_node('key')
+    section.erase_node('KEY')
+    assert len(section) == 1
+    section.reset('KEY', 'string', 'value')
+    section.reset('key', 'string', 'value2')
+    assert len(section) == 2
+    with pytest.raises(TypeError):
+        section['key'] = 42
+    section['key'] = 'new_key'
+    assert section['key'] == 'new_key'
+    with pytest.raises(ParseError):
+        node = VariableNode(binder_container)
+        node.reset('key', 'int', 42)
+        section.append_value_node(node)
+    with pytest.raises(ParseError):
+        node = VariableNode(binder_container)
+        node.reset('Key', 'int', 42)
+        section.append_value_node(node)
+    section.clear()
+    var_node = VariableNode(binder_container)
+    var_node.reset('a', 'int', 1)
+    var_node.comment = ' Hello'
+    section.append_node(var_node)
+    assert section.dump() == '[head]\na: int = 1 # Hello'
+    with pytest.raises(ParseError):
+        section.append_node(SectionNode(binder_container, '42'))
+    section.reset('A', 'string', '2')
+    assert section.dump() == '[head]\nA: string = \'2\' # Hello'
+    section.reset('b', 'int', 3)
+    section.reset('a', 'int', 3)
+    section.append_node(EmptyNode(binder_container, ' 42'))
+    assert section.dump() == '[head]\na: int = 3 # Hello\nb: int = 3\n# 42'
+    section.reset('c', 'int', 42)
+    assert (section.dump() ==
+            '[head]\na: int = 3 # Hello\nb: int = 3\nc: int = 42\n# 42')

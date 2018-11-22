@@ -11,19 +11,22 @@ class EmptyNode:
     def load(self, line, pos=0):
         pos = skip_spaces(line, pos)
         if pos == len(line):
-            return
+            self.comment = None
+            return pos
         if line[pos] != '#':
             raise ParseError(-1, pos, 'comment expected')
         self.comment = line[pos+1:]
         return len(line)
 
     def save(self, line=''):
+        if self.comment is None:
+            return line
         if line != '':
             line += ' '
         line += '#' + self.comment
         return line
 
-    def __init__(self, parent, comment=''):
+    def __init__(self, parent, comment=None):
         self.parent = parent
         self.comment = comment
 
@@ -154,7 +157,8 @@ class CharValue(StrValue):
         pos = super()._do_load(line, pos)
         if len(self.value) != 1:
             raise ParseError(-1, pos,
-                             'one character in char type excepted, {} character(s) found'
+                             'one character in char type excepted, '
+                             '{} character(s) found'
                              .format(len(self.value)))
         return pos
 
@@ -203,18 +207,18 @@ class ArrayValue(VariableValue):
 
 
 class TypeBinder:
-    binding = {}
+    __binding__ = {}
 
     def _bind_type(self, type_class):
         type_name = type_class().type_name()
-        self.binding[type_name] = type_class
+        self.__binding__[type_name] = type_class
 
     def create_value(self, type):
         # TODO: Add multi-dimensional array support (?)
         if len(type) > 2 and type[-2:] == '[]':
-            return ArrayValue(self.binding[type[:-2]])
+            return ArrayValue(self.__binding__[type[:-2]])
         else:
-            return self.binding[type]()
+            return self.__binding__[type]()
 
     def __init__(self):
         self._bind_type(IntValue)
@@ -242,11 +246,24 @@ class VariableNode(EmptyNode):
         except KeyError:
             raise ParseError(-1, pos, 'unknown type {}'.format(type_name))
         pos = skip_spaces(line, pos)
-        pos = line_expect(line, pos, '=')
-        pos = self.value.load(line, pos)
+        if pos < len(line) and line[pos] == '=':
+            pos += 1
+            pos = self.value.load(line, pos)
         return super().load(line, pos)
 
-    def __init__(self, parent, key='', value='', comment=''):
+    def reset(self, key, type, value):
+        self.key = key
+        self.value = self.parent.binder.create_value(type)
+        self.value.value = value
+        self.value.validate()
+
+    def save(self, line=''):
+        line += '{}: {}'.format(self.key, self.value.type_name())
+        if self.value.value is not None:
+            line += ' = {}'.format(self.value.save())
+        return super().save(line)
+
+    def __init__(self, parent, key='', value='', comment=None):
         super().__init__(parent, comment)
         self.key = key
         self.value = value
@@ -269,35 +286,48 @@ class SectionNode(EmptyNode):
         pos = line_expect(line, pos, ']')
         return super().load(line, pos)
 
-    def __init__(self, parent, key='', comment=''):
+    def save(self, line=''):
+        line += '[{}]'.format(self.key)
+        return super().save(line)
+
+    def __init__(self, parent, key='', comment=None):
         super().__init__(parent, comment)
         self.key = key
 
 
 class NodeList:
-    def _do_process_node(self, node):
-        pass
+    def _do_append_node(self, node):
+        raise NotImplementedError()
+
+    def clear(self):
+        raise NotImplementedError()
+
+    def get_nodes(self):
+        raise NotImplementedError()
+
+    def __len__(self):
+        raise NotImplementedError()
 
     def append_line(self, line):
-        line_number = len(self.nodes)
+        line_number = len(self)
         try:
             node = None
-            for node_type in self.node_types:
+            for node_type in self.__node_types__:
                 if node_type.can_load(line):
                     node = node_type(self)
                     break
             if node is None:
-                node = self.node_types[0](self)
+                node = self.__node_types__[0](self)
             node.load(line)
+            self._do_append_node(node)
         except ParseError as parse_error:
             parse_error.row = line_number
+            if parse_error.column < 0:
+                parse_error.column = len(line) - 1
             raise parse_error
 
     def dump(self):
         return '\n'.join(map((lambda x: x.save()), self.nodes))
-
-    def clear(self):
-        self.nodes = []
 
     def load_from_file(self, file_name):
         self.clear()
@@ -308,16 +338,94 @@ class NodeList:
         open(file_name, 'w').write(self.dump())
 
     def __init__(self):
-        self.binder = TypeBinder()
-        self.node_types = [VariableNode, EmptyNode, SectionNode]
-        self.nodes = []
+        self.__binder__ = TypeBinder()
+        self.__node_types__ = [VariableNode, EmptyNode, SectionNode]
         self.clear()
-
-# TODO: Test NodeList()
 
 
 class TypiniSection:
-    pass
+    def __get_node_index__(self, key, case_sensitive=True):
+        if key.lower() not in self.__keys__:
+            return -1
+        if not case_sensitive:
+            key = key.lower()
+        for i in range(len(self.__nodes__)):
+            node = self.__nodes__[i]
+            node_key = node.key
+            if not case_sensitive:
+                node_key = node_key.lower()
+            if (type(node) == VariableNode) and node_key == key:
+                return i
+        return -1
+
+    def __getitem__(self, key):
+        index = self.__get_node_index__(key)
+        if index < 0:
+            raise KeyError(key)
+        return self.__nodes__[index].value.value
+
+    def __setitem__(self, key, value):
+        index = self.__get_node_index__(key)
+        if index < 0:
+            raise KeyError(key)
+        self.__nodes__[index].value.value = value
+        self.__nodes__[index].value.validate()
+
+    def reset(self, key, type, value):
+        index = self.__get_node_index__(key, False)
+        cur_node = self.__nodes__[
+            index] if index >= 0 else VariableNode(self.parent)
+        cur_node.reset(key, type, value)
+        if index < 0:
+            self.append_value_node(cur_node)
+
+    def clear(self):
+        self.__nodes__.clear()
+        self.__comments_tail__.clear()
+
+    def append_value_node(self, node):
+        if node.key.lower() in self.__keys__:
+            raise ParseError(-1, -1,
+                             'key {}::{} is duplicate or only the case differs'
+                             .format(self.header.key, node.key))
+        self.__keys__.add(node.key.lower())
+        self.__nodes__.append(node)
+
+    def erase_node(self, key):
+        index = self.__get_node_index__(key)
+        if index < 0:
+            raise KeyError(key)
+        self.__nodes__.pop(index)
+        self.__keys__.remove(key.lower())
+
+    def append_node(self, node):
+        if type(node) == EmptyNode:
+            self.__comments_tail__.append(node)
+        elif type(node) == VariableNode:
+            self.__nodes__.extend(self.__comments_tail__)
+            self.__comments_tail__.clear()
+            self.append_value_node(node)
+        elif type(node) == SectionNode:
+            raise ParseError(-1, -1,
+                             'section nodes inside sections are not allowed')
+        else:
+            assert False
+
+    def get_nodes(self):
+        return [self.header] + self.__nodes__ + self.__comments_tail__
+
+    def dump(self):
+        return '\n'.join(map((lambda x: x.save()), self.get_nodes()))
+
+    def __len__(self):
+        return len(self.__nodes__) + len(self.__comments_tail__) + 1
+
+    def __init__(self, parent, header):
+        self.header = header
+        self.__keys__ = set()
+        self.__nodes__ = []
+        self.parent = parent
+        self.__comments_tail__ = []
 
 
 class TypiniFile(NodeList):
