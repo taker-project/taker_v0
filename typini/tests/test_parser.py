@@ -17,9 +17,11 @@ def test_parse_error():
 def test_extract_string():
     assert extract_string(' \"Hello \\\"hello\\\"!\" ',
                           0) == (19, 'Hello \"hello\"!')
+
     with pytest.raises(ParseError) as excinfo:
         extract_string(' \"42\'', 0)
     assert excinfo.value.text == 'string is not terminated'
+
     with pytest.raises(ParseError) as excinfo:
         extract_string(' \"42\\\"', 0)
     assert excinfo.value.text == 'string is not terminated'
@@ -37,10 +39,12 @@ def test_int():
     int_value.load('   42   ')
     assert int_value.value == 42
     assert int_value.save() == '42'
+
     with pytest.raises(ParseError) as excinfo:
         int_value.load('123456789012345678901234567')
     assert (excinfo.value.text ==
             'int expected, \'123456789012345678901234567\' token found')
+
     with pytest.raises(ParseError) as excinfo:
         int_value.load('-123456789012345678901234567')
     assert (excinfo.value.text ==
@@ -52,17 +56,21 @@ def test_float():
     float_value.load(' 3.14159 ')
     assert float_value.value == 3.14159
     assert float_value.save() == '3.14159'
+
     float_value.load('nan')
     assert math.isnan(float_value.value)
+
     float_value.load('inf')
     assert math.isinf(float_value.value)
 
 
 def test_bool():
     bool_value = BoolValue()
+
     assert bool_value.load('  true  ') == 6
     assert bool_value.value is True
     assert bool_value.save() == 'true'
+
     assert bool_value.load('  false') == 7
     assert bool_value.value is False
     assert bool_value.save() == 'false'
@@ -70,11 +78,14 @@ def test_bool():
 
 def test_string():
     str_value = StrValue()
-    str_value.load(' \"Demo\\\"string\"  ') 
+
+    str_value.load(' \"Demo\\\"string\"  ')
     assert str_value.value == 'Demo\"string'
     assert str_value.save() == '\'Demo"string\''
+
     str_value.load(' \"\"    ')
     assert str_value.value == ''
+
     str_value.load('"Стр\'ока"')
     assert str_value.value == 'Стр\'ока'
     assert str_value.save() == '"Стр\'ока"'
@@ -82,11 +93,15 @@ def test_string():
 
 def test_char():
     char_value = CharValue()
+
     char_value.load(' \"4\"  ')
+    assert char_value.save() == '4'
+
     with pytest.raises(ParseError) as excinfo:
         char_value.load('\'ab\'')
     assert (excinfo.value.text ==
             'one character in char type excepted, 2 character(s) found')
+
     with pytest.raises(ParseError) as excinfo:
         char_value.load('\'\'')
     assert (excinfo.value.text ==
@@ -95,22 +110,28 @@ def test_char():
 
 def test_array():
     int_array = ArrayValue(IntValue)
+
     int_array.load(' [  1,2,3, 4,   5]')
     assert int_array.value == [1, 2, 3, 4, 5]
     assert int_array.save() == '[1, 2, 3, 4, 5]'
+
     with pytest.raises(ParseError) as excinfo:
         int_array.load('42')
     assert excinfo.value.text == '\'[\' expected'
+
     with pytest.raises(ParseError) as excinfo:
         int_array.load('[1,2,      ')
     assert excinfo.value.text == 'int expected, \'\' token found'
+
     with pytest.raises(ParseError) as excinfo:
         int_array.load('[1,2      ')
     assert excinfo.value.text == 'unterminated array'
+
     str_array = ArrayValue(StrValue)
     str_array.load(' [null, "a", \'42\\\'\\\\1\',"3",   "#longlongln"   ] ')
     assert str_array.value == [None, 'a', "42'\\1", '3', '#longlongln']
     assert str_array.save() == "[null, 'a', \"42'\\\\1\", '3', '#longlongln']"
+
     char_array = ArrayValue(CharValue)
     char_array.value = ['"', "'"]
     assert char_array.save() == '[\'"\', "\'"]'
@@ -131,23 +152,30 @@ class BinderContainer:
 
 def test_nodes():
     binder_container = BinderContainer()
+
     empty_node = EmptyNode(binder_container)
     empty_node.load('   # komment   ')
     assert empty_node.comment == ' komment   '
+
     var_node = VariableNode(binder_container)
+
     with pytest.raises(TypeError):
         var_node.reset('a', 'int', 'gnu')
     with pytest.raises(KeyError):
         var_node.reset('int', 'a', 'gnu')
+
     var_node.load('a.:int[]=[1,2,3]')
     assert var_node.key == 'a.'
     assert var_node.value.value == [1, 2, 3]
     assert var_node.save() == 'a.: int[] = [1, 2, 3]'
+
     var_node.load('a: int = null')
     assert var_node.value.value is None
     assert var_node.save() == 'a: int'
+
     var_node.load('a   :int')
     assert var_node.save() == 'a: int'
+
     section_node = SectionNode(binder_container)
     section_node.load(' [  42  ]  ')
     assert section_node.key == '42'
@@ -157,6 +185,7 @@ def test_section():
     binder_container = BinderContainer()
     section = TypiniSection(
         binder_container, SectionNode(binder_container, 'head'))
+
     section.reset('KEY', 'string', 'value')
     assert section['KEY'] == 'value'
     with pytest.raises(KeyError):
@@ -166,14 +195,17 @@ def test_section():
     with pytest.raises(KeyError):
         section.erase_node('key')
     section.erase_node('KEY')
+
     assert len(section) == 1
     section.reset('KEY', 'string', 'value')
     section.reset('key', 'string', 'value2')
     assert len(section) == 2
+
     with pytest.raises(TypeError):
         section['key'] = 42
     section['key'] = 'new_key'
     assert section['key'] == 'new_key'
+
     with pytest.raises(ParseError):
         node = VariableNode(binder_container)
         node.reset('key', 'int', 42)
@@ -182,6 +214,7 @@ def test_section():
         node = VariableNode(binder_container)
         node.reset('Key', 'int', 42)
         section.append_value_node(node)
+
     section.clear()
     var_node = VariableNode(binder_container)
     var_node.reset('a', 'int', 1)
@@ -221,24 +254,25 @@ def test_full():
     parser.erase_section('section')
     assert parser.dump() == '[section2]\nc: string\nd: int = 2'
     parser.load('#comment\n\n\n\n[section]\na:int\n[section2]\n[section3]\n')
-    
+
     with pytest.raises(ParseError) as excinfo:
         parser.load('a:int=5\n[section]')
     assert (excinfo.value.text ==
             'only blanks and comments are allowed outside of sections')
-    
+
     with pytest.raises(ParseError) as excinfo:
         parser.load('[section]\na:q=5\n')
     assert excinfo.value.text == 'unknown type q'
-    
+
     with pytest.raises(ParseError) as excinfo:
         parser.load('[section]\n--help:int=5\n')
     assert excinfo.value.text == 'invalid variable name: --help'
-    
+
     with pytest.raises(ParseError) as excinfo:
         parser.load('[--help]')
     assert excinfo.value.text == 'invalid section name: --help'
-        
+
     with pytest.raises(ParseError) as excinfo:
         parser.load('[section]\na:int\nA:int\n')
-    assert excinfo.value.text == 'key section::A is duplicate or only the case differs'    
+    assert (excinfo.value.text ==
+            'key section::A is duplicate or only the case differs')
