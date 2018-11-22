@@ -118,12 +118,11 @@ class BoolValue(VariableValue):
         pos, word = extract_word(line, pos)
         if word == 'true':
             self.value = True
-            return
+            return pos
         if word == 'false':
             self.value = False
-            return
-        raise ParseError(-1, pos,
-                         'expected true or false, {} found'.format(word))
+            return pos
+        raise ParseError(-1, pos, 'expected true or false')
         return pos
 
     def _do_save(self):
@@ -327,19 +326,19 @@ class NodeList:
                 parse_error.column = len(line) - 1
             raise parse_error
 
-    def loads(self, text):
+    def load(self, text):
         self.clear()
         for line in text.splitlines():
             self.append_line(line)
 
-    def saves(self):
+    def dump(self):
         return '\n'.join(map((lambda x: x.save()), self.get_nodes()))
 
     def load_from_file(self, file_name):
-        loads(open(file_name, 'r').read())
+        self.load(open(file_name, 'r').read())
 
     def save_to_file(self, file_name):
-        open(file_name, 'w').write(self.saves())
+        open(file_name, 'w').write(self.dump())
 
     def __init__(self):
         self.binder = TypeBinder()
@@ -419,7 +418,9 @@ class TypiniSection:
         return [self.header] + self.__nodes__ + self.__comments_tail__
 
     def list_keys(self):
-        return [node.key for node in self.get_nodes() if type(node) == VariableNode]
+        return [node.key
+                for node in self.get_nodes()
+                if type(node) == VariableNode]
 
     def dump(self):
         return '\n'.join(map((lambda x: x.save()), self.get_nodes()))
@@ -456,8 +457,9 @@ class Typini(NodeList):
         self.__keys__.clear()
 
     def get_nodes(self):
-        return list(itertools.chain(self.__header__, 
-                    *(section.get_nodes() for section in self.__sections__)))
+        return list(itertools.chain(self.__header__,
+                                    *(section.get_nodes()
+                                      for section in self.__sections__)))
 
     def __len__(self):
         return len(self.__header__) + sum(len(i) for i in self.__sections__)
@@ -486,6 +488,9 @@ class Typini(NodeList):
 
     def create_section(self, key):
         self.__append_section__(SectionNode(self, key))
+
+    def get_sections(self):
+        return self.__sections__
 
     def list_sections(self):
         return [section.header.key for section in self.__sections__]

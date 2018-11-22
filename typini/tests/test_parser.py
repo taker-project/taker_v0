@@ -1,5 +1,5 @@
-from .parser import *
-from .parseutils import *
+from typini.parser import *
+from typini.parseutils import *
 import pytest
 import math
 
@@ -60,17 +60,17 @@ def test_float():
 
 def test_bool():
     bool_value = BoolValue()
-    bool_value.load('  true  ')
+    assert bool_value.load('  true  ') == 6
     assert bool_value.value is True
     assert bool_value.save() == 'true'
-    bool_value.load('  false')
+    assert bool_value.load('  false') == 7
     assert bool_value.value is False
     assert bool_value.save() == 'false'
 
 
 def test_string():
     str_value = StrValue()
-    str_value.load(' \"Demo\\\"string\"  ')
+    str_value.load(' \"Demo\\\"string\"  ') 
     assert str_value.value == 'Demo\"string'
     assert str_value.save() == '\'Demo"string\''
     str_value.load(' \"\"    ')
@@ -194,15 +194,15 @@ def test_section():
 
 def test_full():
     parser = Typini()
-    parser.loads(
+    parser.load(
         '[section]\n  a : int = 5\nb: int = 6 # comment\n#another_comment\n\n'
         '[section2]\n c : string\n d:int=2')
     assert(len(parser) == 8)
     assert parser.list_sections() == ['section', 'section2']
     assert parser['section'].list_keys() == ['a', 'b']
     assert parser['section2'].list_keys() == ['c', 'd']
-    assert (parser.saves() == '[section]\na: int = 5\nb: int = 6 # comment\n'
-        '#another_comment\n\n[section2]\nc: string\nd: int = 2')
+    assert (parser.dump() == '[section]\na: int = 5\nb: int = 6 # comment\n'
+            '#another_comment\n\n[section2]\nc: string\nd: int = 2')
     with pytest.raises(KeyError):
         parser['Section']
     with pytest.raises(KeyError):
@@ -210,9 +210,9 @@ def test_full():
     with pytest.raises(KeyError):
         parser.erase_section('Section')
     parser.erase_section('section')
-    assert parser.saves() == '[section2]\nc: string\nd: int = 2'
-    parser.loads('#comment\n\n\n\n[section]\na:int\n[section2]\n[section3]\n')
+    assert parser.dump() == '[section2]\nc: string\nd: int = 2'
+    parser.load('#comment\n\n\n\n[section]\na:int\n[section2]\n[section3]\n')
     with pytest.raises(ParseError) as excinfo:
-        parser.loads('a:int=5\n[section]')
+        parser.load('a:int=5\n[section]')
     assert (excinfo.value.text ==
             'only blanks and comments are allowed outside of sections')
