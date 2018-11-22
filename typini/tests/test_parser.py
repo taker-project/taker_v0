@@ -40,11 +40,11 @@ def test_int():
     with pytest.raises(ParseError) as excinfo:
         int_value.load('123456789012345678901234567')
     assert (excinfo.value.text ==
-            'int expected, 123456789012345678901234567 found')
+            'int expected, \'123456789012345678901234567\' token found')
     with pytest.raises(ParseError) as excinfo:
         int_value.load('-123456789012345678901234567')
     assert (excinfo.value.text ==
-            'int expected, -123456789012345678901234567 found')
+            'int expected, \'-123456789012345678901234567\' token found')
 
 
 def test_float():
@@ -98,6 +98,15 @@ def test_array():
     int_array.load(' [  1,2,3, 4,   5]')
     assert int_array.value == [1, 2, 3, 4, 5]
     assert int_array.save() == '[1, 2, 3, 4, 5]'
+    with pytest.raises(ParseError) as excinfo:
+        int_array.load('42')
+    assert excinfo.value.text == '\'[\' expected'
+    with pytest.raises(ParseError) as excinfo:
+        int_array.load('[1,2,      ')
+    assert excinfo.value.text == 'int expected, \'\' token found'
+    with pytest.raises(ParseError) as excinfo:
+        int_array.load('[1,2      ')
+    assert excinfo.value.text == 'unterminated array'
     str_array = ArrayValue(StrValue)
     str_array.load(' [null, "a", \'42\\\'\\\\1\',"3",   "#longlongln"   ] ')
     assert str_array.value == [None, 'a', "42'\\1", '3', '#longlongln']
@@ -212,7 +221,24 @@ def test_full():
     parser.erase_section('section')
     assert parser.dump() == '[section2]\nc: string\nd: int = 2'
     parser.load('#comment\n\n\n\n[section]\na:int\n[section2]\n[section3]\n')
+    
     with pytest.raises(ParseError) as excinfo:
         parser.load('a:int=5\n[section]')
     assert (excinfo.value.text ==
             'only blanks and comments are allowed outside of sections')
+    
+    with pytest.raises(ParseError) as excinfo:
+        parser.load('[section]\na:q=5\n')
+    assert excinfo.value.text == 'unknown type q'
+    
+    with pytest.raises(ParseError) as excinfo:
+        parser.load('[section]\n--help:int=5\n')
+    assert excinfo.value.text == 'invalid variable name: --help'
+    
+    with pytest.raises(ParseError) as excinfo:
+        parser.load('[--help]')
+    assert excinfo.value.text == 'invalid section name: --help'
+        
+    with pytest.raises(ParseError) as excinfo:
+        parser.load('[section]\na:int\nA:int\n')
+    assert excinfo.value.text == 'key section::A is duplicate or only the case differs'    

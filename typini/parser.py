@@ -78,10 +78,10 @@ class NumberValue(VariableValue):
         try:
             self.value = self.var_type()(word)
             self.validate()
-        except TypeError:
-            raise ParseError(-1, pos, '{} expected, {} found'
+        except (TypeError, ValueError):
+            raise ParseError(-1, pos, '{} expected, {} token found'
                              .format(self.var_type().__name__,
-                                     word))
+                                     repr(word)))
         return pos
 
 
