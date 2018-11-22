@@ -190,3 +190,29 @@ def test_section():
     section.reset('c', 'int', 42)
     assert (section.dump() ==
             '[head]\na: int = 3 # Hello\nb: int = 3\nc: int = 42\n# 42')
+
+
+def test_full():
+    parser = Typini()
+    parser.loads(
+        '[section]\n  a : int = 5\nb: int = 6 # comment\n#another_comment\n\n'
+        '[section2]\n c : string\n d:int=2')
+    assert(len(parser) == 8)
+    assert parser.list_sections() == ['section', 'section2']
+    assert parser['section'].list_keys() == ['a', 'b']
+    assert parser['section2'].list_keys() == ['c', 'd']
+    assert (parser.saves() == '[section]\na: int = 5\nb: int = 6 # comment\n'
+        '#another_comment\n\n[section2]\nc: string\nd: int = 2')
+    with pytest.raises(KeyError):
+        parser['Section']
+    with pytest.raises(KeyError):
+        parser['nonExistent']
+    with pytest.raises(KeyError):
+        parser.erase_section('Section')
+    parser.erase_section('section')
+    assert parser.saves() == '[section2]\nc: string\nd: int = 2'
+    parser.loads('#comment\n\n\n\n[section]\na:int\n[section2]\n[section3]\n')
+    with pytest.raises(ParseError) as excinfo:
+        parser.loads('a:int=5\n[section]')
+    assert (excinfo.value.text ==
+            'only blanks and comments are allowed outside of sections')

@@ -1,5 +1,6 @@
 from .names import *
 from .parseutils import *
+import itertools
 
 
 class EmptyNode:
@@ -326,19 +327,22 @@ class NodeList:
                 parse_error.column = len(line) - 1
             raise parse_error
 
-    def dump(self):
-        return '\n'.join(map((lambda x: x.save()), self.nodes))
-
-    def load_from_file(self, file_name):
+    def loads(self, text):
         self.clear()
-        for line in open(file_name, 'r'):
+        for line in text.splitlines():
             self.append_line(line)
 
+    def saves(self):
+        return '\n'.join(map((lambda x: x.save()), self.get_nodes()))
+
+    def load_from_file(self, file_name):
+        loads(open(file_name, 'r').read())
+
     def save_to_file(self, file_name):
-        open(file_name, 'w').write(self.dump())
+        open(file_name, 'w').write(self.saves())
 
     def __init__(self):
-        self.__binder__ = TypeBinder()
+        self.binder = TypeBinder()
         self.__node_types__ = [VariableNode, EmptyNode, SectionNode]
         self.clear()
 
@@ -414,6 +418,9 @@ class TypiniSection:
     def get_nodes(self):
         return [self.header] + self.__nodes__ + self.__comments_tail__
 
+    def list_keys(self):
+        return [node.key for node in self.get_nodes() if type(node) == VariableNode]
+
     def dump(self):
         return '\n'.join(map((lambda x: x.save()), self.get_nodes()))
 
@@ -428,5 +435,69 @@ class TypiniSection:
         self.__comments_tail__ = []
 
 
-class TypiniFile(NodeList):
-    pass
+class Typini(NodeList):
+    def _do_append_node(self, node):
+        if type(node) == SectionNode:
+            self.__append_section__(node)
+        else:
+            if len(self.__sections__) > 0:
+                self.__sections__[-1].append_node(node)
+            else:
+                if type(node) != EmptyNode:
+                    raise ParseError(
+                        -1, -1,
+                        'only blanks and comments are allowed '
+                        'outside of sections')
+                self.__header__.append(node)
+
+    def clear(self):
+        self.__header__.clear()
+        self.__sections__.clear()
+        self.__keys__.clear()
+
+    def get_nodes(self):
+        return list(itertools.chain(self.__header__, 
+                    *(section.get_nodes() for section in self.__sections__)))
+
+    def __len__(self):
+        return len(self.__header__) + sum(len(i) for i in self.__sections__)
+
+    def __getitem__(self, key):
+        index = self.__get_section_index__(key)
+        if index < 0:
+            raise KeyError(key)
+        return self.__sections__[index]
+
+    def __get_section_index__(self, key):
+        if key not in self.__keys__:
+            return -1
+        for i in range(len(self.__sections__)):
+            if self.__sections__[i].header.key == key:
+                return i
+        return -1
+
+    def __append_section__(self, section_node):
+        if section_node.key in self.__keys__:
+            raise ParseError(-1, -1,
+                             'section {} is duplicate or only the case differs'
+                             .format(section_node.key))
+        self.__keys__.add(section_node.key.lower())
+        self.__sections__.append(TypiniSection(self, section_node))
+
+    def create_section(self, key):
+        self.__append_section__(SectionNode(self, key))
+
+    def list_sections(self):
+        return [section.header.key for section in self.__sections__]
+
+    def erase_section(self, key):
+        index = self.__get_section_index__(key)
+        if index < 0:
+            raise KeyError(key)
+        self.__sections__.pop(index)
+
+    def __init__(self):
+        self.__header__ = []
+        self.__sections__ = []
+        self.__keys__ = set()
+        super().__init__()
