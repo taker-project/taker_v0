@@ -95,7 +95,7 @@ def test_char():
     char_value = CharValue()
 
     char_value.load(' \"4\"  ')
-    assert char_value.save() == '4'
+    assert char_value.save() == '\'4\''
 
     with pytest.raises(ParseError) as excinfo:
         char_value.load('\'ab\'')
