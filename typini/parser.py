@@ -207,20 +207,19 @@ class ArrayValue(VariableValue):
 
 
 class TypeBinder:
-    __binding__ = {}
-
     def _bind_type(self, type_class):
         type_name = type_class().type_name()
-        self.__binding__[type_name] = type_class
+        self.__binding[type_name] = type_class
 
     def create_value(self, type):
         # TODO: Add multi-dimensional array support (?)
         if len(type) > 2 and type[-2:] == '[]':
-            return ArrayValue(self.__binding__[type[:-2]])
+            return ArrayValue(self.__binding[type[:-2]])
         else:
-            return self.__binding__[type]()
+            return self.__binding[type]()
 
     def __init__(self):
+        self.__binding = {}
         self._bind_type(IntValue)
         self._bind_type(FloatValue)
         self._bind_type(CharValue)
@@ -312,12 +311,12 @@ class NodeList:
         line_number = len(self)
         try:
             node = None
-            for node_type in self.__node_types__:
+            for node_type in self.__node_types:
                 if node_type.can_load(line):
                     node = node_type(self)
                     break
             if node is None:
-                node = self.__node_types__[0](self)
+                node = self.__node_types[0](self)
             node.load(line)
             self._do_append_node(node)
         except ParseError as parse_error:
@@ -342,18 +341,18 @@ class NodeList:
 
     def __init__(self):
         self.binder = TypeBinder()
-        self.__node_types__ = [VariableNode, EmptyNode, SectionNode]
+        self.__node_types = [VariableNode, EmptyNode, SectionNode]
         self.clear()
 
 
 class TypiniSection:
-    def __get_node_index__(self, key, case_sensitive=True):
-        if key.lower() not in self.__keys__:
+    def __get_node_index(self, key, case_sensitive=True):
+        if key.lower() not in self.__keys:
             return -1
         if not case_sensitive:
             key = key.lower()
-        for i in range(len(self.__nodes__)):
-            node = self.__nodes__[i]
+        for i in range(len(self.__nodes)):
+            node = self.__nodes[i]
             node_key = node.key
             if not case_sensitive:
                 node_key = node_key.lower()
@@ -362,51 +361,51 @@ class TypiniSection:
         return -1
 
     def __getitem__(self, key):
-        index = self.__get_node_index__(key)
+        index = self.__get_node_index(key)
         if index < 0:
             raise KeyError(key)
-        return self.__nodes__[index].value.value
+        return self.__nodes[index].value.value
 
     def __setitem__(self, key, value):
-        index = self.__get_node_index__(key)
+        index = self.__get_node_index(key)
         if index < 0:
             raise KeyError(key)
-        self.__nodes__[index].value.value = value
-        self.__nodes__[index].value.validate()
+        self.__nodes[index].value.value = value
+        self.__nodes[index].value.validate()
 
     def reset(self, key, type, value):
-        index = self.__get_node_index__(key, False)
-        cur_node = self.__nodes__[
+        index = self.__get_node_index(key, False)
+        cur_node = self.__nodes[
             index] if index >= 0 else VariableNode(self.parent)
         cur_node.reset(key, type, value)
         if index < 0:
             self.append_value_node(cur_node)
 
     def clear(self):
-        self.__nodes__.clear()
-        self.__comments_tail__.clear()
+        self.__nodes.clear()
+        self.__comments_tail.clear()
 
     def append_value_node(self, node):
-        if node.key.lower() in self.__keys__:
+        if node.key.lower() in self.__keys:
             raise ParseError(-1, -1,
                              'key {}::{} is duplicate or only the case differs'
                              .format(self.header.key, node.key))
-        self.__keys__.add(node.key.lower())
-        self.__nodes__.append(node)
+        self.__keys.add(node.key.lower())
+        self.__nodes.append(node)
 
     def erase_node(self, key):
-        index = self.__get_node_index__(key)
+        index = self.__get_node_index(key)
         if index < 0:
             raise KeyError(key)
-        self.__nodes__.pop(index)
-        self.__keys__.remove(key.lower())
+        self.__nodes.pop(index)
+        self.__keys.remove(key.lower())
 
     def append_node(self, node):
         if type(node) == EmptyNode:
-            self.__comments_tail__.append(node)
+            self.__comments_tail.append(node)
         elif type(node) == VariableNode:
-            self.__nodes__.extend(self.__comments_tail__)
-            self.__comments_tail__.clear()
+            self.__nodes.extend(self.__comments_tail)
+            self.__comments_tail.clear()
             self.append_value_node(node)
         elif type(node) == SectionNode:
             raise ParseError(-1, -1,
@@ -415,7 +414,7 @@ class TypiniSection:
             assert False
 
     def get_nodes(self):
-        return [self.header] + self.__nodes__ + self.__comments_tail__
+        return [self.header] + self.__nodes + self.__comments_tail
 
     def list_keys(self):
         return [node.key
@@ -426,83 +425,83 @@ class TypiniSection:
         return '\n'.join(map((lambda x: x.save()), self.get_nodes()))
 
     def __len__(self):
-        return len(self.__nodes__) + len(self.__comments_tail__) + 1
+        return len(self.__nodes) + len(self.__comments_tail) + 1
 
     def __init__(self, parent, header):
         self.header = header
-        self.__keys__ = set()
-        self.__nodes__ = []
+        self.__keys = set()
+        self.__nodes = []
         self.parent = parent
-        self.__comments_tail__ = []
+        self.__comments_tail = []
 
 
 class Typini(NodeList):
     def _do_append_node(self, node):
         if type(node) == SectionNode:
-            self.__append_section__(node)
+            self.__append_section(node)
         else:
-            if len(self.__sections__) > 0:
-                self.__sections__[-1].append_node(node)
+            if len(self.__sections) > 0:
+                self.__sections[-1].append_node(node)
             else:
                 if type(node) != EmptyNode:
                     raise ParseError(
                         -1, -1,
                         'only blanks and comments are allowed '
                         'outside of sections')
-                self.__header__.append(node)
+                self.__header.append(node)
 
     def clear(self):
-        self.__header__.clear()
-        self.__sections__.clear()
-        self.__keys__.clear()
+        self.__header.clear()
+        self.__sections.clear()
+        self.__keys.clear()
 
     def get_nodes(self):
-        return list(itertools.chain(self.__header__,
+        return list(itertools.chain(self.__header,
                                     *(section.get_nodes()
-                                      for section in self.__sections__)))
+                                      for section in self.__sections)))
 
     def __len__(self):
-        return len(self.__header__) + sum(len(i) for i in self.__sections__)
+        return len(self.__header) + sum(len(i) for i in self.__sections)
 
     def __getitem__(self, key):
-        index = self.__get_section_index__(key)
+        index = self.__get_section_index(key)
         if index < 0:
             raise KeyError(key)
-        return self.__sections__[index]
+        return self.__sections[index]
 
-    def __get_section_index__(self, key):
-        if key not in self.__keys__:
+    def __get_section_index(self, key):
+        if key not in self.__keys:
             return -1
-        for i in range(len(self.__sections__)):
-            if self.__sections__[i].header.key == key:
+        for i in range(len(self.__sections)):
+            if self.__sections[i].header.key == key:
                 return i
         return -1
 
-    def __append_section__(self, section_node):
-        if section_node.key in self.__keys__:
+    def __append_section(self, section_node):
+        if section_node.key in self.__keys:
             raise ParseError(-1, -1,
                              'section {} is duplicate or only the case differs'
                              .format(section_node.key))
-        self.__keys__.add(section_node.key.lower())
-        self.__sections__.append(TypiniSection(self, section_node))
+        self.__keys.add(section_node.key.lower())
+        self.__sections.append(TypiniSection(self, section_node))
 
     def create_section(self, key):
-        self.__append_section__(SectionNode(self, key))
+        self.__append_section(SectionNode(self, key))
 
     def get_sections(self):
-        return self.__sections__
+        return self.__sections
 
     def list_sections(self):
-        return [section.header.key for section in self.__sections__]
+        return [section.header.key for section in self.__sections]
 
     def erase_section(self, key):
-        index = self.__get_section_index__(key)
+        index = self.__get_section_index(key)
         if index < 0:
             raise KeyError(key)
-        self.__sections__.pop(index)
+        self.__sections.pop(index)
 
     def __init__(self):
-        self.__header__ = []
-        self.__sections__ = []
-        self.__keys__ = set()
+        self.__header = []
+        self.__sections = []
+        self.__keys = set()
         super().__init__()
