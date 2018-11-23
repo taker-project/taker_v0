@@ -1,9 +1,10 @@
-from typini import *
-from os import path
+import typing
 import json
+from typini import *  # type: ignore
+from os import path
 
 
-def dump(parser):
+def dump(parser: Typini) -> dict:
     dict = {}
     for section in parser.get_sections():
         section_dict = {}
@@ -13,7 +14,7 @@ def dump(parser):
     return dict
 
 
-def test_parse_tree():
+def test_parse_tree() -> None:
     test_dir = path.join('typini', 'tests')
     parser = Typini()
     parser.load_from_file(path.join(test_dir, 'test1.tini'))

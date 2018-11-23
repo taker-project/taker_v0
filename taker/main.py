@@ -1,5 +1,5 @@
 import typini
 
 
-def main():
+def main() -> None:
     print('Empty :(')

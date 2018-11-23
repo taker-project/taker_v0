@@ -20,7 +20,8 @@ venv: .make_targets/venv
 	rm -rf venv/
 	python3 -m venv venv
 	touch .make_targets/venv
-	bash -c '. pyenv.sh && pip install -U pip'
+	bash -c '. pyenv.sh && pip install -U pip pkg-resources setuptools \
+		&& pip install pytest mypy pytest-mypy pytest-pep8 typing_extensions'
 
 clean:
 	rm -rf venv/ build/ dist/
@@ -31,7 +32,7 @@ build: venv
 	bash -c '. pyenv.sh && python setup.py install'
 
 test: venv build
-	bash -c '. pyenv.sh && pytest'
+	bash -c '. pyenv.sh && pytest --mypy'
 
 autopep8: venv
 	bash -c 'scripts/autopep8.sh'

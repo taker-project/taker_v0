@@ -1,5 +1,5 @@
 
-def is_char_valid(c):
+def is_char_valid(c: str) -> bool:
     if 'a' <= c and c <= 'z':
         return True
     if 'A' <= c and c <= 'Z':
@@ -11,7 +11,7 @@ def is_char_valid(c):
     return False
 
 
-def is_var_name_valid(name):
+def is_var_name_valid(name: str) -> bool:
     if name == '':
         return False
     if name[0] == '-':

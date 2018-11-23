@@ -1,20 +1,21 @@
-from typini.parser import *
-from typini.parseutils import *
+import typing
 import pytest
 import math
+from typini.parser import *  # type: ignore
+from typini.parseutils import *  # type: ignore
 
 
-def test_unescape():
+def test_unescape() -> None:
     assert unescape_str('\\033') == '\033'
     assert unescape_str('Строка\\n') == 'Строка\n'
     assert unescape_str('\\\'\\"') == '\'"'
 
 
-def test_parse_error():
+def test_parse_error() -> None:
     assert str(ParseError(3, 4, 'test')) == '4:5: error: test'
 
 
-def test_extract_string():
+def test_extract_string() -> None:
     assert extract_string(' \"Hello \\\"hello\\\"!\" ',
                           0) == (19, 'Hello \"hello\"!')
 
@@ -27,14 +28,14 @@ def test_extract_string():
     assert excinfo.value.text == 'string is not terminated'
 
 
-def test_null():
+def test_null() -> None:
     null_value = IntValue()
     null_value.load(' null  ')
     assert null_value.value is None
     assert null_value.save() == 'null'
 
 
-def test_int():
+def test_int() -> None:
     int_value = IntValue()
     int_value.load('   42   ')
     assert int_value.value == 42
@@ -51,7 +52,7 @@ def test_int():
             'int expected, \'-123456789012345678901234567\' token found')
 
 
-def test_float():
+def test_float() -> None:
     float_value = FloatValue()
     float_value.load(' 3.14159 ')
     assert float_value.value == 3.14159
@@ -64,7 +65,7 @@ def test_float():
     assert math.isinf(float_value.value)
 
 
-def test_bool():
+def test_bool() -> None:
     bool_value = BoolValue()
 
     assert bool_value.load('  true  ') == 6
@@ -76,7 +77,7 @@ def test_bool():
     assert bool_value.save() == 'false'
 
 
-def test_string():
+def test_string() -> None:
     str_value = StrValue()
 
     str_value.load(' \"Demo\\\"string\"  ')
@@ -91,7 +92,7 @@ def test_string():
     assert str_value.save() == '"Стр\'ока"'
 
 
-def test_char():
+def test_char() -> None:
     char_value = CharValue()
 
     char_value.load(' \"4\"  ')
@@ -108,7 +109,7 @@ def test_char():
             'one character in char type excepted, 0 character(s) found')
 
 
-def test_array():
+def test_array() -> None:
     int_array = ArrayValue(IntValue)
 
     int_array.load(' [  1,2,3, 4,   5]')
@@ -137,7 +138,7 @@ def test_array():
     assert char_array.save() == '[\'"\', "\'"]'
 
 
-def test_type_binder():
+def test_type_binder() -> None:
     binder = TypeBinder()
     assert binder.create_value('int').type_name() == 'int'
     assert binder.create_value('int[]').type_name() == 'int[]'
@@ -146,11 +147,11 @@ def test_type_binder():
 
 
 class BinderContainer:
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.binder = TypeBinder()
 
 
-def test_nodes():
+def test_nodes() -> None:
     binder_container = BinderContainer()
 
     empty_node = EmptyNode(binder_container)
@@ -181,7 +182,7 @@ def test_nodes():
     assert section_node.key == '42'
 
 
-def test_section():
+def test_section() -> None:
     binder_container = BinderContainer()
     section = TypiniSection(
         binder_container, SectionNode(binder_container, 'head'))
@@ -234,7 +235,7 @@ def test_section():
             '[head]\na: int = 3 # Hello\nb: int = 3\nc: int = 42\n# 42')
 
 
-def test_full():
+def test_full() -> None:
     parser = Typini()
     parser.load(
         '[section]\n  a : int = 5\nb: int = 6 # comment\n#another_comment\n\n'
