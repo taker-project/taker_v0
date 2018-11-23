@@ -147,7 +147,7 @@ def test_type_binder() -> None:
 
 
 class BinderContainer:
-    def __init__(self):  # type: ignore
+    def __init__(self) -> None:
         self.binder = TypeBinder()
 
 
