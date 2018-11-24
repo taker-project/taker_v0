@@ -46,8 +46,8 @@ class VariableValue:
 
     def validate(self):
         if not self._do_validate():
-            raise TypeError('{} contains an invalid value'
-                            .format(type(self).__name__))
+            raise ValueError('{} contains an invalid value'
+                             .format(type(self).__name__))
 
     def _do_load(self, line, pos=0):
         raise NotImplementedError()
@@ -57,7 +57,11 @@ class VariableValue:
         if word == 'null':
             self.value = None
             return new_pos
-        return self._do_load(line, pos)
+        pos = self._do_load(line, pos)
+        if not self._do_validate():
+            raise ParseError('{} contains an invalid value'
+                             .format(type(self).__name__))
+        return pos
 
     def _do_save(self):
         return str(self.value)
@@ -78,7 +82,7 @@ class NumberValue(VariableValue):
         try:
             self.value = self.var_type()(word)
             self.validate()
-        except (TypeError, ValueError):
+        except ValueError:
             raise ParseError(-1, pos, '{} expected, {} token found'
                              .format(self.var_type().__name__,
                                      repr(word)))
@@ -262,10 +266,10 @@ class VariableNode(EmptyNode):
             line += ' = {}'.format(self.value.save())
         return super().save(line)
 
-    def __init__(self, parent, key='', value='', comment=None):
+    def __init__(self, parent, key='', value_node='', comment=None):
         super().__init__(parent, comment)
         self.key = key
-        self.value = value
+        self.value = value_node
 
 
 class SectionNode(EmptyNode):
@@ -276,7 +280,6 @@ class SectionNode(EmptyNode):
     def load(self, line, pos=0):
         pos = skip_spaces(line, pos)
         pos = line_expect(line, pos, '[')
-        pos = skip_spaces(line, pos)
         pos, self.key = extract_word(line, pos)
         if not is_var_name_valid(self.key):
             raise ParseError(-1, pos,
@@ -315,7 +318,7 @@ class NodeList:
                 if node_type.can_load(line):
                     node = node_type(self)
                     break
-            if node is None:
+            if node is None:  # fallback to default node type
                 node = self.__node_types[0](self)
             node.load(line)
             self._do_append_node(node)
@@ -331,7 +334,7 @@ class NodeList:
             self.append_line(line)
 
     def dump(self):
-        return '\n'.join(map((lambda x: x.save()), self.get_nodes()))
+        return '\n'.join([node.save() for node in self.get_nodes()])
 
     def load_from_file(self, file_name):
         self.load(open(file_name, 'r').read())
@@ -375,8 +378,9 @@ class TypiniSection:
 
     def reset(self, key, type, value):
         index = self.__get_node_index(key, False)
-        cur_node = self.__nodes[
-            index] if index >= 0 else VariableNode(self.parent)
+        cur_node = (self.__nodes[index]
+                    if index >= 0
+                    else VariableNode(self.parent))
         cur_node.reset(key, type, value)
         if index < 0:
             self.append_value_node(cur_node)
@@ -388,8 +392,8 @@ class TypiniSection:
     def append_value_node(self, node):
         if node.key.lower() in self.__keys:
             raise ParseError(-1, -1,
-                             'key {}::{} is duplicate or only the case differs'
-                             .format(self.header.key, node.key))
+                             'key {} is duplicate or only the case differs'
+                             .format(node.key))
         self.__keys.add(node.key.lower())
         self.__nodes.append(node)
 
@@ -422,10 +426,10 @@ class TypiniSection:
                 if type(node) == VariableNode]
 
     def dump(self):
-        return '\n'.join(map((lambda x: x.save()), self.get_nodes()))
+        return '\n'.join([node.save() for node in self.get_nodes()])
 
     def __len__(self):
-        return len(self.__nodes) + len(self.__comments_tail) + 1
+        return 1 + len(self.__nodes) + len(self.__comments_tail)
 
     def __init__(self, parent, header):
         self.header = header
@@ -442,12 +446,12 @@ class Typini(NodeList):
         else:
             if len(self.__sections) > 0:
                 self.__sections[-1].append_node(node)
+            elif type(node) != EmptyNode:
+                raise ParseError(
+                    -1, -1,
+                    'only blanks and comments are allowed '
+                    'outside of sections')
             else:
-                if type(node) != EmptyNode:
-                    raise ParseError(
-                        -1, -1,
-                        'only blanks and comments are allowed '
-                        'outside of sections')
                 self.__header.append(node)
 
     def clear(self):
@@ -461,6 +465,7 @@ class Typini(NodeList):
                                       for section in self.__sections)))
 
     def __len__(self):
+        # TODO : calculate length more efficiently?
         return len(self.__header) + sum(len(i) for i in self.__sections)
 
     def __getitem__(self, key):

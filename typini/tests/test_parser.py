@@ -159,7 +159,7 @@ def test_nodes():
 
     var_node = VariableNode(binder_container)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         var_node.reset('a', 'int', 'gnu')
     with pytest.raises(KeyError):
         var_node.reset('int', 'a', 'gnu')
@@ -201,7 +201,7 @@ def test_section():
     section.reset('key', 'string', 'value2')
     assert len(section) == 2
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         section['key'] = 42
     section['key'] = 'new_key'
     assert section['key'] == 'new_key'
@@ -275,4 +275,4 @@ def test_full():
     with pytest.raises(ParseError) as excinfo:
         parser.load('[section]\na:int\nA:int\n')
     assert (excinfo.value.text ==
-            'key section::A is duplicate or only the case differs')
+            'key A is duplicate or only the case differs')
