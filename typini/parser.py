@@ -311,7 +311,6 @@ class NodeList:
         raise NotImplementedError()
 
     def append_line(self, line):
-        line_number = len(self)
         try:
             node = None
             for node_type in self.__node_types:
@@ -323,15 +322,20 @@ class NodeList:
             node.load(line)
             self._do_append_node(node)
         except ParseError as parse_error:
-            parse_error.row = line_number
+            parse_error.row = self.__line_counter
             if parse_error.column < 0:
                 parse_error.column = len(line) - 1
             raise parse_error
 
     def load(self, text):
-        self.clear()
-        for line in text.splitlines():
-            self.append_line(line)
+        try:
+            self.clear()
+            self.__line_counter = 0
+            for line in text.splitlines():
+                self.append_line(line)
+                self.__line_counter += 1
+        finally:
+            self.__line_counter = -1
 
     def dump(self):
         return '\n'.join([node.save() for node in self.get_nodes()])
@@ -345,6 +349,7 @@ class NodeList:
     def __init__(self):
         self.binder = TypeBinder()
         self.__node_types = [VariableNode, EmptyNode, SectionNode]
+        self.__line_counter = -1
         self.clear()
 
 

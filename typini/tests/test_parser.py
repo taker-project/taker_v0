@@ -266,7 +266,7 @@ def test_full():
 
     with pytest.raises(ParseError) as excinfo:
         parser.load('[section]\n--help:int=5\n')
-    assert excinfo.value.text == 'invalid variable name: --help'
+    assert str(excinfo.value) == '2:7: error: invalid variable name: --help'
 
     with pytest.raises(ParseError) as excinfo:
         parser.load('[--help]')
