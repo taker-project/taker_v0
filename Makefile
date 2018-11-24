@@ -20,7 +20,8 @@ venv: .make_targets/venv
 	rm -rf venv/
 	python3 -m venv venv
 	touch .make_targets/venv
-	bash -c '. pyenv.sh && pip install -U pip'
+	bash -c '. pyenv.sh && pip install -U pip pkg-resources setuptools \
+		&& pip install pytest'
 
 clean:
 	rm -rf venv/ build/ dist/

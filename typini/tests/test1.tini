@@ -1,0 +1,34 @@
+[Flags]
+white: bool = true
+black:    bool  =  false
+arr:bool[]=[true,false,false,true]
+field:bool
+
+[Integers]
+a:int=4
+var.var-42 : int = 28518515 # длинное число
+_: int = -0
+hack: int = 555
+arr1: int[] =[1,2,3,4,5]
+arr2 : int[]   =  [ 42,   492759,   248,  48   ] # komment
+
+[Floats]
+q:float=33
+88: float=88
+_: float =248.8513
+inf942: float =   inf
+HELLO/world:float[]=[1, 2.3, -42.5]
+HEllO: float[]=[-inf, inf, 11, 0.0]
+oneItem:float[]=[1]
+iMeanNothing: float = null
+
+# Этот комментарий занимает целую строку
+
+[Chars/And/Strings]
+c1:char='\n'
+s1:string='hello\n\'\"\\\''
+q1:  string = ""
+arr1  : string[] = ['a', 'hello', "array of string", "# this is not comment"]
+arr2: string[] = ["null", null, "non-null"]
+arr3: string[] = null 
+arr4:string[]=['1','2','3','4']

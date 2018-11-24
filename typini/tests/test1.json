@@ -1,0 +1,35 @@
+{
+    "Flags": {
+        "white": true,
+        "black": false,
+        "arr": [true, false, false, true],
+        "field": null
+    },
+    "Integers": {
+        "a": 4,
+        "var.var-42": 28518515,
+        "_": 0,
+        "hack": 555,
+        "arr1": [1, 2, 3, 4, 5],
+        "arr2": [42, 492759, 248, 48]        
+    },
+    "Floats": {
+        "q": 33.0,
+        "88": 88.0,
+        "_": 248.8513,
+        "inf942": 1e+9999,
+        "HELLO/world": [1.0, 2.3, -42.5],
+        "HEllO": [-1e+9999, 1e+9999, 11.0, 0.0],
+        "oneItem": [1.0],
+        "iMeanNothing": null
+    },
+    "Chars/And/Strings": {
+        "c1": "\n",
+        "s1": "hello\n'\"\\'",
+        "q1": "",
+        "arr1": ["a", "hello", "array of string", "# this is not comment"],
+        "arr2": ["null", null, "non-null"],
+        "arr3": null,
+        "arr4": ["1", "2", "3", "4"]
+    }
+}
