@@ -381,11 +381,14 @@ class TypiniSection:
         self.__nodes[index].value.value = value
         self.__nodes[index].value.validate()
 
-    def reset(self, key, type, value):
+    def reset(self, key, type, value, can_overwrite=True):
         index = self.__get_node_index(key, False)
         cur_node = (self.__nodes[index]
                     if index >= 0
                     else VariableNode(self.parent))
+        if (not can_overwrite) and index >= 0:
+            if cur_node.key != key or cur_node.value.type_name() != type:
+                raise KeyError(key)
         cur_node.reset(key, type, value)
         if index < 0:
             self.append_value_node(cur_node)
@@ -479,16 +482,21 @@ class Typini(NodeList):
             raise KeyError(key)
         return self.__sections[index]
 
-    def __get_section_index(self, key):
-        if key not in self.__keys:
+    def __get_section_index(self, key, case_sensitive=True):
+        if key.lower() not in self.__keys:
             return -1
+        if not case_sensitive:
+            key = key.lower()
         for i in range(len(self.__sections)):
-            if self.__sections[i].header.key == key:
+            header_key = self.__sections[i].header.key
+            if not case_sensitive:
+                header_key = header_key.lower()
+            if header_key == key:
                 return i
         return -1
 
     def __append_section(self, section_node):
-        if section_node.key in self.__keys:
+        if section_node.key.lower() in self.__keys:
             raise ParseError(-1, -1,
                              'section {} is duplicate or only the case differs'
                              .format(section_node.key))
@@ -497,6 +505,16 @@ class Typini(NodeList):
 
     def create_section(self, key):
         self.__append_section(SectionNode(self, key))
+
+    def ensure_section(self, key, can_overwrite=True):
+        index = self.__get_section_index(key, False)
+        if index < 0:
+            index = len(self.__sections)
+            self.__append_section(SectionNode(self, key))
+        section = self.__sections[index]
+        if (not can_overwrite) and section.header.key != key:
+            raise KeyError(key)
+        section.header.key = key
 
     def get_sections(self):
         return self.__sections

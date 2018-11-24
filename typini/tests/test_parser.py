@@ -199,7 +199,14 @@ def test_section():
     assert len(section) == 1
     section.reset('KEY', 'string', 'value')
     section.reset('key', 'string', 'value2')
-    assert len(section) == 2
+    section.reset('hello', 'int', 42, False)
+    section.reset('hello', 'int', 43, False)
+    assert len(section) == 3
+
+    with pytest.raises(KeyError):
+        section.reset('HELLO', 'string', 'value', False)
+    with pytest.raises(KeyError):
+        section.reset('HELLO', 'int', 42, False)
 
     with pytest.raises(ValueError):
         section['key'] = 42
@@ -254,6 +261,26 @@ def test_full():
     parser.erase_section('section')
     assert parser.dump() == '[section2]\nc: string\nd: int = 2'
     parser.load('#comment\n\n\n\n[section]\na:int\n[section2]\n[section3]\n')
+
+    parser.clear()
+    parser.ensure_section('hello')
+    assert parser.dump() == '[hello]'
+    with pytest.raises(KeyError):
+        parser.ensure_section('HELLO', False)
+    parser.ensure_section('HELLO')
+    assert parser.dump() == '[HELLO]'
+    parser.ensure_section('test')
+    assert parser.dump() == '[HELLO]\n[test]'
+    parser.ensure_section('Section')
+    assert parser.dump() == '[HELLO]\n[test]\n[Section]'
+    parser.erase_section('HELLO')
+    assert parser.dump() == '[test]\n[Section]'
+    parser.create_section('42')
+    assert parser.dump() == '[test]\n[Section]\n[42]'
+    with pytest.raises(ParseError):
+        parser.create_section('TEST')
+    with pytest.raises(ParseError):
+        parser.create_section('test')
 
     with pytest.raises(ParseError) as excinfo:
         parser.load('a:int=5\n[section]')
