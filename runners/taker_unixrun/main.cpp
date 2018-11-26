@@ -1,10 +1,17 @@
+#include <json/json.h>
 #include <iostream>
-#include "json/json.h"
+#include "processrunner.hpp"
 
-int main(int argc, char **argv) {
-    Json::Value val;
-    std::cin >> val;
-    std::cout << val["message"].asString() << std::endl;
-    std::cout << val << std::endl;
-    return 0;
+int main() {
+  using namespace UnixRunner;
+
+  Json::Value value;
+  std::cin >> value;
+
+  ProcessRunner runner;
+  runner.parameters().loadFromJson(value);
+
+  std::cout << runner.results().saveToJson() << std::endl;
+
+  return 0;
 }
