@@ -172,11 +172,10 @@ void ProcessRunner::doExecute() {
 void ProcessRunner::handleParent() {
   // TODO : make it work better
   // TODO : enable timelimit/memorylimit/idlelimit detection
-  // TODO : check for run fail
 
   startTimer();
 
-  // check for failure
+  // check for RUN_FAIL
   int msgSize;
   int bytesRead = read(pipe_[0], &msgSize, sizeof(msgSize));
   if (bytesRead < 0) {
