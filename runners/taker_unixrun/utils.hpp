@@ -43,6 +43,10 @@ std::string demangle(const char *typeName);
 
 std::string getFullExceptionMessage(const std::exception &exc);
 
+timeval timeSum(const timeval &val1, const timeval &val2);
+timeval timeDifference(const timeval &start, const timeval &finish);
+double timevalToDouble(const timeval &value);
+
 }  // namespace UnixRunner
 
 #endif  // UTILS_H

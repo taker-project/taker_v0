@@ -16,16 +16,16 @@
  */
 
 #include "utils.hpp"
-#include <algorithm>
-#include <cassert>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/resource.h>
 #include <unistd.h>
+#include <algorithm>
+#include <cassert>
 #include <typeinfo>
 
 #ifdef __GNUC__
-# include <cxxabi.h>
+#include <cxxabi.h>
 #endif
 
 namespace UnixRunner {
@@ -125,15 +125,39 @@ std::string demangle(const char *typeName) {
   return res;
 }
 #else
-std::string demangle(const char *typeName) {
-  return typeName;
-}
+std::string demangle(const char *typeName) { return typeName; }
 #endif
 
-std::string getFullExceptionMessage(const std::exception& exc) {
+std::string getFullExceptionMessage(const std::exception &exc) {
   return std::string("") + demangle(typeid(exc).name()) + ": " + exc.what();
 }
 
+const int USEC_IN_SECOND = 1'000'000;
+
+timeval timeSum(const timeval &val1, const timeval &val2) {
+  timeval res;
+  res.tv_sec = val1.tv_sec + val2.tv_sec;
+  res.tv_usec = val1.tv_usec + val2.tv_usec;
+  if (res.tv_usec >= USEC_IN_SECOND) {
+    ++res.tv_sec;
+    res.tv_usec -= USEC_IN_SECOND;
+  }
+  return res;
+}
+
+timeval timeDifference(const timeval &start, const timeval &finish) {
+  timeval res;
+  res.tv_sec = finish.tv_sec - start.tv_sec;
+  res.tv_usec = finish.tv_usec - start.tv_usec;
+  if (res.tv_usec < 0) {
+    --res.tv_sec;
+    res.tv_usec += USEC_IN_SECOND;
+  }
+  return res;
+}
+
+double timevalToDouble(const timeval &value) {
+  return 1.0 * value.tv_sec + 1.0 * value.tv_usec / USEC_IN_SECOND;
+}
+
 }  // namespace UnixRunner
-
-

@@ -18,7 +18,10 @@
 #include "processrunner.hpp"
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/resource.h>
+#include <sys/time.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <cmath>
@@ -145,54 +148,127 @@ void ProcessRunner::execute() {
 
 void ProcessRunner::doExecute() {
   parameters_.validate();
+  results_ = RunResults();
   results_.status = RunStatus::RUNNING;
-  pid_t pid = fork();
-  if (pid < 0) {
+  if (pipe2(pipe_, O_CLOEXEC) != 0) {
+    throw RunnerError(getFullErrorMessage("unable to create pipe", errno));
+  }
+  pid_ = fork();
+  if (pid_ < 0) {
     throw RunnerError(strerror(errno));
   }
-  if (pid == 0) {
+  if (pid_ == 0) {
+    close(pipe_[0]);
     try {
       handleChild();
     } catch (const std::exception &e) {
       childFailure(getFullExceptionMessage(e));
     }
   }
-  handleParent(pid);
+  close(pipe_[1]);
+  handleParent();
 }
 
-void ProcessRunner::handleParent(pid_t child) {
-  // TODO: implement
-  int status;
-  wait(&status);
-}
+void ProcessRunner::handleParent() {
+  // TODO : make it work better
+  // TODO : enable timelimit/memorylimit/idlelimit detection
+  // TODO : check for run fail
 
-void ProcessRunner::childTry(bool success, const char *errorName) {
-  if (!success) {
-    childFailure(errorName, errno);
+  startTimer();
+
+  // check for failure
+  int msgSize;
+  int bytesRead = read(pipe_[0], &msgSize, sizeof(msgSize));
+  if (bytesRead < 0) {
+    parentFailure("unable to read from pipe", errno);
   }
+  if (bytesRead > 0) {
+    if (bytesRead != sizeof(msgSize)) {
+      parentFailure("unexpected child/parent protocol error");
+    }
+    char *message = new char[msgSize + 1];
+    message[msgSize] = 0;
+    int bytesExpected = sizeof(char) * msgSize;
+    trySyscall(read(pipe_[0], message, bytesExpected) == bytesExpected,
+               "unexpected child/parent protocol error (message length"
+               " must be " +
+                   std::to_string(bytesExpected) + ", not " +
+                   std::to_string(bytesRead) + ")");
+    results_.status = RunStatus::RUN_FAIL;
+    results_.comment = message;
+    delete[] message;
+    int status;
+    waitpid(pid_, &status, 0);
+    return;
+  }
+
+  // wait for process
+  int status;
+  struct rusage resources;
+  if (wait4(pid_, &status, 0, &resources) == -1) {
+    int errCode = errno;
+    kill(pid_, SIGKILL);
+    parentFailure("unable to wait for process", errCode);
+  }
+
+  // fill the results
+  results_.exitCode = results_.signal = 0;
+  results_.status = RunStatus::OK;
+  if (WIFEXITED(status)) {
+    results_.exitCode = WEXITSTATUS(status);
+    if (results_.exitCode != 0) {
+      results_.status = RunStatus::RUNTIME_ERROR;
+    }
+  }
+  if (WIFSIGNALED(status)) {
+    results_.signal = WTERMSIG(status);
+    results_.status = RunStatus::RUNTIME_ERROR;
+  }
+  results_.time =
+      timevalToDouble(timeSum(resources.ru_stime, resources.ru_utime));
+  results_.clockTime = getTimerValue();
+  results_.memory = resources.ru_maxrss / 1048576.0;
 }
 
-void ProcessRunner::childTry(bool success, const std::string &errorName) {
-  childTry(success, errorName.c_str());
+void ProcessRunner::startTimer() {
+  trySyscall(gettimeofday(&startTime_, nullptr) == 0,
+             "could not get system time");
+}
+
+double ProcessRunner::getTimerValue() {
+  timeval curTime;
+  trySyscall(gettimeofday(&curTime, nullptr) == 0, "could not get system time");
+  return timevalToDouble(timeDifference(startTime_, curTime));
+}
+
+void ProcessRunner::trySyscall(bool success, const std::string &errorName) {
+  if (success) {
+    return;
+  }
+  if (pid_ == 0) {
+    childFailure(errorName, errno);
+  } else {
+    parentFailure(errorName, errno);
+  }
 }
 
 void ProcessRunner::handleChild() {
   int64_t integralTimeLimit = static_cast<int64_t>(ceil(parameters_.timeLimit));
-  childTry(updateLimit(RLIMIT_CPU, integralTimeLimit),
-           "could not set time limit");
+  trySyscall(updateLimit(RLIMIT_CPU, integralTimeLimit),
+             "could not set time limit");
 
   int64_t memLimitBytes =
       static_cast<int64_t>(ceil(parameters_.memoryLimit * 1048576));
-  childTry(updateLimit(RLIMIT_AS, memLimitBytes * 2),
-           "could not set memory limit");
-  childTry(updateLimit(RLIMIT_DATA, memLimitBytes * 2),
-           "could not set memory limit");
-  childTry(updateLimit(RLIMIT_STACK, memLimitBytes * 2),
-           "could not set memory limit");
+  trySyscall(updateLimit(RLIMIT_AS, memLimitBytes * 2),
+             "could not set memory limit");
+  trySyscall(updateLimit(RLIMIT_DATA, memLimitBytes * 2),
+             "could not set memory limit");
+  trySyscall(updateLimit(RLIMIT_STACK, memLimitBytes * 2),
+             "could not set memory limit");
 
   if (!parameters_.workingDir.empty()) {
-    childTry(chdir(parameters_.workingDir.c_str()) == 0,
-             "could not change directory");
+    trySyscall(chdir(parameters_.workingDir.c_str()) == 0,
+               "could not change directory");
   }
 
   childRedirect(STDIN_FILENO, parameters_.stdinRedir, O_RDONLY);
@@ -202,13 +278,13 @@ void ProcessRunner::handleChild() {
                 O_CREAT | O_TRUNC | O_WRONLY);
 
   if (parameters_.clearEnv) {
-    childTry(clearenv() == 0, "unable to clear environment");
+    trySyscall(clearenv() == 0, "unable to clear environment");
   }
   for (const auto &iter : parameters_.env) {
     const std::string &key = iter.first;
     const std::string &value = iter.second;
-    childTry(setenv(key.c_str(), value.c_str(), true) == 0,
-             "could not set environment \"" + key + "\"");
+    trySyscall(setenv(key.c_str(), value.c_str(), true) == 0,
+               "could not set environment \"" + key + "\"");
   }
 
   int argc = static_cast<int>(parameters_.args.size()) + 1;
@@ -220,17 +296,12 @@ void ProcessRunner::handleChild() {
   }
   argv[argc] = nullptr;
 
-  childTry(execv(argv[0], argv) == 0,
-           "failed to run \"" + parameters_.executable + "\"");
-  childFailure("handleChild() has reaches the end");
-  // double timeLimit = 2.0;
-  // double idleLimit = 7.0;
+  trySyscall(execv(argv[0], argv) == 0,
+             "failed to run \"" + parameters_.executable + "\"");
+  childFailure("handleChild() has reached the end");
   // TODO : handle the limit in msec
   // TODO : handle the realtime limit
-  // TODO: if setting the child fails, we should get RUN_FAIL status, not
-  // RUNTIME_ERROR
-  // TODO: think of how to do this
-  // TODO : FINISH IT !!!
+  // TODO : terminate the child process on parent termination
 }
 
 void ProcessRunner::childRedirect(int fd, std::string fileName, int flags,
@@ -247,11 +318,26 @@ void ProcessRunner::childRedirect(int fd, std::string fileName, int flags,
   }
 }
 
+std::string ProcessRunner::getFullErrorMessage(const std::string &message,
+                                               int errcode) {
+  if (errcode == 0) {
+    return message;
+  } else {
+    return message + ": " + strerror(errcode);
+  }
+}
+
 [[noreturn]] void ProcessRunner::childFailure(const std::string &message,
                                               int errcode) {
-  std::cerr << message << " " << strerror(errcode) << std::endl;
-  // TODO : write to pipe
+  std::string fullMsg = getFullErrorMessage(message, errcode);
+  int msgSize = static_cast<int>(fullMsg.size());
+  write(pipe_[1], &msgSize, sizeof(msgSize));
+  write(pipe_[1], fullMsg.c_str(), msgSize * sizeof(char));
   _exit(42);
+}
+
+void ProcessRunner::parentFailure(const std::string &message, int errcode) {
+  throw RunnerError(getFullErrorMessage(message, errcode));
 }
 
 ProcessRunner::ProcessRunner() {}
