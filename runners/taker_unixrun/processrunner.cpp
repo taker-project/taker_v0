@@ -62,7 +62,7 @@ void ProcessRunner::Parameters::loadFromJson(const Json::Value &value) {
   if (value.isMember("env")) {
     auto envNode = value["env"];
     if (!envNode.isObject()) {
-      throw std::runtime_error("env is not object");
+      throw std::runtime_error("env is not an object");
     }
     env.clear();
     for (const std::string &name : envNode.getMemberNames()) {
