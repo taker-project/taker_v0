@@ -15,6 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef UTILS_H
+#define UTILS_H
+
 #include <string>
 
 namespace UnixRunner {
@@ -34,4 +37,12 @@ bool fileIsWritable(const std::string &fileName);
 bool fileIsExecutable(const char *fileName);
 bool fileIsExecutable(const std::string &fileName);
 
+bool updateLimit(int resource, int64_t value);
+
+std::string demangle(const char *typeName);
+
+std::string getFullExceptionMessage(const std::exception &exc);
+
 }  // namespace UnixRunner
+
+#endif  // UTILS_H

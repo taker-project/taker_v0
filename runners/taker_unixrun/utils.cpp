@@ -16,9 +16,17 @@
  */
 
 #include "utils.hpp"
+#include <algorithm>
+#include <cassert>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <unistd.h>
+#include <typeinfo>
+
+#ifdef __GNUC__
+# include <cxxabi.h>
+#endif
 
 namespace UnixRunner {
 
@@ -31,7 +39,9 @@ int filePermissions(const char *fileName) {
   if (stat(fileName, &fileStats) != 0) {
     return -1;
   }
-  if (!S_ISREG(fileStats.st_mode)) {
+  int fileType = fileStats.st_mode & S_IFMT;
+  if (fileType != S_IFREG && fileType != S_IFLNK && fileType != S_IFBLK &&
+      fileType != S_IFCHR) {
     return -1;
   }
   if (fileStats.st_uid == getuid()) {
@@ -88,4 +98,42 @@ bool fileIsExecutable(const std::string &fileName) {
   return fileIsExecutable(fileName.c_str());
 }
 
+bool updateLimit(int resource, int64_t value) {
+  struct rlimit rlim;
+  if (getrlimit(resource, &rlim) != 0) {
+    return false;
+  }
+  if (rlim.rlim_max == RLIM_INFINITY) {
+    rlim.rlim_cur = value;
+  } else {
+    rlim.rlim_cur = std::min(static_cast<rlim_t>(value), rlim.rlim_max);
+  }
+  rlim.rlim_max = rlim.rlim_cur;
+  if (setrlimit(resource, &rlim) != 0) {
+    return false;
+  }
+  return true;
+}
+
+#ifdef __GNUC__
+std::string demangle(const char *typeName) {
+  int status;
+  char *demangled = abi::__cxa_demangle(typeName, 0, 0, &status);
+  assert(status == 0);
+  std::string res = demangled;
+  free(demangled);
+  return res;
+}
+#else
+std::string demangle(const char *typeName) {
+  return typeName;
+}
+#endif
+
+std::string getFullExceptionMessage(const std::exception& exc) {
+  return std::string("") + demangle(typeid(exc).name()) + ": " + exc.what();
+}
+
 }  // namespace UnixRunner
+
+

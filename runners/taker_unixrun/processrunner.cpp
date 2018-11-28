@@ -16,7 +16,14 @@
  */
 
 #include "processrunner.hpp"
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
 #include <unistd.h>
+#include <cmath>
+#include <cstring>
+#include <iostream>
 #include <sstream>
 #include "utils.hpp"
 
@@ -28,19 +35,19 @@ RunnerError::RunnerError(const std::string &comment)
 RunnerValidateError::RunnerValidateError(const std::string &comment)
     : RunnerError(comment) {}
 
-void ProcessRunner::Parameters::validate() {
 #define VALIDATE_ASSERT(cond) \
-  if (!(cond)) throw RunnerValidateError(#cond);
+  if (!(cond)) throw RunnerValidateError("assertion failed: " #cond);
+
+void ProcessRunner::Parameters::validate() {
   VALIDATE_ASSERT(timeLimit > 0);
   VALIDATE_ASSERT(idleLimit > 0);
   VALIDATE_ASSERT(memoryLimit > 0);
   VALIDATE_ASSERT(fileIsExecutable(executable));
   VALIDATE_ASSERT(workingDir.empty() || directoryIsGood(workingDir));
   VALIDATE_ASSERT(stdinRedir.empty() || fileIsReadable(stdinRedir));
-  VALIDATE_ASSERT(stdoutRedir.empty() || fileIsWritable(stdoutRedir));
-  VALIDATE_ASSERT(stderrRedir.empty() || fileIsWritable(stderrRedir));
-#undef VALIDATE_ASSERT
 }
+
+#undef VALIDATE_ASSERT
 
 void ProcessRunner::Parameters::loadFromJson(const Json::Value &value) {
   using Json::Value;
@@ -48,6 +55,20 @@ void ProcessRunner::Parameters::loadFromJson(const Json::Value &value) {
   idleLimit = value.get("idle-limit", Value(timeLimit * 3.5)).asDouble();
   memoryLimit = value.get("memory-limit", Value(memoryLimit)).asDouble();
   executable = value.get("executable", Value("")).asString();
+  clearEnv = value.get("clear-env", Value(clearEnv)).asBool();
+  if (value.isMember("env")) {
+    auto envNode = value["env"];
+    if (!envNode.isObject()) {
+      throw std::runtime_error("env is not object");
+    }
+    env.clear();
+    for (const std::string &name : envNode.getMemberNames()) {
+      Json::Value strValue = envNode[name];
+      if (strValue.isConvertibleTo(Json::stringValue)) {
+        env[name] = strValue.asString();
+      }
+    }
+  }
   if (value.isMember("args")) {
     auto argNode = value["args"];
     if (!argNode.isArray()) {
@@ -108,6 +129,129 @@ const UnixRunner::ProcessRunner::Parameters &ProcessRunner::parameters() const {
 
 const UnixRunner::ProcessRunner::RunResults &ProcessRunner::results() const {
   return results_;
+}
+
+void ProcessRunner::execute() {
+  if (results_.status == RunStatus::RUNNING) {
+    throw std::runtime_error("process is already running");
+  }
+  try {
+    doExecute();
+  } catch (const std::exception &e) {
+    results_.status = RunStatus::RUN_FAIL;
+    results_.comment = getFullExceptionMessage(e);
+  }
+}
+
+void ProcessRunner::doExecute() {
+  parameters_.validate();
+  results_.status = RunStatus::RUNNING;
+  pid_t pid = fork();
+  if (pid < 0) {
+    throw RunnerError(strerror(errno));
+  }
+  if (pid == 0) {
+    try {
+      handleChild();
+    } catch (const std::exception &e) {
+      childFailure(getFullExceptionMessage(e));
+    }
+  }
+  handleParent(pid);
+}
+
+void ProcessRunner::handleParent(pid_t child) {
+  // TODO: implement
+  int status;
+  wait(&status);
+}
+
+void ProcessRunner::childTry(bool success, const char *errorName) {
+  if (!success) {
+    childFailure(errorName, errno);
+  }
+}
+
+void ProcessRunner::childTry(bool success, const std::string &errorName) {
+  childTry(success, errorName.c_str());
+}
+
+void ProcessRunner::handleChild() {
+  int64_t integralTimeLimit = static_cast<int64_t>(ceil(parameters_.timeLimit));
+  childTry(updateLimit(RLIMIT_CPU, integralTimeLimit),
+           "could not set time limit");
+
+  int64_t memLimitBytes =
+      static_cast<int64_t>(ceil(parameters_.memoryLimit * 1048576));
+  childTry(updateLimit(RLIMIT_AS, memLimitBytes * 2),
+           "could not set memory limit");
+  childTry(updateLimit(RLIMIT_DATA, memLimitBytes * 2),
+           "could not set memory limit");
+  childTry(updateLimit(RLIMIT_STACK, memLimitBytes * 2),
+           "could not set memory limit");
+
+  if (!parameters_.workingDir.empty()) {
+    childTry(chdir(parameters_.workingDir.c_str()) == 0,
+             "could not change directory");
+  }
+
+  childRedirect(STDIN_FILENO, parameters_.stdinRedir, O_RDONLY);
+  childRedirect(STDOUT_FILENO, parameters_.stdoutRedir,
+                O_CREAT | O_TRUNC | O_WRONLY);
+  childRedirect(STDERR_FILENO, parameters_.stderrRedir,
+                O_CREAT | O_TRUNC | O_WRONLY);
+
+  if (parameters_.clearEnv) {
+    childTry(clearenv() == 0, "unable to clear environment");
+  }
+  for (const auto &iter : parameters_.env) {
+    const std::string &key = iter.first;
+    const std::string &value = iter.second;
+    childTry(setenv(key.c_str(), value.c_str(), true) == 0,
+             "could not set environment \"" + key + "\"");
+  }
+
+  int argc = static_cast<int>(parameters_.args.size()) + 1;
+  char **argv = new char *[argc];
+  argv[0] = strdup(parameters_.executable.c_str());
+  for (size_t i = 0; i < argc - 1; ++i) {
+    const std::string &argument = parameters_.args[i];
+    argv[i + 1] = strdup(argument.c_str());
+  }
+  argv[argc] = nullptr;
+
+  childTry(execv(argv[0], argv) == 0,
+           "failed to run \"" + parameters_.executable + "\"");
+  childFailure("handleChild() has reaches the end");
+  // double timeLimit = 2.0;
+  // double idleLimit = 7.0;
+  // TODO : handle the limit in msec
+  // TODO : handle the realtime limit
+  // TODO: if setting the child fails, we should get RUN_FAIL status, not
+  // RUNTIME_ERROR
+  // TODO: think of how to do this
+  // TODO : FINISH IT !!!
+}
+
+void ProcessRunner::childRedirect(int fd, std::string fileName, int flags,
+                                  mode_t mode) {
+  if (fileName.empty()) {
+    fileName = "/dev/null";
+  }
+  int dest_fd = open(fileName.c_str(), flags, mode);
+  if (dest_fd < 0) {
+    childFailure("unable to open \"" + fileName + "\"", errno);
+  }
+  if (dup2(dest_fd, fd) < 0) {
+    childFailure("unable to duplicate file descriptor");
+  }
+}
+
+[[noreturn]] void ProcessRunner::childFailure(const std::string &message,
+                                              int errcode) {
+  std::cerr << message << " " << strerror(errcode) << std::endl;
+  // TODO : write to pipe
+  _exit(42);
 }
 
 ProcessRunner::ProcessRunner() {}

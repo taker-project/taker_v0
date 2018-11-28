@@ -10,7 +10,7 @@ int main() {
 
   ProcessRunner runner;
   runner.parameters().loadFromJson(value);
-
+  runner.execute();
   std::cout << runner.results().saveToJson() << std::endl;
 
   return 0;

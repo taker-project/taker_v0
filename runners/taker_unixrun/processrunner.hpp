@@ -19,7 +19,11 @@
 #define PROCESSRUNNER_H
 
 #include <json/json.h>
+#include <sys/types.h>
 #include <exception>
+#include <map>
+#include <vector>
+#include "utils.hpp"
 
 namespace UnixRunner {
 
@@ -36,7 +40,7 @@ class RunnerValidateError : public RunnerError {
 class ProcessRunner {
  public:
   // TODO : Document the Runner API!
-  // TODO : Add privilege levels!
+  // TODO : Add privilege levels! (?)
 
   enum class RunStatus {
     OK,
@@ -56,7 +60,9 @@ class ProcessRunner {
     double timeLimit = 2.0;
     double idleLimit = 7.0;
     double memoryLimit = 256.0;
+    bool clearEnv = false;
     std::string executable;
+    std::map<std::string, std::string> env;
     std::vector<std::string> args;
     std::string workingDir = "";
     std::string stdinRedir = "";
@@ -91,9 +97,21 @@ class ProcessRunner {
 
   ProcessRunner();
 
+ protected:
+  void doExecute();
+  [[noreturn]] void handleChild();
+  void handleParent(pid_t child);
+
  private:
   Parameters parameters_;
   RunResults results_;
+
+  void childTry(bool success, const char *errorName);
+  void childTry(bool success, const std::string &errorName);
+
+  void childRedirect(int fd, std::string fileName, int flags,
+                     mode_t mode = 0644);
+  [[noreturn]] void childFailure(const std::string &message, int errcode = 0);
 };
 
 }  // namespace UnixRunner
