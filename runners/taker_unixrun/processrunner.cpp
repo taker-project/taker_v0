@@ -32,6 +32,10 @@
 #include <sstream>
 #include "utils.hpp"
 
+#ifndef _GNU_SOURCE
+extern char **environ;
+#endif
+
 namespace UnixRunner {
 
 pid_t g_activeChild = 0;
@@ -424,7 +428,7 @@ void ProcessRunner::handleChild() {
                 O_CREAT | O_TRUNC | O_WRONLY);
 
   if (parameters_.clearEnv) {
-    trySyscall(clearenv() == 0, "unable to clear environment");
+    environ = nullptr;
   }
   for (const auto &iter : parameters_.env) {
     const std::string &key = iter.first;
@@ -434,7 +438,7 @@ void ProcessRunner::handleChild() {
   }
 
   int argc = static_cast<int>(parameters_.args.size()) + 1;
-  char **argv = new char *[argc];
+  char **argv = new char *[argc + 1];
   argv[0] = strdup(parameters_.executable.c_str());
   for (size_t i = 0; i < argc - 1; ++i) {
     const std::string &argument = parameters_.args[i];

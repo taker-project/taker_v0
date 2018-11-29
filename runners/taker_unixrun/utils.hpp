@@ -18,6 +18,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <sys/time.h>
 #include <cstring>
 #include <string>
 
@@ -51,7 +52,7 @@ std::string getFullExceptionMessage(const std::exception &exc);
 
 struct timeval timeSum(const struct timeval &val1, const struct timeval &val2);
 struct timeval timeDifference(const struct timeval &start,
-                              const timeval &finish);
+                              const struct timeval &finish);
 double timevalToDouble(const struct timeval &value);
 
 }  // namespace UnixRunner
