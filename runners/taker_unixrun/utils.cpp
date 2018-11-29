@@ -36,6 +36,7 @@ const int EXEC_PERM = S_IXUSR | S_IXGRP | S_IXOTH;
 
 int filePermissions(const char *fileName) {
   struct stat fileStats;
+  zeroMem(fileStats);
   if (stat(fileName, &fileStats) != 0) {
     return -1;
   }
@@ -61,6 +62,7 @@ bool fileIsGood(const std::string &fileName) {
 
 bool directoryIsGood(const char *fileName) {
   struct stat fileStats;
+  zeroMem(fileStats);
   if (stat(fileName, &fileStats) != 0) {
     return false;
   }
@@ -100,6 +102,7 @@ bool fileIsExecutable(const std::string &fileName) {
 
 bool updateLimit(int resource, int64_t value) {
   struct rlimit rlim;
+  zeroMem(rlim);
   if (getrlimit(resource, &rlim) != 0) {
     return false;
   }
@@ -117,7 +120,7 @@ bool updateLimit(int resource, int64_t value) {
 
 #ifdef __GNUC__
 std::string demangle(const char *typeName) {
-  int status;
+  int status = -1;
   char *demangled = abi::__cxa_demangle(typeName, 0, 0, &status);
   assert(status == 0);
   std::string res = demangled;
@@ -134,8 +137,9 @@ std::string getFullExceptionMessage(const std::exception &exc) {
 
 const int USEC_IN_SECOND = 1'000'000;
 
-timeval timeSum(const timeval &val1, const timeval &val2) {
-  timeval res;
+struct timeval timeSum(const struct timeval &val1, const struct timeval &val2) {
+  struct timeval res;
+  zeroMem(res);
   res.tv_sec = val1.tv_sec + val2.tv_sec;
   res.tv_usec = val1.tv_usec + val2.tv_usec;
   if (res.tv_usec >= USEC_IN_SECOND) {
@@ -145,8 +149,10 @@ timeval timeSum(const timeval &val1, const timeval &val2) {
   return res;
 }
 
-timeval timeDifference(const timeval &start, const timeval &finish) {
-  timeval res;
+struct timeval timeDifference(const struct timeval &start,
+                              const struct timeval &finish) {
+  struct timeval res;
+  zeroMem(res);
   res.tv_sec = finish.tv_sec - start.tv_sec;
   res.tv_usec = finish.tv_usec - start.tv_usec;
   if (res.tv_usec < 0) {
@@ -156,7 +162,7 @@ timeval timeDifference(const timeval &start, const timeval &finish) {
   return res;
 }
 
-double timevalToDouble(const timeval &value) {
+double timevalToDouble(const struct timeval &value) {
   return 1.0 * value.tv_sec + 1.0 * value.tv_usec / USEC_IN_SECOND;
 }
 

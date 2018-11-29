@@ -18,9 +18,15 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <cstring>
 #include <string>
 
 namespace UnixRunner {
+
+template <typename T>
+inline void zeroMem(T &value) {
+  memset(&value, 0, sizeof(value));
+}
 
 bool fileIsGood(const char *fileName);
 bool fileIsGood(const std::string &fileName);
@@ -43,9 +49,10 @@ std::string demangle(const char *typeName);
 
 std::string getFullExceptionMessage(const std::exception &exc);
 
-timeval timeSum(const timeval &val1, const timeval &val2);
-timeval timeDifference(const timeval &start, const timeval &finish);
-double timevalToDouble(const timeval &value);
+struct timeval timeSum(const struct timeval &val1, const struct timeval &val2);
+struct timeval timeDifference(const struct timeval &start,
+                              const timeval &finish);
+double timevalToDouble(const struct timeval &value);
 
 }  // namespace UnixRunner
 

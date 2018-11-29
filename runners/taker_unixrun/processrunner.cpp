@@ -201,21 +201,43 @@ void ProcessRunner::handleParent() {
     return;
   }
 
+  // initialize results
+  results_.exitCode = results_.signal = 0;
+  results_.memory = 0.0;
+  results_.status = RunStatus::RUNNING;
+
   // wait for process
-  int status;
+  int status = 0;
   struct rusage resources;
-  if (wait4(pid_, &status, 0, &resources) == -1) {
+  zeroMem(resources);
+  if (wait4(pid_, &status, WUNTRACED, &resources) == -1) {
     int errCode = errno;
     kill(pid_, SIGKILL);
     parentFailure("unable to wait for process", errCode);
   }
 
-  // fill the results
-  results_.exitCode = results_.signal = 0;
-  results_.status = RunStatus::OK;
+  updateResults(resources, status);
+}
+
+void ProcessRunner::startTimer() {
+  zeroMem(startTime_);
+  trySyscall(gettimeofday(&startTime_, nullptr) == 0,
+             "could not get system time");
+}
+
+double ProcessRunner::getTimerValue() {
+  struct timeval curTime;
+  zeroMem(curTime);
+  trySyscall(gettimeofday(&curTime, nullptr) == 0, "could not get system time");
+  return timevalToDouble(timeDifference(startTime_, curTime));
+}
+
+void ProcessRunner::updateResults(const struct rusage &resources, int status) {
   if (WIFEXITED(status)) {
     results_.exitCode = WEXITSTATUS(status);
-    if (results_.exitCode != 0) {
+    if (results_.exitCode == 0) {
+      results_.status = RunStatus::OK;
+    } else {
       results_.status = RunStatus::RUNTIME_ERROR;
     }
   }
@@ -227,17 +249,6 @@ void ProcessRunner::handleParent() {
       timevalToDouble(timeSum(resources.ru_stime, resources.ru_utime));
   results_.clockTime = getTimerValue();
   results_.memory = resources.ru_maxrss / 1048576.0;
-}
-
-void ProcessRunner::startTimer() {
-  trySyscall(gettimeofday(&startTime_, nullptr) == 0,
-             "could not get system time");
-}
-
-double ProcessRunner::getTimerValue() {
-  timeval curTime;
-  trySyscall(gettimeofday(&curTime, nullptr) == 0, "could not get system time");
-  return timevalToDouble(timeDifference(startTime_, curTime));
 }
 
 void ProcessRunner::trySyscall(bool success, const std::string &errorName) {

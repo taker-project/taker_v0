@@ -19,6 +19,7 @@
 #define PROCESSRUNNER_H
 
 #include <json/json.h>
+#include <sys/resource.h>
 #include <sys/types.h>
 #include <exception>
 #include <map>
@@ -107,10 +108,12 @@ class ProcessRunner {
   RunResults results_;
   pid_t pid_;
   int pipe_[2];
-  timeval startTime_;
+  struct timeval startTime_;
 
   void startTimer();
   double getTimerValue();
+
+  void updateResults(const struct rusage &resources, int status);
 
   void trySyscall(bool success, const std::string &errorName);
 
