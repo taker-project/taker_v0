@@ -34,6 +34,44 @@
 
 namespace UnixRunner {
 
+pid_t g_activeChild = 0;
+
+void termSignal(int signum) {
+  if (g_activeChild != 0) {
+    kill(g_activeChild, SIGKILL);
+  }
+  kill(0, SIGKILL);
+}
+
+class ActiveChildLock {
+ private:
+  struct sigaction oldActions_[3];
+
+ public:
+  ActiveChildLock(pid_t pid) {
+    if (g_activeChild != 0) {
+      throw std::runtime_error("active child already set");
+    }
+    g_activeChild = pid;
+    struct sigaction sigHandler;
+    zeroMem(sigHandler);
+    for (int i = 0; i < 3; ++i) {
+      zeroMem(oldActions_[i]);
+    }
+    sigHandler.sa_handler = termSignal;
+    sigaction(SIGINT, &sigHandler, &oldActions_[0]);
+    sigaction(SIGTERM, &sigHandler, &oldActions_[1]);
+    sigaction(SIGQUIT, &sigHandler, &oldActions_[2]);
+  }
+
+  ~ActiveChildLock() {
+    g_activeChild = 0;
+    sigaction(SIGINT, &oldActions_[0], nullptr);
+    sigaction(SIGTERM, &oldActions_[1], nullptr);
+    sigaction(SIGQUIT, &oldActions_[2], nullptr);
+  }
+};
+
 RunnerError::RunnerError(const std::string &comment)
     : std::runtime_error(comment) {}
 
@@ -99,8 +137,7 @@ void ProcessRunner::Parameters::loadFromJsonStr(const std::string &json) {
   return loadFromJson(value);
 }
 
-const char *ProcessRunner::runStatusToStr(
-    UnixRunner::ProcessRunner::RunStatus status) {
+const char *ProcessRunner::runStatusToStr(ProcessRunner::RunStatus status) {
   static const char *RUN_STATUS_STRS[] = {
       "ok",           "time-limit",    "idle-limit",
       "memory-limit", "runtime-error", "security-error",
@@ -128,15 +165,13 @@ std::string ProcessRunner::RunResults::saveToJsonStr() const {
   return saveToJson().toStyledString();
 }
 
-UnixRunner::ProcessRunner::Parameters &ProcessRunner::parameters() {
+ProcessRunner::Parameters &ProcessRunner::parameters() { return parameters_; }
+
+const ProcessRunner::Parameters &ProcessRunner::parameters() const {
   return parameters_;
 }
 
-const UnixRunner::ProcessRunner::Parameters &ProcessRunner::parameters() const {
-  return parameters_;
-}
-
-const UnixRunner::ProcessRunner::RunResults &ProcessRunner::results() const {
+const ProcessRunner::RunResults &ProcessRunner::results() const {
   return results_;
 }
 
@@ -171,6 +206,7 @@ void ProcessRunner::doExecute() {
       childFailure(getFullExceptionMessage(e));
     }
   }
+  ActiveChildLock lock(pid_);
   close(pipe_[1]);
   handleParent();
 }
@@ -209,7 +245,7 @@ void ProcessRunner::handleParent() {
   results_.memory = 0.0;
   results_.status = RunStatus::RUNNING;
   updateResultsOnRun();
-  
+
   // wait for process
   while (results_.status == RunStatus::RUNNING) {
     int status = -1;
@@ -360,6 +396,8 @@ void ProcessRunner::trySyscall(bool success, const std::string &errorName) {
 }
 
 void ProcessRunner::handleChild() {
+  setsid();
+
   int64_t integralTimeLimit =
       static_cast<int64_t>(ceil(parameters_.timeLimit + 0.2));
   trySyscall(updateLimit(RLIMIT_CPU, integralTimeLimit),
@@ -407,8 +445,6 @@ void ProcessRunner::handleChild() {
   trySyscall(execv(argv[0], argv) == 0,
              "failed to run \"" + parameters_.executable + "\"");
   childFailure("handleChild() has reached the end");
-  // TODO : terminate the child process on parent termination
-  // TODO : use setsid()
 }
 
 void ProcessRunner::childRedirect(int fd, std::string fileName, int flags,
