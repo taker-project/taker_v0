@@ -24,8 +24,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <cassert>
 #include <cmath>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include "utils.hpp"
@@ -113,6 +115,10 @@ Json::Value ProcessRunner::RunResults::saveToJson() const {
   value["memory"] = memory;
   value["exitcode"] = exitCode;
   value["signal"] = signal;
+  if (signal != 0) {
+    char *signalName = strsignal(signal);
+    value["signal-name"] = (signalName == nullptr) ? "unknown" : signalName;
+  }
   value["status"] = ProcessRunner::runStatusToStr(status);
   value["comment"] = comment;
   return value;
@@ -170,9 +176,6 @@ void ProcessRunner::doExecute() {
 }
 
 void ProcessRunner::handleParent() {
-  // TODO : make it work better
-  // TODO : enable timelimit/memorylimit/idlelimit detection
-
   startTimer();
 
   // check for RUN_FAIL
@@ -196,27 +199,56 @@ void ProcessRunner::handleParent() {
     results_.status = RunStatus::RUN_FAIL;
     results_.comment = message;
     delete[] message;
-    int status;
-    waitpid(pid_, &status, 0);
+    waitpid(pid_, nullptr, 0);
     return;
   }
 
   // initialize results
   results_.exitCode = results_.signal = 0;
+  results_.time = results_.clockTime = 0.0;
   results_.memory = 0.0;
   results_.status = RunStatus::RUNNING;
-
+  updateResultsOnRun();
+  
   // wait for process
-  int status = 0;
-  struct rusage resources;
-  zeroMem(resources);
-  if (wait4(pid_, &status, WUNTRACED, &resources) == -1) {
-    int errCode = errno;
-    kill(pid_, SIGKILL);
-    parentFailure("unable to wait for process", errCode);
+  while (results_.status == RunStatus::RUNNING) {
+    int status = -1;
+    struct rusage resources;
+    zeroMem(resources);
+    int pidWaited = wait4(pid_, &status, WNOHANG | WUNTRACED, &resources);
+    if (pidWaited == -1) {
+      // wait4() error
+      int errCode = errno;
+      kill(pid_, SIGKILL);
+      parentFailure("unable to wait for process", errCode);
+    }
+    if (pidWaited == 0) {
+      // the process is still running
+      updateResultsOnRun();
+      updateVerdicts();
+      if (results_.status != RunStatus::RUNNING) {
+        kill(pid_, SIGKILL);
+        trySyscall(waitpid(pid_, nullptr, 0) >= 0,
+                   "unable to wait for process");
+        break;
+      }
+    } else {
+      // the process has changed the state
+      // FIXME : handle stopped/continued processes
+      updateResultsOnTerminate(resources, status);
+      if (results_.status == RunStatus::RUNNING) {
+        kill(pid_, SIGKILL);
+        waitpid(pid_, nullptr, 0);
+        parentFailure(
+            "unexpected process status: waitpid() returned, "
+            "but the process is still alive (status = " +
+            std::to_string(status) + ")");
+      }
+      updateVerdicts();
+      break;
+    }
+    usleep(10'000);
   }
-
-  updateResults(resources, status);
 }
 
 void ProcessRunner::startTimer() {
@@ -232,7 +264,67 @@ double ProcessRunner::getTimerValue() {
   return timevalToDouble(timeDifference(startTime_, curTime));
 }
 
-void ProcessRunner::updateResults(const struct rusage &resources, int status) {
+bool ProcessRunner::updateResourcesFromProcInfo() {
+#ifdef __linux__
+  std::string procFileName = "/proc/" + std::to_string(pid_) + "/stat";
+  std::ifstream procStats(procFileName);
+  if (!procStats.good()) {
+    return false;
+  }
+  std::string procStr;
+  if (!std::getline(procStats, procStr)) {
+    return false;
+  }
+  auto bracketPos = procStr.rfind(')');
+  if (bracketPos == std::string::npos || bracketPos == procStr.size()) {
+    return false;
+  }
+  procStr.erase(0, bracketPos + 1);
+  std::istringstream tokenizer(procStr);
+  unsigned long utime, stime, vsize;
+  std::string unused;
+  for (int field = 3; field <= 42; ++field) {
+    if (field == 14) {
+      tokenizer >> utime;
+    } else if (field == 15) {
+      tokenizer >> stime;
+    } else if (field == 23) {
+      tokenizer >> vsize;
+    } else {
+      tokenizer >> unused;
+    }
+    if (!tokenizer.good()) {
+      return false;
+    }
+  }
+  results_.time = 1.0 * (utime + stime) / sysconf(_SC_CLK_TCK);
+  results_.memory = std::max(results_.memory, vsize / 1048576.0);
+  return true;
+#else
+  // TODO : add code for *BSD (?)
+  return false;
+#endif
+}
+
+void ProcessRunner::updateResultsOnRun() {
+  updateResourcesFromProcInfo();
+  results_.clockTime = getTimerValue();
+}
+
+void ProcessRunner::updateVerdicts() {
+  if (results_.time > parameters_.timeLimit) {
+    results_.status = RunStatus::TIME_LIMIT;
+  }
+  if (results_.clockTime > parameters_.idleLimit) {
+    results_.status = RunStatus::IDLE_LIMIT;
+  }
+  if (results_.memory > parameters_.memoryLimit) {
+    results_.status = RunStatus::MEMORY_LIMIT;
+  }
+}
+
+void ProcessRunner::updateResultsOnTerminate(const struct rusage &resources,
+                                             int status) {
   if (WIFEXITED(status)) {
     results_.exitCode = WEXITSTATUS(status);
     if (results_.exitCode == 0) {
@@ -248,7 +340,12 @@ void ProcessRunner::updateResults(const struct rusage &resources, int status) {
   results_.time =
       timevalToDouble(timeSum(resources.ru_stime, resources.ru_utime));
   results_.clockTime = getTimerValue();
-  results_.memory = resources.ru_maxrss / 1048576.0;
+  if (results_.memory == 0) {
+    // FIXME : if the memory usage wasn't updated, maybe use smth better than
+    // maxrss?
+    results_.comment = "memory measurement is not precise!";
+    results_.memory = resources.ru_maxrss / 1024.0;
+  }
 }
 
 void ProcessRunner::trySyscall(bool success, const std::string &errorName) {
@@ -263,7 +360,8 @@ void ProcessRunner::trySyscall(bool success, const std::string &errorName) {
 }
 
 void ProcessRunner::handleChild() {
-  int64_t integralTimeLimit = static_cast<int64_t>(ceil(parameters_.timeLimit));
+  int64_t integralTimeLimit =
+      static_cast<int64_t>(ceil(parameters_.timeLimit + 0.2));
   trySyscall(updateLimit(RLIMIT_CPU, integralTimeLimit),
              "could not set time limit");
 
@@ -309,9 +407,8 @@ void ProcessRunner::handleChild() {
   trySyscall(execv(argv[0], argv) == 0,
              "failed to run \"" + parameters_.executable + "\"");
   childFailure("handleChild() has reached the end");
-  // TODO : handle the limit in msec
-  // TODO : handle the realtime limit
   // TODO : terminate the child process on parent termination
+  // TODO : use setsid()
 }
 
 void ProcessRunner::childRedirect(int fd, std::string fileName, int flags,

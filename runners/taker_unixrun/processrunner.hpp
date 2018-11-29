@@ -113,7 +113,10 @@ class ProcessRunner {
   void startTimer();
   double getTimerValue();
 
-  void updateResults(const struct rusage &resources, int status);
+  bool updateResourcesFromProcInfo();
+  void updateResultsOnRun();
+  void updateVerdicts();
+  void updateResultsOnTerminate(const struct rusage &resources, int status);
 
   void trySyscall(bool success, const std::string &errorName);
 
