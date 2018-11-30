@@ -402,6 +402,8 @@ void ProcessRunner::trySyscall(bool success, const std::string &errorName) {
 void ProcessRunner::handleChild() {
   setsid();
 
+  // FIXME : avoid overflow when handling very large time and memory limits
+
   int64_t integralTimeLimit =
       static_cast<int64_t>(ceil(parameters_.timeLimit + 0.2));
   trySyscall(updateLimit(RLIMIT_CPU, integralTimeLimit),
