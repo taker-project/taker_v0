@@ -40,7 +40,6 @@ class RunnerValidateError : public RunnerError {
 
 class ProcessRunner {
  public:
-  // TODO : Document the Runner API!
   // TODO : Add privilege levels! (?)
 
   enum class RunStatus {
