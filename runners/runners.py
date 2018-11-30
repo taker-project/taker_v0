@@ -2,6 +2,9 @@ from namedlist import namedtuple, namedlist
 from enum import Enum
 import json
 import subprocess
+import os
+import shutil
+import tempfile
 
 Parameters = namedlist('Parameters',
                        ['time_limit', 'idle_limit', 'memory_limit',
@@ -65,16 +68,46 @@ def json_to_results(results_json):
 
 
 class Runner:
-    def run(self):
-        input_str = parameters_to_json()
+    def _do_run(self):
+        input_str = parameters_to_json(self.parameters)
         try:
             output_str = subprocess.check_output(
                 [self.runner_path], input=input_str, universal_newlines=True)
+            self.results = json_to_results(output_str)
         except subprocess.CalledProcessError as exc:
             raise RunnerError('runner exited with exitcode = {}'
                               .format(exc.returncode))
 
+    def run(self):
+        create_temp_dir = (self.pass_stdin or self.capture_stdout
+                           or self.capture_stderr)
+        if create_temp_dir:
+            temp_dir = tempfile.mkdtemp()
+        try:
+            if self.pass_stdin:
+                self.parameters.stdin_redir = os.path.join(temp_dir, 't.in')
+                open(self.parameters.stdin_redir, 'w').write(self.stdin)
+            if self.capture_stdout:
+                self.parameters.stdout_redir = os.path.join(temp_dir, 't.out')
+            if self.capture_stderr:
+                self.parameters.stderr_redir = os.path.join(temp_dir, 't.err')
+            self._do_run()
+            try:
+                if self.capture_stdout:
+                    self.stdout = open(
+                        self.parameters.stdout_redir, 'r').read()
+                if self.capture_stderr:
+                    self.stderr = open(
+                        self.parameters.stderr_redir, 'r').read()
+            except FileNotFoundError:
+                pass
+        finally:
+            if create_temp_dir:
+                shutil.rmtree(temp_dir)
+
     def __init__(self, runner_path):
+        # TODO : runner must capture stdout instead of creating temp files (?)
+        # FIXME : add .exe extension for Windows executables (here on in tests)
         self.runner_path = runner_path
         self.parameters = Parameters(
             time_limit=2.0, idle_limit=None, memory_limit=256.0,
@@ -82,3 +115,9 @@ class Runner:
             working_dir='', stdin_redir='', stdout_redir='',
             stderr_redir='')
         self.results = None
+        self.pass_stdin = False
+        self.capture_stdout = False
+        self.capture_stderr = False
+        self.stdin = ''
+        self.stdout = ''
+        self.stderr = ''

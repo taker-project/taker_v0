@@ -1,6 +1,9 @@
 from .runners import *
 import json
 import pytest
+import os
+from os import path
+import tempfile
 
 
 def test_parameters_to_json():
@@ -42,3 +45,24 @@ def test_results_from_json():
     invoke_value_error('signal', 1.2)
     invoke_value_error('status', 'invalid')
     invoke_value_error('comment', 42)
+
+
+def do_runner_test(runner_name):
+    tests_location = path.realpath(path.join('runners', 'tests', 'build'))
+
+    runner = Runner(runner_name)
+    runner.capture_stdout = True
+
+    runner.parameters.executable = path.join(tests_location, 'basic_test')
+    runner.run()
+    assert runner.results.status == Status.OK
+    assert runner.stdout == 'hello world\n'
+
+    runner.parameters.executable = path.join(tests_location, 'invalid_test')
+    runner.run()
+    assert runner.results.status == Status.RUN_FAIL
+
+
+def test_unixrun():
+    do_runner_test(path.realpath(path.join('runners', 'taker_unixrun',
+                                           'build', 'taker_unixrun')))

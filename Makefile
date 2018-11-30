@@ -1,4 +1,4 @@
-.PHONY: help venv build build_runners clean clean_runners test autopep8 pep8
+.PHONY: help venv build build_runners clean clean_runners test_prepare test autopep8 pep8
 
 help:
 	@echo Usage:
@@ -38,7 +38,10 @@ build: venv build_runners
 	cd runners && $(MAKE) build
 	bash -c '. pyenv.sh && python setup.py install'
 
-test: venv build
+test_prepare:
+	cd runners && $(MAKE) test_prepare
+
+test: venv build test_prepare
 	bash -c '. pyenv.sh && pytest'
 
 autopep8: venv
