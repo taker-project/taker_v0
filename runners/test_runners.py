@@ -49,8 +49,10 @@ def test_results_from_json():
 
 def do_runner_test(runner_name):
     tests_location = path.realpath(path.join('runners', 'tests', 'build'))
+    runner_path = path.realpath(path.join('runners', 'taker_unixrun',
+                                          'build', runner_name))
 
-    runner = Runner(runner_name)
+    runner = Runner(runner_path)
     runner.capture_stdout = True
 
     runner.parameters.executable = path.join(tests_location, 'basic_test')
@@ -62,7 +64,74 @@ def do_runner_test(runner_name):
     runner.run()
     assert runner.results.status == Status.RUN_FAIL
 
+    runner.parameters.executable = path.join(tests_location, 'sleepy_test')
+    runner.parameters.idle_limit = 0.5
+    runner.run()
+    assert runner.results.status == Status.IDLE_LIMIT
+    runner.parameters.idle_limit = 0.7
+    runner.run()
+    assert runner.results.status == Status.OK
+    assert abs(runner.results.clock_time - 0.55) < 0.02
+    assert runner.results.time < 0.02
+    runner.parameters.idle_limit = None
+
+    runner.parameters.executable = path.join(tests_location, 'worky_test')
+    runner.parameters.time_limit = 0.5
+    runner.run()
+    assert runner.results.status == Status.TIME_LIMIT
+    runner.parameters.time_limit = 0.7
+    runner.run()
+    assert runner.results.status == Status.OK
+    assert abs(runner.results.time - 0.55) < 0.02
+    runner.parameters.time_limit = 2
+
+    runner.parameters.executable = path.join(tests_location, 'memory_test')
+    # on taker_unixrun, this test fail with RUNTIME_ERROR
+    # FIXME : better detect MEMORY_LIMIT and RUNTIME_ERROR for unixrun!
+    if runner_name not in set(['taker_unixrun']):
+        runner.parameters.memory_limit = 20.0
+        runner.run()
+        assert runner.results.status == Status.MEMORY_LIMIT
+    runner.parameters.memory_limit = 40.0
+    runner.run()
+    assert runner.results.status == Status.MEMORY_LIMIT
+    runner.parameters.memory_limit = 256.0
+    runner.run()
+    assert runner.results.status == Status.OK
+    assert runner.results.memory >= 59.0
+    assert runner.results.memory <= 69.0
+
+    runner.parameters.executable = path.join(tests_location, 'vector_test')
+    # this test also fails on unixrun because of fast memory allocation and
+    # deallocation
+    # FIXME : fix this test for unixrun!
+    if runner_name not in set(['taker_unixrun']):
+        assert runner.results.status == Status.MEMORY_LIMIT
+        runner.parameters.memory_limit = 40.0
+        runner.run()
+    runner.parameters.memory_limit = 256.0
+    runner.run()
+    assert runner.results.status == Status.OK
+    if runner_name not in set(['taker_unixrun']):
+        assert runner.results.memory >= 59.0
+        assert runner.results.memory <= 69.0
+
+    runner.parameters.executable = path.join(
+        tests_location, 'vector_pushback_test')
+    runner.parameters.memory_limit = 25.0
+    runner.run()
+    assert runner.results.status == Status.MEMORY_LIMIT
+    runner.parameters.memory_limit = 50.0
+    runner.run()
+    assert runner.results.status == Status.MEMORY_LIMIT
+    runner.parameters.memory_limit = 256.0
+    runner.run()
+    assert runner.results.status == Status.OK
+    assert runner.results.memory >= 59.0
+
+    # TODO : add more tests (with memory allocation/deallocation)
+    # TODO : add test with bad ELF
+
 
 def test_unixrun():
-    do_runner_test(path.realpath(path.join('runners', 'taker_unixrun',
-                                           'build', 'taker_unixrun')))
+    do_runner_test('taker_unixrun')
