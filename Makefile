@@ -1,4 +1,4 @@
-.PHONY: help venv build clean test autopep8 pep8
+.PHONY: help venv build build_runners clean clean_runners test autopep8 pep8
 
 help:
 	@echo Usage:
@@ -23,12 +23,19 @@ venv: .make_targets/venv
 	bash -c '. pyenv.sh && pip install -U pip setuptools \
 		&& pip install pytest'
 
-clean:
-	rm -rf venv/ build/ dist/
+clean_runners:
+	cd runners && $(MAKE) clean
+
+build_runners: venv
+	cd runners && $(MAKE) PREFIX="$$(pwd)/../venv" install
+
+clean: clean_runners
+	rm -rf venv/ build/ dist/ .pytest_cache/
 	rm -rf *.egg-info/
 	rm -rf .make_targets
 
-build: venv
+build: venv build_runners
+	cd runners && $(MAKE) build
 	bash -c '. pyenv.sh && python setup.py install'
 
 test: venv build
