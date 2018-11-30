@@ -40,7 +40,7 @@ namespace UnixRunner {
 
 pid_t g_activeChild = 0;
 
-void termSignal(int signum) {
+void termSignal(int) {
   if (g_activeChild != 0) {
     kill(g_activeChild, SIGKILL);
   }
@@ -437,10 +437,10 @@ void ProcessRunner::handleChild() {
                "could not set environment \"" + key + "\"");
   }
 
-  int argc = static_cast<int>(parameters_.args.size()) + 1;
+  size_t argc = parameters_.args.size() + 1;
   char **argv = new char *[argc + 1];
   argv[0] = strdup(parameters_.executable.c_str());
-  for (size_t i = 0; i < argc - 1; ++i) {
+  for (size_t i = 0; i + 1 < argc; ++i) {
     const std::string &argument = parameters_.args[i];
     argv[i + 1] = strdup(argument.c_str());
   }

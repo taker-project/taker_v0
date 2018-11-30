@@ -4,7 +4,6 @@ prebuild:
 	mkdir -p build/
 
 build: prebuild
-	mkdir -p build
 	cd build && cmake ..
 	cd build && $(MAKE)
 

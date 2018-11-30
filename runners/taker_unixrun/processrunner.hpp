@@ -103,11 +103,11 @@ class ProcessRunner {
   void handleParent();
 
  private:
-  Parameters parameters_;
-  RunResults results_;
-  pid_t pid_;
-  int pipe_[2];
-  struct timeval startTime_;
+  Parameters parameters_ {};
+  RunResults results_ {};
+  pid_t pid_ = -1;
+  int pipe_[2] {};
+  struct timeval startTime_ {};
 
   void startTimer();
   double getTimerValue();
