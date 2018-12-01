@@ -132,11 +132,71 @@ def do_runner_test(runner_name):
     runner.run()
     assert runner.results.status == Status.MEMORY_LIMIT
     runner.parameters.memory_limit = 256.0
+    runner.parameters.time_limit = 6.0
     runner.run()
+    runner.parameters.time_limit = 2.0
     assert runner.results.status == Status.OK
     assert runner.results.memory >= 59.0
 
-    # TODO : add more tests (with memory allocation/deallocation)
+    runner.parameters.executable = path.join(
+        tests_location, 'alloc1_test')
+    runner.run()
+    assert runner.results.memory >= 59.0
+    assert runner.results.memory <= 69.0
+
+    runner.parameters.executable = path.join(
+        tests_location, 'alloc2_test')
+    runner.run()
+    assert runner.results.memory >= 19.0
+    assert runner.results.memory <= 29.0
+
+    runner.parameters.executable = path.join(
+        tests_location, 'env_test')
+    runner.capture_stdout = True
+    runner.run()
+    assert runner.stdout == 'none\n'
+    runner.parameters.env['HELLO'] = '42'
+    runner.run()
+    assert runner.stdout == '42\n'
+    os.environ['HELLO'] = 'world'
+    runner.run()
+    assert runner.stdout == '42\n'
+    runner.parameters.env.pop('HELLO')
+    runner.run()
+    assert runner.stdout == 'world\n'
+    runner.parameters.clear_env = True
+    runner.run()
+    assert runner.stdout == 'none\n'
+    runner.parameters.env['HELLO'] = '42'
+    runner.run()
+    assert runner.stdout == '42\n'
+    os.environ.pop('HELLO')
+    runner.parameters.env.clear()
+    runner.parameters.clear_env = False
+
+    runner.parameters.executable = path.join(
+        tests_location, 'runerror_test')
+    runner.pass_stdin = True
+    runner.stdin = 'normal'
+    runner.run()
+    assert runner.results.status == Status.OK
+    runner.stdin = 'assert'
+    runner.run()
+    assert runner.results.status == Status.RUNTIME_ERROR
+    runner.stdin = 'error'
+    runner.run()
+    assert runner.results.status == Status.RUNTIME_ERROR
+    runner.pass_stdin = False
+
+    runner.parameters.executable = path.join(
+        tests_location, 'args_test')
+    runner.capture_stdout = True
+    runner.parameters.args = ['arg1', 'arg2']
+    runner.run()
+    assert runner.stdout == 'arg1\narg2\n'
+    runner.parameters.args = []
+    runner.capture_stdout = False
+
     # TODO : add test with bad ELF
 
 
