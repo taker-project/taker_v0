@@ -197,7 +197,10 @@ def do_runner_test(runner_name):
     runner.parameters.args = []
     runner.capture_stdout = False
 
-    # TODO : add test with bad ELF
+    runner.parameters.executable = path.join(
+        tests_location, 'broken_test')
+    runner.run()
+    assert runner.results.status == Status.RUN_FAIL
 
 
 def test_unixrun():
