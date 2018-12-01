@@ -40,8 +40,6 @@ class RunnerValidateError : public RunnerError {
 
 class ProcessRunner {
  public:
-  // TODO : Add privilege levels! (?)
-
   enum class RunStatus {
     OK,
     TIME_LIMIT,
@@ -56,6 +54,15 @@ class ProcessRunner {
 
   static const char *runStatusToStr(RunStatus status);
 
+  enum class IsolatePolicy {
+    NONE,
+    NORMAL,
+    COMPILE,
+    STRICT
+  };
+
+  static IsolatePolicy strToIsolatePolicy(const std::string &value);
+
   struct Parameters {
     double timeLimit = 2.0;
     double idleLimit = 7.0;
@@ -68,6 +75,8 @@ class ProcessRunner {
     std::string stdinRedir = "";
     std::string stdoutRedir = "";
     std::string stderrRedir = "";
+    std::string isolateDir = "";
+    IsolatePolicy isolatePolicy = IsolatePolicy::NORMAL;
 
     void validate();
     void loadFromJsonStr(const std::string &json);
@@ -86,6 +95,8 @@ class ProcessRunner {
     std::string saveToJsonStr() const;
     Json::Value saveToJson() const;
   };
+
+  Json::Value runnerInfoJson() const;
 
   Parameters &parameters();
 

@@ -11,11 +11,19 @@ Parameters = namedlist('Parameters',
                        ['time_limit', 'idle_limit', 'memory_limit',
                         'executable', 'clear_env', 'env', 'args',
                         'working_dir', 'stdin_redir', 'stdout_redir',
-                        'stderr_redir'])
+                        'stderr_redir', 'isolate_dir', 'isolate_policy'])
 
 Results = namedtuple('Results',
                      ['time', 'clock_time', 'memory', 'exitcode', 'signal',
                       'signal_name', 'status', 'comment'])
+
+RunnerInfo = namedtuple('RunnerInfo',
+                        ['name', 'description', 'author', 'version',
+                         'version_number', 'license', 'features'])
+
+
+class RunnerFeature(Enum):
+    ISOLATE = 'isolate'
 
 
 class Status(Enum):
@@ -26,6 +34,13 @@ class Status(Enum):
     RUNTIME_ERROR = 'runtime-error'
     SECURITY_ERROR = 'security-error'
     RUN_FAIL = 'run-fail'
+
+
+class IsolatePolicy(Enum):
+    NONE = 'none'
+    NORMAL = 'normal'
+    COMPILE = 'compile'
+    STRICT = 'strict'
 
 
 class RunnerError(Exception):
@@ -42,6 +57,11 @@ def parameters_to_json(parameters):
     param_dict = dict_keys_replace(param_dict, '_', '-')
     if parameters.idle_limit is None:
         param_dict['idle-limit'] = 3.5 * parameters.time_limit
+    if parameters.isolate_dir is None:
+        param_dict['isolate-dir'] = parameters.working_dir
+    if parameters.isolate_policy is None:
+        param_dict['isolate-policy'] = IsolatePolicy.NORMAL
+    param_dict['isolate-policy'] = param_dict['isolate-policy'].value
     return json.dumps(param_dict)
 
 
@@ -50,6 +70,19 @@ def typecheck(typename, value):
         raise ValueError('"{}" is not {}'.format(
             str(value), typename.__name__))
     return value
+
+
+def json_to_runner_info(results_json):
+    res = json.loads(results_json)
+    res['features'] = set([RunnerFeature(i) for i in res['features']])
+    return RunnerInfo(
+        name=typecheck(str, res['name']),
+        description=typecheck(str, res['description']),
+        author=typecheck(str, res['author']),
+        version=typecheck(str, res['version']),
+        version_number=typecheck(int, res['version-number']),
+        license=typecheck(str, res['license']),
+        features=res['features'])
 
 
 def json_to_results(results_json):
@@ -116,7 +149,7 @@ class Runner:
             time_limit=2.0, idle_limit=None, memory_limit=256.0,
             executable='', clear_env=False, env={}, args=[],
             working_dir='', stdin_redir='', stdout_redir='',
-            stderr_redir='')
+            stderr_redir='', isolate_dir=None, isolate_policy=None)
         self.results = None
         self.pass_stdin = False
         self.capture_stdout = False

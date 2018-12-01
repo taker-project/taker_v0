@@ -133,6 +133,9 @@ void ProcessRunner::Parameters::loadFromJson(const Json::Value &value) {
   stdinRedir = value.get("stdin-redir", Value("")).asString();
   stdoutRedir = value.get("stdout-redir", Value("")).asString();
   stderrRedir = value.get("stderr-redir", Value("")).asString();
+  isolateDir = value.get("isolate-dir", Value("")).asString();
+  isolatePolicy = strToIsolatePolicy(
+      value.get("isolate-policy", Value("normal")).asString());
 }
 
 void ProcessRunner::Parameters::loadFromJsonStr(const std::string &json) {
@@ -148,6 +151,19 @@ const char *ProcessRunner::runStatusToStr(ProcessRunner::RunStatus status) {
       "memory-limit", "runtime-error", "security-error",
       "run-fail",     "running",       "none"};
   return RUN_STATUS_STRS[static_cast<int>(status)];
+}
+
+ProcessRunner::IsolatePolicy ProcessRunner::strToIsolatePolicy(
+    const std::string &value) {
+  static const char *ISOLATE_POLICY_STRS[] = {"none", "normal", "compile",
+                                              "strict"};
+  int strCount = sizeof(ISOLATE_POLICY_STRS) / sizeof(ISOLATE_POLICY_STRS[0]);
+  for (int i = 0; i < strCount; ++i) {
+    if (ISOLATE_POLICY_STRS[i] == value) {
+      return static_cast<IsolatePolicy>(i);
+    }
+  }
+  throw RunnerValidateError(value + " is invalid isolate-policy");
 }
 
 Json::Value ProcessRunner::RunResults::saveToJson() const {
@@ -168,6 +184,19 @@ Json::Value ProcessRunner::RunResults::saveToJson() const {
 
 std::string ProcessRunner::RunResults::saveToJsonStr() const {
   return saveToJson().toStyledString();
+}
+
+Json::Value ProcessRunner::runnerInfoJson() const {
+  Json::Value res;
+  res["name"] = "Taker UNIX Runner";
+  res["description"] =
+      "A simple runner for UNIX-like systems (like GNU/Linux or FreeBSD)";
+  res["author"] = "Alexander Kernozhitsky";
+  res["version"] = "0.1";
+  res["version-number"] = 1;
+  res["license"] = "GPL-3+";
+  res["features"] = Json::Value(Json::arrayValue);
+  return res;
 }
 
 ProcessRunner::Parameters &ProcessRunner::parameters() { return parameters_; }

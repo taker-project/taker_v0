@@ -1,1 +1,2 @@
-from .runners import Runner, Parameters, Results, Status, RunnerError
+from .runners import Runner, RunnerError
+from .runners import Parameters, Results, Status, IsolatePolicy, RunnerFeature
