@@ -27,3 +27,13 @@ Initially, Taker will be command-line. After the initial stable release, work on
 ## When will it become 1.0?
 
 I don't know.
+
+## Build dependencies
+
+* `bash`, `make` (not necessarily GNU Make, because Makefiles in this project try to be POSIX-compatible)
+* `python (tested on 3.6)`, `pip`, `venv`
+* `g++` (or `clang`)
+* `cmake` for runners
+* `libjsoncpp` for runners (on Debian/Ubuntu, you can use `libjsoncpp-dev` package)
+
+Currently the project targets UNIX-like OSes and will be tested on GNU/Linux and FreeBSD. Other OS support will be added later.

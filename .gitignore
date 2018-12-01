@@ -105,6 +105,7 @@ venv.bak/
 
 # project-specific
 .make_targets/
+**/build/
 
 # KDevelop
 *.kdev*

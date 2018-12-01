@@ -473,7 +473,7 @@ class Typini(NodeList):
                                       for section in self.__sections)))
 
     def __len__(self):
-        # TODO : calculate length more efficiently?
+        # FIXME : calculate length more efficiently?
         return len(self.__header) + sum(len(i) for i in self.__sections)
 
     def __getitem__(self, key):
