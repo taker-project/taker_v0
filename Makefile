@@ -1,4 +1,4 @@
-.PHONY: help venv build build_runners clean clean_runners test_prepare test autopep8 pep8
+.PHONY: help venv build build_runners clean clean_runners test_prepare test autopep8 pep8 lint
 
 help:
 	@echo Usage:
@@ -10,6 +10,7 @@ help:
 	@echo test - run tests
 	@echo autopep8 - apply autopep8 to the code
 	@echo pep8 - run code style analysis
+	@echo lint - run pylint
 
 .make_targets/.dir:
 	mkdir -p .make_targets
@@ -21,7 +22,7 @@ venv: .make_targets/venv
 	python3 -m venv venv
 	touch .make_targets/venv
 	bash -c '. pyenv.sh && pip install -U pip setuptools \
-		&& pip install pytest'
+		&& pip install pytest pytest-pycodestyle pylint'
 
 clean_runners:
 	cd runners && $(MAKE) clean
@@ -42,10 +43,13 @@ test_prepare:
 	cd runners && $(MAKE) test_prepare
 
 test: venv build test_prepare
-	bash -c '. pyenv.sh && pytest'
+	bash -c '. pyenv.sh && pytest --codestyle'
 
 autopep8: venv
 	bash -c 'scripts/autopep8.sh'
 
 pep8: venv
 	bash -c 'scripts/pep8.sh'
+
+lint: venv
+	bash -c 'scripts/lint.sh'
