@@ -1,13 +1,13 @@
+import itertools
 from .names import *
 from .parseutils import *
-import itertools
 
 
 class EmptyNode:
     @classmethod
     def can_load(cls, line):
-        c = next_nonspace(line)
-        return c == '' or c == '#'
+        char = next_nonspace(line)
+        return char in ('', '#')
 
     def load(self, line, pos=0):
         pos = skip_spaces(line, pos)
@@ -33,7 +33,7 @@ class EmptyNode:
 
 
 class VariableValue:
-    def _do_validate(self):
+    def is_valid(self):
         if self.value is None:
             return True
         return type(self.value) == self.var_type()
@@ -45,7 +45,7 @@ class VariableValue:
         raise NotImplementedError()
 
     def validate(self):
-        if not self._do_validate():
+        if not self.is_valid():
             raise ValueError('{} contains an invalid value'
                              .format(type(self).__name__))
 
@@ -58,8 +58,8 @@ class VariableValue:
             self.value = None
             return new_pos
         pos = self._do_load(line, pos)
-        if not self._do_validate():
-            raise ParseError('{} contains an invalid value'
+        if not self.is_valid():
+            raise ParseError(-1, pos, '{} contains an invalid value'
                              .format(type(self).__name__))
         return pos
 
@@ -96,11 +96,10 @@ class IntValue(NumberValue):
     def type_name(self):
         return 'int'
 
-    def _do_validate(self):
-        if type(self.value) is int:
+    def is_valid(self):
+        if isinstance(self.value, int):
             return INT_MIN <= self.value and self.value <= INT_MAX
-        else:
-            return super()._do_validate()
+        return super().is_valid()
 
 
 class FloatValue(NumberValue):
@@ -127,7 +126,6 @@ class BoolValue(VariableValue):
             self.value = False
             return pos
         raise ParseError(-1, pos, 'expected true or false')
-        return pos
 
     def _do_save(self):
         return 'true' if self.value else 'false'
@@ -149,10 +147,10 @@ class StrValue(VariableValue):
 
 
 class CharValue(StrValue):
-    def _do_validate(self):
-        if type(self.value) is str and len(self.value) != 1:
+    def is_valid(self):
+        if isinstance(self.value, str) and len(self.value) != 1:
             return False
-        return super()._do_validate()
+        return super().is_valid()
 
     def type_name(self):
         return 'char'
@@ -174,12 +172,12 @@ class ArrayValue(VariableValue):
     def type_name(self):
         return self.item_value.type_name() + '[]'
 
-    def _do_validate(self):
-        if super()._do_validate():
+    def is_valid(self):
+        if super().is_valid():
             return True
         for item in self.value:
             self.item_value.value = item
-            if not self.item_value._do_validate():
+            if not self.item_value.is_valid():
                 return False
         return True
 
@@ -193,7 +191,7 @@ class ArrayValue(VariableValue):
                 raise ParseError(-1, pos, 'unterminated array')
             if line[pos] == ']':
                 return pos + 1
-            if len(self.value) != 0:
+            if self.value:
                 pos = line_expect(line, pos, ',')
             pos = self.item_value.load(line, pos)
             self.value += [self.item_value.value]
@@ -206,6 +204,7 @@ class ArrayValue(VariableValue):
         return res[:-2] + ']'
 
     def __init__(self, item_class, value=None):
+        super().__init__(value)
         self.item_class = item_class
         self.item_value = item_class()
 
@@ -215,12 +214,11 @@ class TypeBinder:
         type_name = type_class().type_name()
         self.__binding[type_name] = type_class
 
-    def create_value(self, type):
+    def create_value(self, typename):
         # TODO: Add multi-dimensional array support (?)
-        if len(type) > 2 and type[-2:] == '[]':
-            return ArrayValue(self.__binding[type[:-2]])
-        else:
-            return self.__binding[type]()
+        if len(typename) > 2 and typename[-2:] == '[]':
+            return ArrayValue(self.__binding[typename[:-2]])
+        return self.__binding[typename]()
 
     def __init__(self):
         self.__binding = {}
@@ -254,9 +252,9 @@ class VariableNode(EmptyNode):
             pos = self.value.load(line, pos)
         return super().load(line, pos)
 
-    def reset(self, key, type, value):
+    def reset(self, key, typename, value):
         self.key = key
-        self.value = self.parent.binder.create_value(type)
+        self.value = self.parent.binder.create_value(typename)
         self.value.value = value
         self.value.validate()
 
@@ -381,15 +379,15 @@ class TypiniSection:
         self.__nodes[index].value.value = value
         self.__nodes[index].value.validate()
 
-    def reset(self, key, type, value, can_overwrite=True):
+    def reset(self, key, typename, value, can_overwrite=True):
         index = self.__get_node_index(key, False)
         cur_node = (self.__nodes[index]
                     if index >= 0
                     else VariableNode(self.parent))
         if (not can_overwrite) and index >= 0:
-            if cur_node.key != key or cur_node.value.type_name() != type:
+            if cur_node.key != key or cur_node.value.type_name() != typename:
                 raise KeyError(key)
-        cur_node.reset(key, type, value)
+        cur_node.reset(key, typename, value)
         if index < 0:
             self.append_value_node(cur_node)
 
@@ -452,7 +450,7 @@ class Typini(NodeList):
         if type(node) == SectionNode:
             self.__append_section(node)
         else:
-            if len(self.__sections) > 0:
+            if self.__sections:
                 self.__sections[-1].append_node(node)
             elif type(node) != EmptyNode:
                 raise ParseError(

@@ -1,12 +1,12 @@
 
-def is_char_valid(c):
-    if 'a' <= c and c <= 'z':
+def is_char_valid(char):
+    if 'a' <= char and char <= 'z':
         return True
-    if 'A' <= c and c <= 'Z':
+    if 'A' <= char and char <= 'Z':
         return True
-    if '0' <= c and c <= '9':
+    if '0' <= char and char <= '9':
         return True
-    if c == '-' or c == '_' or c == '.' or c == '/':
+    if char in ('-', '_', '.', '/'):
         return True
     return False
 
@@ -16,7 +16,7 @@ def is_var_name_valid(name):
         return False
     if name[0] == '-':
         return False
-    for c in name:
-        if not is_char_valid(c):
+    for char in name:
+        if not is_char_valid(char):
             return False
     return True

@@ -19,8 +19,8 @@ INT_MIN = -(2 ** 63)
 INT_MAX = 2 ** 63 - 1
 
 
-def unescape_str(s):
-    return codecs.escape_decode(s.encode())[0].decode()
+def unescape_str(string):
+    return codecs.escape_decode(string.encode())[0].decode()
 
 
 def skip_spaces(line, pos):
@@ -54,9 +54,9 @@ def extract_string(line, pos):
     raise ParseError(-1, pos, 'string is not terminated')
 
 
-def line_expect(line, pos, c):
-    if pos == len(line) or line[pos] != c:
-        raise ParseError(-1, pos, '{} expected'.format(repr(c)))
+def line_expect(line, pos, char):
+    if pos == len(line) or line[pos] != char:
+        raise ParseError(-1, pos, '{} expected'.format(repr(char)))
     pos += 1
     return pos
 
