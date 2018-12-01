@@ -287,7 +287,7 @@ void ProcessRunner::handleParent() {
       break;
     }
     // wait a little
-    usleep(10'000);
+    usleep(1'000);
   }
 }
 

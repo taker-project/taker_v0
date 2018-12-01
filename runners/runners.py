@@ -5,6 +5,7 @@ import subprocess
 import os
 import shutil
 import tempfile
+from copy import copy
 
 Parameters = namedlist('Parameters',
                        ['time_limit', 'idle_limit', 'memory_limit',
@@ -37,10 +38,10 @@ def dict_keys_replace(src_dict, src_char, dst_char):
 
 
 def parameters_to_json(parameters):
-    if parameters.idle_limit is None:
-        parameters.idle_limit = 3.5 * parameters.time_limit
     param_dict = parameters._asdict()
     param_dict = dict_keys_replace(param_dict, '_', '-')
+    if parameters.idle_limit is None:
+        param_dict['idle-limit'] = 3.5 * parameters.time_limit
     return json.dumps(param_dict)
 
 
@@ -79,6 +80,7 @@ class Runner:
                               .format(exc.returncode))
 
     def run(self):
+        old_parameters = copy(self.parameters)
         create_temp_dir = (self.pass_stdin or self.capture_stdout
                            or self.capture_stderr)
         if create_temp_dir:
@@ -102,6 +104,7 @@ class Runner:
             except FileNotFoundError:
                 pass
         finally:
+            self.parameters = old_parameters
             if create_temp_dir:
                 shutil.rmtree(temp_dir)
 

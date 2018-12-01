@@ -102,9 +102,6 @@ def do_runner_test(runner_name):
     assert runner.results.memory <= 69.0
 
     runner.parameters.executable = path.join(tests_location, 'vector_test')
-    # this test also fails on unixrun because of fast memory allocation and
-    # deallocation
-    # FIXME : fix this test for unixrun!
     if runner_name not in set(['taker_unixrun']):
         runner.parameters.memory_limit = 20.0
         runner.run()
@@ -120,7 +117,7 @@ def do_runner_test(runner_name):
 
     runner.parameters.executable = path.join(
         tests_location, 'vector_pushback_test')
-    runner.parameters.memory_limit = 55.0
+    runner.parameters.memory_limit = 40.0
     runner.run()
     assert runner.results.status == Status.MEMORY_LIMIT
     runner.parameters.memory_limit = 256.0
