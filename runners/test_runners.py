@@ -1,9 +1,9 @@
-from .runners import *
 import json
-import pytest
 import os
 from os import path
 import tempfile
+import pytest
+from .runners import *
 
 
 def test_parameters_to_json():

@@ -1,4 +1,3 @@
-from namedlist import namedtuple, namedlist
 from enum import Enum
 import json
 import subprocess
@@ -6,6 +5,7 @@ import os
 import shutil
 import tempfile
 from copy import copy
+from namedlist import namedtuple, namedlist
 
 Parameters = namedlist('Parameters',
                        ['time_limit', 'idle_limit', 'memory_limit',
@@ -48,8 +48,8 @@ class RunnerError(Exception):
 
 
 def dict_keys_replace(src_dict, src_char, dst_char):
-    return dict([(item[0].replace(src_char, dst_char), item[1])
-                 for item in src_dict.items()])
+    return {item[0].replace(src_char, dst_char): item[1]
+            for item in src_dict.items()}
 
 
 def parameters_to_json(parameters):
@@ -66,7 +66,7 @@ def parameters_to_json(parameters):
 
 
 def typecheck(typename, value):
-    if type(value) is not typename:
+    if not isinstance(value, typename):
         raise ValueError('"{}" is not {}'.format(
             str(value), typename.__name__))
     return value
@@ -74,7 +74,7 @@ def typecheck(typename, value):
 
 def json_to_runner_info(results_json):
     res = json.loads(results_json)
-    res['features'] = set([RunnerFeature(i) for i in res['features']])
+    res['features'] = {RunnerFeature(i) for i in res['features']}
     return RunnerInfo(
         name=typecheck(str, res['name']),
         description=typecheck(str, res['description']),
