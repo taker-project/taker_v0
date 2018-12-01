@@ -1,5 +1,5 @@
-#include <cstdio>
 #include <cassert>
+#include <cstdio>
 
 #ifdef __unix__
 #include <sys/stat.h>

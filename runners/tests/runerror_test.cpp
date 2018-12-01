@@ -1,12 +1,13 @@
+#include <cassert>
+#include <cstdlib>
 #include <iostream>
 #include <string>
-#include <cstdlib>
-#include <cassert>
 
 using namespace std;
 
 int main() {
-  std::string s; std::cin >> s;
+  std::string s;
+  std::cin >> s;
   if (s == "assert") {
     assert(false);
   } else if (s == "error") {

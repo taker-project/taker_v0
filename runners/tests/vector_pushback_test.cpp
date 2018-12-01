@@ -1,5 +1,5 @@
-#include "test_utils.hpp"
 #include <vector>
+#include "test_utils.hpp"
 
 int main() {
   std::vector<char> vec;
