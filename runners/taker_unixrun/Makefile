@@ -1,11 +1,11 @@
 .PHONY: install build clean prebuild
 
-prebuild:
-	mkdir -p build/
-
 build: prebuild
 	cd build && cmake ..
 	cd build && $(MAKE)
+
+prebuild:
+	mkdir -p build/
 
 clean:
 	rm -rf build
