@@ -103,6 +103,7 @@ def json_to_results(results_json):
 
 class Runner:
     def get_runner_info(self):
+        # FIXME : do not call runner process for each instance (?)
         return json_to_runner_info(
             subprocess.check_output([self.runner_path, '-?'],
                                     input='', universal_newlines=True))
