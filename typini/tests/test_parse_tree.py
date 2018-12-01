@@ -18,5 +18,6 @@ def test_parse_tree():
     parser = Typini()
     parser.load_from_file(path.join(test_dir, 'test1.tini'))
     parsed = dump(parser)
-    correct = json.loads(open(path.join(test_dir, 'test1.json'), 'r').read())
+    correct = json.loads(
+        open(path.join(test_dir, 'test1.json'), 'r', encoding='utf8').read())
     assert parsed == correct
