@@ -106,15 +106,17 @@ def do_runner_test(runner_name):
     # deallocation
     # FIXME : fix this test for unixrun!
     if runner_name not in set(['taker_unixrun']):
-        assert runner.results.status == Status.MEMORY_LIMIT
-        runner.parameters.memory_limit = 40.0
+        runner.parameters.memory_limit = 20.0
         runner.run()
+        assert runner.results.status == Status.MEMORY_LIMIT
+    runner.parameters.memory_limit = 40.0
+    runner.run()
+    assert runner.results.status == Status.MEMORY_LIMIT
     runner.parameters.memory_limit = 256.0
     runner.run()
     assert runner.results.status == Status.OK
-    if runner_name not in set(['taker_unixrun']):
-        assert runner.results.memory >= 59.0
-        assert runner.results.memory <= 69.0
+    assert runner.results.memory >= 59.0
+    assert runner.results.memory <= 69.0
 
     runner.parameters.executable = path.join(
         tests_location, 'vector_pushback_test')

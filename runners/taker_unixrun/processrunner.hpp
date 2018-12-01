@@ -112,7 +112,11 @@ class ProcessRunner {
   void startTimer();
   double getTimerValue();
 
-  bool updateResourcesFromProcInfo();
+#ifdef __linux__
+  bool updateTimeFromProcStat();
+  bool updateMemFromProcStatus();
+#endif
+
   void updateResultsOnRun();
   void updateVerdicts();
   void updateResultsOnTerminate(const struct rusage &resources, int status);

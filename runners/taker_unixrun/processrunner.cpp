@@ -29,6 +29,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include "utils.hpp"
 
@@ -248,10 +249,18 @@ void ProcessRunner::handleParent() {
   results_.time = results_.clockTime = 0.0;
   results_.memory = 0.0;
   results_.status = RunStatus::RUNNING;
-  updateResultsOnRun();
 
   // wait for process
   while (results_.status == RunStatus::RUNNING) {
+    // check for time and memory limits
+    updateResultsOnRun();
+    updateVerdicts();
+    if (results_.status != RunStatus::RUNNING) {
+      kill(pid_, SIGKILL);
+      trySyscall(waitpid(pid_, nullptr, 0) >= 0, "unable to wait for process");
+      break;
+    }
+    // check if the process has terminated
     int status = -1;
     struct rusage resources;
     zeroMem(resources);
@@ -262,17 +271,7 @@ void ProcessRunner::handleParent() {
       kill(pid_, SIGKILL);
       parentFailure("unable to wait for process", errCode);
     }
-    if (pidWaited == 0) {
-      // the process is still running
-      updateResultsOnRun();
-      updateVerdicts();
-      if (results_.status != RunStatus::RUNNING) {
-        kill(pid_, SIGKILL);
-        trySyscall(waitpid(pid_, nullptr, 0) >= 0,
-                   "unable to wait for process");
-        break;
-      }
-    } else {
+    if (pidWaited != 0) {
       // the process has changed the state
       // FIXME : handle stopped/continued processes
       updateResultsOnTerminate(resources, status);
@@ -287,6 +286,7 @@ void ProcessRunner::handleParent() {
       updateVerdicts();
       break;
     }
+    // wait a little
     usleep(10'000);
   }
 }
@@ -304,8 +304,9 @@ double ProcessRunner::getTimerValue() {
   return timevalToDouble(timeDifference(startTime_, curTime));
 }
 
-bool ProcessRunner::updateResourcesFromProcInfo() {
 #ifdef __linux__
+
+bool ProcessRunner::updateTimeFromProcStat() {
   std::string procFileName = "/proc/" + std::to_string(pid_) + "/stat";
   std::ifstream procStats(procFileName);
   if (!procStats.good()) {
@@ -321,15 +322,13 @@ bool ProcessRunner::updateResourcesFromProcInfo() {
   }
   procStr.erase(0, bracketPos + 1);
   std::istringstream tokenizer(procStr);
-  unsigned long utime, stime, vsize;
+  unsigned long utime, stime;
   std::string unused;
   for (int field = 3; field <= 42; ++field) {
     if (field == 14) {
       tokenizer >> utime;
     } else if (field == 15) {
       tokenizer >> stime;
-    } else if (field == 23) {
-      tokenizer >> vsize;
     } else {
       tokenizer >> unused;
     }
@@ -338,16 +337,49 @@ bool ProcessRunner::updateResourcesFromProcInfo() {
     }
   }
   results_.time = 1.0 * (utime + stime) / sysconf(_SC_CLK_TCK);
-  results_.memory = std::max(results_.memory, vsize / 1048576.0);
   return true;
-#else
-  // TODO : add code for *BSD (?)
-  return false;
-#endif
 }
 
+bool ProcessRunner::updateMemFromProcStatus() {
+  const std::map<std::string, double> multipliers = {
+      {"kB", 1.0 / 1024}, {"KB", 1.0 / 1024}, {"kb", 1.0 / 1024}, {"MB", 1.0},
+      {"mb", 1.0},        {"GB", 1024.0},     {"gb", 1024.0}};
+  std::string procFileName = "/proc/" + std::to_string(pid_) + "/status";
+  std::ifstream procStatus(procFileName);
+  if (!procStatus.good()) {
+    return false;
+  }
+  std::string fieldName;
+  while (procStatus >> fieldName) {
+    if (fieldName == "VmPeak:") {
+      int64_t value;
+      std::string measureUnit;
+      if (!(procStatus >> value >> measureUnit)) {
+        return false;
+      }
+      if (multipliers.find(measureUnit) == end(multipliers)) {
+        return false;
+      }
+      results_.memory =
+          std::max(results_.memory, value * multipliers.at(measureUnit));
+      return true;
+    } else {
+      std::string unused;
+      if (!std::getline(procStatus, unused)) {
+        return false;
+      }
+    }
+  }
+  return false;
+}
+
+#endif  // __linux__
+
 void ProcessRunner::updateResultsOnRun() {
-  updateResourcesFromProcInfo();
+#ifdef __linux__
+  updateTimeFromProcStat();
+  updateMemFromProcStatus();
+#endif
   results_.clockTime = getTimerValue();
 }
 
@@ -408,6 +440,8 @@ void ProcessRunner::handleChild() {
       static_cast<int64_t>(ceil(parameters_.timeLimit + 0.2));
   trySyscall(updateLimit(RLIMIT_CPU, integralTimeLimit),
              "could not set time limit");
+
+  // FIXME : distinguish between RE and ML better
 
   int64_t memLimitBytes =
       static_cast<int64_t>(ceil(parameters_.memoryLimit * 1048576));
