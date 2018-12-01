@@ -102,6 +102,11 @@ def json_to_results(results_json):
 
 
 class Runner:
+    def get_runner_info(self):
+        return json_to_runner_info(
+            subprocess.check_output([self.runner_path, '-?'],
+                                    input='', universal_newlines=True))
+
     def _do_run(self):
         input_str = parameters_to_json(self.parameters)
         try:
@@ -157,3 +162,4 @@ class Runner:
         self.stdin = ''
         self.stdout = ''
         self.stderr = ''
+        self.info = self.get_runner_info()
