@@ -52,11 +52,7 @@ class ProcessRunner {
     NONE
   };
 
-  static const char *runStatusToStr(RunStatus status);
-
   enum class IsolatePolicy { NONE, NORMAL, COMPILE, STRICT };
-
-  static IsolatePolicy strToIsolatePolicy(const std::string &value);
 
   struct Parameters {
     double timeLimit = 2.0;
@@ -91,12 +87,13 @@ class ProcessRunner {
     Json::Value saveToJson() const;
   };
 
+  static const char *runStatusToStr(RunStatus status);
+  static IsolatePolicy strToIsolatePolicy(const std::string &value);
+
   Json::Value runnerInfoJson() const;
 
   Parameters &parameters();
-
   const Parameters &parameters() const;
-
   const RunResults &results() const;
 
   void execute();
