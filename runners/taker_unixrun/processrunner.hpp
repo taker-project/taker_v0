@@ -54,12 +54,7 @@ class ProcessRunner {
 
   static const char *runStatusToStr(RunStatus status);
 
-  enum class IsolatePolicy {
-    NONE,
-    NORMAL,
-    COMPILE,
-    STRICT
-  };
+  enum class IsolatePolicy { NONE, NORMAL, COMPILE, STRICT };
 
   static IsolatePolicy strToIsolatePolicy(const std::string &value);
 
@@ -114,10 +109,10 @@ class ProcessRunner {
   void handleParent();
 
  private:
-  Parameters parameters_ {};
-  RunResults results_ {};
+  Parameters parameters_{};
+  RunResults results_{};
   pid_t pid_ = -1;
-  int pipe_[2] {};
+  int pipe_[2]{};
   struct timeval startTime_ {};
 
   void startTimer();
