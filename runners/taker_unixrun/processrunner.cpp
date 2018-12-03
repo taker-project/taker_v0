@@ -230,6 +230,8 @@ void ProcessRunner::doExecute() {
   }
   pid_ = fork();
   if (pid_ < 0) {
+    close(pipe_[0]);
+    close(pipe_[1]);
     throw RunnerError(strerror(errno));
   }
   if (pid_ == 0) {
@@ -246,6 +248,7 @@ void ProcessRunner::doExecute() {
 }
 
 void ProcessRunner::handleParent() {
+  FileDescriptorOwner fdOwner(pipe_[0]);
   startTimer();
 
   // check for RUN_FAIL
@@ -545,6 +548,7 @@ std::string ProcessRunner::getFullErrorMessage(const std::string &message,
   int msgSize = static_cast<int>(fullMsg.size());
   write(pipe_[1], &msgSize, sizeof(msgSize));
   write(pipe_[1], fullMsg.c_str(), msgSize * sizeof(char));
+  close(pipe_[1]);
   _exit(42);
 }
 

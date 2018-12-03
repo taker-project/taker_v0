@@ -29,6 +29,17 @@ inline void zeroMem(T &value) {
   memset(&value, 0, sizeof(value));
 }
 
+class FileDescriptorOwner {
+ public:
+  int getFileDescriptor() const;
+
+  FileDescriptorOwner(int fd);
+  ~FileDescriptorOwner();
+
+ private:
+  int fd_;
+};
+
 bool fileIsGood(const char *fileName);
 bool fileIsGood(const std::string &fileName);
 

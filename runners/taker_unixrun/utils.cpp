@@ -30,6 +30,12 @@
 
 namespace UnixRunner {
 
+FileDescriptorOwner::FileDescriptorOwner(int fd) : fd_(fd) {}
+
+int FileDescriptorOwner::getFileDescriptor() const { return fd_; }
+
+FileDescriptorOwner::~FileDescriptorOwner() { close(fd_); }
+
 const int READ_PERM = S_IRUSR | S_IRGRP | S_IROTH;
 const int WRITE_PERM = S_IWUSR | S_IWGRP | S_IWOTH;
 const int EXEC_PERM = S_IXUSR | S_IXGRP | S_IXOTH;
