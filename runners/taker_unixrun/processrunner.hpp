@@ -110,10 +110,7 @@ class ProcessRunner {
   RunResults results_{};
   pid_t pid_ = -1;
   int pipe_[2]{};
-  struct timeval startTime_ {};
-
-  void startTimer();
-  double getTimerValue();
+  Timer timer_{};
 
 #ifdef __linux__
   bool updateTimeFromProcStat();
@@ -126,10 +123,6 @@ class ProcessRunner {
 
   void trySyscall(bool success, const std::string &errorName);
 
-  void childRedirect(int fd, std::string fileName, int flags,
-                     mode_t mode = 0644);
-
-  std::string getFullErrorMessage(const std::string &message, int errcode = 0);
   [[noreturn]] void childFailure(const std::string &message, int errcode = 0);
   void parentFailure(const std::string &message, int errcode = 0);
 };

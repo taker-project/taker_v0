@@ -20,7 +20,6 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/resource.h>
-#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -249,7 +248,7 @@ void ProcessRunner::doExecute() {
 
 void ProcessRunner::handleParent() {
   FileDescriptorOwner fdOwner(pipe_[0]);
-  startTimer();
+  timer_.start();
 
   // check for RUN_FAIL
   int msgSize;
@@ -321,19 +320,6 @@ void ProcessRunner::handleParent() {
     // wait a little
     usleep(1'000);
   }
-}
-
-void ProcessRunner::startTimer() {
-  zeroMem(startTime_);
-  trySyscall(gettimeofday(&startTime_, nullptr) == 0,
-             "could not get system time");
-}
-
-double ProcessRunner::getTimerValue() {
-  struct timeval curTime;
-  zeroMem(curTime);
-  trySyscall(gettimeofday(&curTime, nullptr) == 0, "could not get system time");
-  return timevalToDouble(timeDifference(startTime_, curTime));
 }
 
 #ifdef __linux__
@@ -412,7 +398,7 @@ void ProcessRunner::updateResultsOnRun() {
   updateTimeFromProcStat();
   updateMemFromProcStatus();
 #endif
-  results_.clockTime = getTimerValue();
+  results_.clockTime = timer_.getTime();
 }
 
 void ProcessRunner::updateVerdicts() {
@@ -443,7 +429,7 @@ void ProcessRunner::updateResultsOnTerminate(const struct rusage &resources,
   }
   results_.time =
       timevalToDouble(timeSum(resources.ru_stime, resources.ru_utime));
-  results_.clockTime = getTimerValue();
+  results_.clockTime = timer_.getTime();
   if (results_.memory == 0) {
     // FIXME : if the memory usage wasn't updated, maybe use smth better than
     // maxrss?
@@ -489,11 +475,17 @@ void ProcessRunner::handleChild() {
                "could not change directory");
   }
 
-  childRedirect(STDIN_FILENO, parameters_.stdinRedir, O_RDONLY);
-  childRedirect(STDOUT_FILENO, parameters_.stdoutRedir,
-                O_CREAT | O_TRUNC | O_WRONLY);
-  childRedirect(STDERR_FILENO, parameters_.stderrRedir,
-                O_CREAT | O_TRUNC | O_WRONLY);
+  trySyscall(
+      redirectDescriptor(STDIN_FILENO, parameters_.stdinRedir, O_RDONLY),
+      "unable to redirect stdin into \"" + parameters_.stdinRedir + "\"");
+  trySyscall(
+      redirectDescriptor(STDOUT_FILENO, parameters_.stdoutRedir,
+                         O_CREAT | O_TRUNC | O_WRONLY),
+      "unable to redirect stdout into \"" + parameters_.stdoutRedir + "\"");
+  trySyscall(
+      redirectDescriptor(STDERR_FILENO, parameters_.stderrRedir,
+                         O_CREAT | O_TRUNC | O_WRONLY),
+      "unable to redirect stderr into \"" + parameters_.stderrRedir + "\"");
 
   if (parameters_.clearEnv) {
     environ = nullptr;
@@ -517,29 +509,6 @@ void ProcessRunner::handleChild() {
   trySyscall(execv(argv[0], argv) == 0,
              "failed to run \"" + parameters_.executable + "\"");
   childFailure("handleChild() has reached the end");
-}
-
-void ProcessRunner::childRedirect(int fd, std::string fileName, int flags,
-                                  mode_t mode) {
-  if (fileName.empty()) {
-    fileName = "/dev/null";
-  }
-  int dest_fd = open(fileName.c_str(), flags, mode);
-  if (dest_fd < 0) {
-    childFailure("unable to open \"" + fileName + "\"", errno);
-  }
-  if (dup2(dest_fd, fd) < 0) {
-    childFailure("unable to duplicate file descriptor");
-  }
-}
-
-std::string ProcessRunner::getFullErrorMessage(const std::string &message,
-                                               int errcode) {
-  if (errcode == 0) {
-    return message;
-  } else {
-    return message + ": " + strerror(errcode);
-  }
 }
 
 [[noreturn]] void ProcessRunner::childFailure(const std::string &message,

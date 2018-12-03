@@ -16,6 +16,7 @@
  */
 
 #include "utils.hpp"
+#include <fcntl.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -35,6 +36,15 @@ FileDescriptorOwner::FileDescriptorOwner(int fd) : fd_(fd) {}
 int FileDescriptorOwner::getFileDescriptor() const { return fd_; }
 
 FileDescriptorOwner::~FileDescriptorOwner() { close(fd_); }
+
+double Timer::getTime() const {
+  using namespace std::chrono;
+  return 1e-9 * duration_cast<nanoseconds>(clock_.now() - startTime_).count();
+}
+
+void Timer::start() { startTime_ = clock_.now(); }
+
+Timer::Timer() { start(); }
 
 const int READ_PERM = S_IRUSR | S_IRGRP | S_IROTH;
 const int WRITE_PERM = S_IWUSR | S_IWGRP | S_IWOTH;
@@ -170,6 +180,31 @@ struct timeval timeDifference(const struct timeval &start,
 
 double timevalToDouble(const struct timeval &value) {
   return 1.0 * value.tv_sec + 1.0 * value.tv_usec / USEC_IN_SECOND;
+}
+
+std::string getFullErrorMessage(const std::string &message, int errcode) {
+  if (errcode == 0) {
+    return message;
+  } else {
+    return message + ": " + strerror(errcode);
+  }
+}
+
+bool redirectDescriptor(int fd, std::string fileName, int flags, mode_t mode) {
+  if (fileName.empty()) {
+    fileName = "/dev/null";
+  }
+  int dest_fd = open(fileName.c_str(), flags, mode);
+  if (dest_fd < 0) {
+    return false;
+  }
+  if (dup2(dest_fd, fd) < 0) {
+    int dupErr = errno;
+    close(dest_fd);
+    errno = dupErr;
+    return false;
+  }
+  return true;
 }
 
 }  // namespace UnixRunner

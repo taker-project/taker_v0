@@ -19,6 +19,7 @@
 #define UTILS_H
 
 #include <sys/time.h>
+#include <chrono>
 #include <cstring>
 #include <string>
 
@@ -38,6 +39,17 @@ class FileDescriptorOwner {
 
  private:
   int fd_;
+};
+
+class Timer {
+ public:
+  void start();
+  double getTime() const;
+  Timer();
+
+ private:
+  std::chrono::steady_clock clock_{};
+  std::chrono::steady_clock::time_point startTime_{};
 };
 
 bool fileIsGood(const char *fileName);
@@ -65,6 +77,11 @@ struct timeval timeSum(const struct timeval &val1, const struct timeval &val2);
 struct timeval timeDifference(const struct timeval &start,
                               const struct timeval &finish);
 double timevalToDouble(const struct timeval &value);
+
+std::string getFullErrorMessage(const std::string &message, int errcode = 0);
+
+bool redirectDescriptor(int fd, std::string fileName, int flags,
+                        mode_t mode = 0644);
 
 }  // namespace UnixRunner
 
