@@ -3,7 +3,7 @@ import os
 from os import path
 import tempfile
 import pytest
-from .runners import *
+from runners.runners import *
 
 
 def test_parameters_to_json():
@@ -26,6 +26,7 @@ def test_results_from_json():
     assert (json_to_results(json.dumps(src_dict)) ==
             Results(time=2.5, clock_time=3.0, memory=42.0, exitcode=10,
                     signal=0, signal_name='', status=Status.OK, comment=''))
+
     src_dict['signal'] = 42
     src_dict['comment'] = '!'
     assert (json_to_results(json.dumps(src_dict)) ==
@@ -63,18 +64,22 @@ def do_runner_test(runner_name):
     runner_path = path.realpath(path.join('runners', 'taker_unixrun',
                                           'build', runner_name))
 
+    # basic test: check if program prints some output
     runner = Runner(runner_path)
     runner.capture_stdout = True
-
     runner.parameters.executable = path.join(tests_location, 'basic_test')
     runner.run()
     assert runner.results.status == Status.OK
     assert runner.stdout == 'hello world\n'
 
+    # invalid test: check for RUN_FAIL for non-existing executables
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(tests_location, 'invalid_test')
     runner.run()
     assert runner.results.status == Status.RUN_FAIL
 
+    # sleepy test: check for IDLE_LIMIT
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(tests_location, 'sleepy_test')
     runner.parameters.idle_limit = 0.5
     runner.run()
@@ -84,8 +89,9 @@ def do_runner_test(runner_name):
     assert runner.results.status == Status.OK
     assert abs(runner.results.clock_time - 0.55) < 0.02
     assert runner.results.time < 0.02
-    runner.parameters.idle_limit = None
 
+    # worky test: check for TIME_LIMIT
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(tests_location, 'worky_test')
     runner.parameters.time_limit = 0.5
     runner.run()
@@ -94,8 +100,9 @@ def do_runner_test(runner_name):
     runner.run()
     assert runner.results.status == Status.OK
     assert abs(runner.results.time - 0.55) < 0.02
-    runner.parameters.time_limit = 2
 
+    # memory_test: check for MEMORY_LIMIT
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(tests_location, 'memory_test')
     # on taker_unixrun, this test fail with RUNTIME_ERROR
     # FIXME : better detect MEMORY_LIMIT and RUNTIME_ERROR for unixrun!
@@ -112,6 +119,9 @@ def do_runner_test(runner_name):
     assert runner.results.memory >= 59.0
     assert runner.results.memory <= 69.0
 
+    # vector_test: another memory test, now with vectors
+    # memory allocations and deallocations are very fast here
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(tests_location, 'vector_test')
     if runner_name not in set(['taker_unixrun']):
         runner.parameters.memory_limit = 20.0
@@ -120,36 +130,44 @@ def do_runner_test(runner_name):
     runner.parameters.memory_limit = 40.0
     runner.run()
     assert runner.results.status == Status.MEMORY_LIMIT
-    runner.parameters.memory_limit = 256.0
+    runner.parameters.memory_limit = 128.0
     runner.run()
     assert runner.results.status == Status.OK
     assert runner.results.memory >= 59.0
     assert runner.results.memory <= 69.0
 
+    # vector_pushback_test: memory tests with push_back() into vector
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(
         tests_location, 'vector_pushback_test')
     runner.parameters.memory_limit = 40.0
     runner.run()
     assert runner.results.status == Status.MEMORY_LIMIT
-    runner.parameters.memory_limit = 256.0
+    runner.parameters.memory_limit = 150.0
     runner.parameters.time_limit = 6.0
     runner.run()
     runner.parameters.time_limit = 2.0
     assert runner.results.status == Status.OK
     assert runner.results.memory >= 59.0
 
+    # alloc1_test: fast allocation/deallocation
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(
         tests_location, 'alloc1_test')
     runner.run()
     assert runner.results.memory >= 59.0
     assert runner.results.memory <= 69.0
 
+    # alloc2_test: fast allocation/deallocation
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(
         tests_location, 'alloc2_test')
     runner.run()
     assert runner.results.memory >= 19.0
     assert runner.results.memory <= 29.0
 
+    # env_test: test for env and clear_env parameters
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(
         tests_location, 'env_test')
     runner.capture_stdout = True
@@ -171,9 +189,9 @@ def do_runner_test(runner_name):
     runner.run()
     assert runner.stdout == '42\n'
     os.environ.pop('HELLO')
-    runner.parameters.env.clear()
-    runner.parameters.clear_env = False
 
+    # runerror_test: test for RUNTIME_ERROR (both by exitcode and signal)
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(
         tests_location, 'runerror_test')
     runner.pass_stdin = True
@@ -188,6 +206,8 @@ def do_runner_test(runner_name):
     assert runner.results.status == Status.RUNTIME_ERROR
     runner.pass_stdin = False
 
+    # args_test: test for args parameter
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(
         tests_location, 'args_test')
     runner.capture_stdout = True
@@ -197,6 +217,8 @@ def do_runner_test(runner_name):
     runner.parameters.args = []
     runner.capture_stdout = False
 
+    # broken_test: test for RUN_FAIL on bad executables
+    runner = Runner(runner_path)
     runner.parameters.executable = path.join(
         tests_location, 'broken_test')
     runner.run()
