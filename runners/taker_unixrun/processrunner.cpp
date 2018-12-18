@@ -229,9 +229,10 @@ void ProcessRunner::doExecute() {
   }
   pid_ = fork();
   if (pid_ < 0) {
+    int errCode = errno;
     close(pipe_[0]);
     close(pipe_[1]);
-    throw RunnerError(strerror(errno));
+    throw RunnerError(strerror(errCode));
   }
   if (pid_ == 0) {
     close(pipe_[0]);
