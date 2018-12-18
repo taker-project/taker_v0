@@ -232,7 +232,7 @@ void ProcessRunner::doExecute() {
     int errCode = errno;
     close(pipe_[0]);
     close(pipe_[1]);
-    throw RunnerError(strerror(errCode));
+    throw RunnerError(getFullErrorMessage("unable to fork()", errCode));
   }
   if (pid_ == 0) {
     close(pipe_[0]);
