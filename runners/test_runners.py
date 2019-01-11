@@ -8,16 +8,36 @@ from runners.runners import *
 
 def test_parameters_to_json():
     parameters = Parameters(
-        time_limit=1.0, idle_limit=None, memory_limit=256.0, executable='exe',
-        clear_env=False, env={'ENV1': '4', 'ENV2': '5'}, args=['arg1', 'arg2'],
-        working_dir='work', stdin_redir='in.txt', stdout_redir='out.txt',
-        stderr_redir='err.txt', isolate_dir=None, isolate_policy=None)
-    assert (parameters_to_json(parameters) == '{"time-limit": 1.0, '
-            '"idle-limit": 3.5, "memory-limit": 256.0, "executable": "exe", '
-            '"clear-env": false, "env": {"ENV1": "4", "ENV2": "5"}, "args": '
-            '["arg1", "arg2"], "working-dir": "work", "stdin-redir": '
-            '"in.txt", "stdout-redir": "out.txt", "stderr-redir": "err.txt", '
-            '"isolate-dir": "work", "isolate-policy": "normal"}')
+        time_limit=1.0,
+        idle_limit=None,
+        memory_limit=256.0,
+        executable='exe',
+        clear_env=False,
+        env={'ENV1': '4', 'ENV2': '5'},
+        args=['arg1', 'arg2'],
+        working_dir='work',
+        stdin_redir='in.txt',
+        stdout_redir='out.txt',
+        stderr_redir='err.txt',
+        isolate_dir=None,
+        isolate_policy=None
+    )
+    assert (json.loads(parameters_to_json(parameters)) ==
+            {
+                'time-limit': 1.0,
+                'idle-limit': 3.5,
+                'memory-limit': 256.0,
+                'executable': 'exe',
+                'clear-env': False,
+                'env': {'ENV1': '4', 'ENV2': '5'},
+                'args': ['arg1', 'arg2'],
+                'working-dir': 'work',
+                'stdin-redir': 'in.txt',
+                'stdout-redir': 'out.txt',
+                'stderr-redir': 'err.txt',
+                'isolate-dir': 'work',
+                'isolate-policy': 'normal'
+            })
 
 
 def test_results_from_json():
