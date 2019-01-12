@@ -26,4 +26,7 @@ add_custom_command(
     DEPENDS basic_test cut_exe
 )
 
-add_custom_target(more_tests DEPENDS "broken_test${CMAKE_EXECUTABLE_SUFFIX}")
+add_custom_target(
+    more_tests ALL
+    DEPENDS "broken_test${CMAKE_EXECUTABLE_SUFFIX}"
+)
