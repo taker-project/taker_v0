@@ -7,6 +7,8 @@ import tempfile
 from copy import copy
 from namedlist import namedtuple, namedlist
 
+# TODO : the module architecture is not flexible enough, rewrite it!
+
 Parameters = namedlist('Parameters',
                        ['time_limit', 'idle_limit', 'memory_limit',
                         'executable', 'clear_env', 'env', 'args',
