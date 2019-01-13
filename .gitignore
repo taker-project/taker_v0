@@ -107,6 +107,7 @@ venv.bak/
 .make_targets/
 **/build/
 
-# KDevelop
+# IDE ignores
 *.kdev*
 .kdev*/
+*.geany

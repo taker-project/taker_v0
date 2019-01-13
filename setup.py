@@ -5,7 +5,7 @@ with open('README.md', 'r') as file:
 
 setup(
     name='taker',
-    version='0.0.0.a0',
+    version='0.0.0a0',
     author='Alexander Kernozhitsky',
     author_email='sh200105@mail.ru',
     description='Taker is a system to prepare competitive programming '
