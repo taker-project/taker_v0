@@ -21,20 +21,25 @@ internal_dir = '.taker'
 
 class TaskRepository:
     def init_task(self):
-        Path.mkdir(self.directory / internal_dir)
+        self.mkdir(internal_dir)
 
     def relpath(self, cur_path):
+        cur_path = Path(cur_path)
         if not cur_path.is_absolute():
-            cur_path = utils.relpath(self.abspath(cur_path))
+            cur_path = self.abspath(cur_path)
         return utils.relpath(cur_path, self.directory)
 
     def abspath(self, cur_path):
+        cur_path = Path(cur_path)
         if cur_path.is_absolute():
             return utils.abspath(cur_path)
         else:
             return utils.abspath(self.directory.joinpath(cur_path))
 
-    def to_root_dir(self):
+    def mkdir(self, location):
+        self.abspath(location).mkdir()
+
+    def to_task_dir(self):
         os.chdir(str(self.directory))
 
     def __init__(self, directory=None):

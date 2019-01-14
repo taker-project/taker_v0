@@ -38,5 +38,5 @@ def test_repo(tmpdir, monkeypatch):
             task_dir.parent / '42')
 
     with mock.patch('os.chdir'):
-        repo.to_root_dir()
+        repo.to_task_dir()
         os.chdir.assert_called_once_with(str(task_dir))

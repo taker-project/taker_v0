@@ -40,17 +40,16 @@ class File:
         return repo.abspath(self.filename)
 
     def normalize(self, repo):
-        if self.filename.is_absolute():
-            self.filename = repo.relpath(self.filename)
+        self.filename = repo.relpath(self.filename)
 
     def relative_to(self, repo, work_dir):
-        abs_filename = repo.abspath(self.filename)
+        abs_filename = self.absolute(repo)
         return utils.relpath(abs_filename, work_dir)
 
 
 class AbsoluteFile(File):
     def normalize(self, repo):
-        self.filename = utils.abspath(self.filename)
+        self.filename = repo.abspath(self.filename)
 
     def relative_to(self, repo, work_dir):
         return self.filename
@@ -148,11 +147,11 @@ class Command(AbstractCommand):
     def __init__(self, repo, executable, work_dir=None, args=[],
                  stdin_redir=None, stdout_redir=None, stderr_redir=None):
         super().__init__(repo, work_dir)
-        self.executable = executable
+        self.executable = copy(executable)
         self.args = deepcopy(args)
-        self.stdin_redir = stdin_redir
-        self.stdout_redir = stdout_redir
-        self.stderr_redir = stderr_redir
+        self.stdin_redir = copy(stdin_redir)
+        self.stdout_redir = copy(stdout_redir)
+        self.stderr_redir = copy(stderr_redir)
         self.__normalize_files()
 
     def get_input_files(self):
