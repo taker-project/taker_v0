@@ -12,6 +12,12 @@ def test_manager(tmpdir, monkeypatch):
 
     mgr = TaskManager(Path(task_dir))
     mgr.init_task()
+
+    assert mgr.relpath(Path(path.pardir) / path.curdir) == Path(path.pardir)
+    assert mgr.relpath(tmpdir) == Path(path.pardir)
+    assert mgr.abspath(Path(path.pardir) / path.curdir) == tmpdir
+    assert mgr.abspath(tmpdir) == tmpdir
+
     del mgr
 
     with pytest.raises(FileNotFoundError):
@@ -28,8 +34,10 @@ def test_manager(tmpdir, monkeypatch):
     assert find_task_dir(new_dir) == task_dir
 
     assert manager().directory.samefile(task_dir)
-    assert manager().relpath(task_dir.parent / '42') == Path('..') / '42'
-    assert manager().abspath(Path('..') / '42') == task_dir.parent / '42'
+    assert (manager().relpath(task_dir.parent / '42') ==
+            Path(path.pardir) / '42')
+    assert (manager().abspath(Path(path.pardir) / '42') ==
+            task_dir.parent / '42')
 
     with mock.patch('os.chdir'):
         manager().to_root_dir()
