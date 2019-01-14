@@ -16,7 +16,7 @@ setup(
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',
-        'License :: OSI Approved :: ',
+        'License :: OSI Approved :: '
         'GNU General Public License v3 or later (GPLv3+)',
         'Operating System :: POSIX',
         'Programming Language :: Python :: 3'
