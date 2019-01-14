@@ -52,13 +52,3 @@ def find_task_dir(start_dir=None):
         if (cur_dir / internal_dir).is_dir():
             return cur_dir
     raise FileNotFoundError('not in task directory')
-
-
-task_manager = None
-
-
-def manager():
-    global task_manager
-    if task_manager is None:
-        task_manager = TaskManager(find_task_dir())
-    return task_manager
