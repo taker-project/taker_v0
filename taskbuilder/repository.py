@@ -6,7 +6,7 @@ from . import utils
 '''
 Important notice about paths in this module:
 
-All relative paths in TaskManager are calculated relative to the task
+All relative paths in TaskRepository are calculated relative to the task
 directory, NOT to the current directory! The exception is the constructor,
 which considers relative paths as relative to the current directory.
 
@@ -19,7 +19,7 @@ format.
 internal_dir = '.taker'
 
 
-class TaskManager:
+class TaskRepository:
     def init_task(self):
         Path.mkdir(self.directory / internal_dir)
 

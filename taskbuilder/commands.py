@@ -36,23 +36,23 @@ class File:
     def __init__(self, filename):
         self.filename = Path(filename)
 
-    def absolute(self, manager):
-        return manager.abspath(self.filename)
+    def absolute(self, repo):
+        return repo.abspath(self.filename)
 
-    def normalize(self, manager):
+    def normalize(self, repo):
         if self.filename.is_absolute():
-            self.filename = manager.relpath(self.filename)
+            self.filename = repo.relpath(self.filename)
 
-    def relative_to(self, manager, work_dir):
-        abs_filename = manager.abspath(self.filename)
+    def relative_to(self, repo, work_dir):
+        abs_filename = repo.abspath(self.filename)
         return utils.relpath(abs_filename, work_dir)
 
 
 class AbsoluteFile(File):
-    def normalize(self, manager):
+    def normalize(self, repo):
         self.filename = utils.abspath(self.filename)
 
-    def relative_to(self, manager, work_dir):
+    def relative_to(self, repo, work_dir):
         return self.filename
 
 
@@ -70,21 +70,21 @@ class OutputFile(File):
 
 
 class Executable(File):
-    def command_name(self, manager, work_dir):
-        result = str(self.relative_to(manager, work_dir))
+    def command_name(self, repo, work_dir):
+        result = str(self.relative_to(repo, work_dir))
         if path.basename(result) == result:
             result = path.join(path.curdir, result)
         return result
 
 
 class GlobalCmd(Executable):
-    def relative_to(self, manager, work_dir):
+    def relative_to(self, repo, work_dir):
         return self.filename
 
-    def command_name(self, manager, work_dir):
+    def command_name(self, repo, work_dir):
         return str(self.filename)
 
-    def normalize(self, manager):
+    def normalize(self, repo):
         new_filename = Path(shutil.which(str(self.filename)))
         if new_filename is None:
             # FIXME : maybe raise an error here?
@@ -110,31 +110,31 @@ class AbstractCommand:
                                     self._shell_str_internal())
 
     def work_dir_abs(self):
-        return self.manager.abspath(self.work_dir)
+        return self.repo.abspath(self.work_dir)
 
-    def __init__(self, manager, work_dir=None):
+    def __init__(self, repo, work_dir=None):
         if work_dir is None:
-            work_dir = manager.directory
-        self.manager = manager
-        self.work_dir = manager.relpath(work_dir)
+            work_dir = repo.directory
+        self.repo = repo
+        self.work_dir = repo.relpath(work_dir)
 
 
 class Command(AbstractCommand):
     def __normalize_file(self, the_file):
         if not isinstance(the_file, File):
             return
-        the_file.normalize(self.manager)
+        the_file.normalize(self.repo)
 
     def __executable_to_shell(self, exe):
         if isinstance(exe, Executable):
-            return exe.command_name(self.manager, self.work_dir_abs())
+            return exe.command_name(self.repo, self.work_dir_abs())
         raise TypeError('exe has invalid type (Executable expected)')
 
     def __arg_to_shell(self, arg):
         if isinstance(arg, str):
             return arg
         if isinstance(arg, File):
-            return str(arg.relative_to(self.manager, self.work_dir_abs()))
+            return str(arg.relative_to(self.repo, self.work_dir_abs()))
         raise TypeError('arg has invalid type (str or File expected)')
 
     def __normalize_files(self):
@@ -145,9 +145,9 @@ class Command(AbstractCommand):
         for the_file in self.args:
             self.__normalize_file(the_file)
 
-    def __init__(self, manager, executable, work_dir=None, args=[],
+    def __init__(self, repo, executable, work_dir=None, args=[],
                  stdin_redir=None, stdout_redir=None, stderr_redir=None):
-        super().__init__(manager, work_dir)
+        super().__init__(repo, work_dir)
         self.executable = executable
         self.args = deepcopy(args)
         self.stdin_redir = stdin_redir

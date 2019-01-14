@@ -1,5 +1,5 @@
 from taskbuilder.commands import *
-from taskbuilder.manager import TaskManager
+from taskbuilder.repository import TaskRepository
 from os import path
 import shutil
 
@@ -23,11 +23,11 @@ def test_commands(tmpdir):
     task_dir.mkdir()
     (task_dir / 'inner').mkdir()
 
-    manager = TaskManager(task_dir)
-    manager.init_task()
+    repo = TaskRepository(task_dir)
+    repo.init_task()
 
     command = Command(
-        manager,
+        repo,
         Executable('local_exe'),
         args=[File('file.txt'),
               InputFile(path.join(path.pardir, 'input_file.txt')),
@@ -58,7 +58,7 @@ def test_commands(tmpdir):
                       '>' + path.join(path.pardir, 'out_redir.txt'))))
 
     command = Command(
-        manager,
+        repo,
         GlobalCmd('mkdir'),
         work_dir=Path('inner'),
         args=[AbsoluteFile(Path.cwd() / 'new'),
