@@ -139,7 +139,7 @@ def test_memory(runner):
     # runner.parameters.memory_limit = 20.0
     # runner.run()
     # assert runner.results.status == Status.MEMORY_LIMIT
-    runner.parameters.memory_limit = 36.0
+    runner.parameters.memory_limit = 40.0
     runner.run()
     assert runner.results.status == Status.MEMORY_LIMIT
     runner.parameters.memory_limit = 256.0
@@ -170,7 +170,7 @@ def test_vector_pushback(runner):
     '''test_vector_pushback: memory tests with push_back() into vector'''
     runner.parameters.executable = path.join(
         tests_location(), 'vector_pushback_test')
-    runner.parameters.memory_limit = 40.0
+    runner.parameters.memory_limit = 36.0
     runner.run()
     assert runner.results.status == Status.MEMORY_LIMIT
     runner.parameters.memory_limit = 150.0
