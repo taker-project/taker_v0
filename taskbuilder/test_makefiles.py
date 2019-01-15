@@ -9,7 +9,7 @@ test_dir = path.join('taskbuilder', 'tests')
 
 
 def load_answer_file(file_name):
-    result = open(path.join(test_dir, file_name)).read()
+    result = open(path.join(test_dir, file_name), encoding='utf8').read()
     return result.format(shutil.which('mkdir'),
                          shutil.which('touch'),
                          shutil.which('ls'))

@@ -130,7 +130,8 @@ class Runner:
         try:
             if self.pass_stdin:
                 self.parameters.stdin_redir = os.path.join(temp_dir, 't.in')
-                open(self.parameters.stdin_redir, 'w').write(self.stdin)
+                open(self.parameters.stdin_redir, 'w',
+                     encoding='utf8').write(self.stdin)
             if self.capture_stdout:
                 self.parameters.stdout_redir = os.path.join(temp_dir, 't.out')
             if self.capture_stderr:
@@ -139,10 +140,10 @@ class Runner:
             try:
                 if self.capture_stdout:
                     self.stdout = open(
-                        self.parameters.stdout_redir, 'r').read()
+                        self.parameters.stdout_redir, 'r', encoding='utf8').read()
                 if self.capture_stderr:
                     self.stderr = open(
-                        self.parameters.stderr_redir, 'r').read()
+                        self.parameters.stderr_redir, 'r', encoding='utf8').read()
             except FileNotFoundError:
                 pass
         finally:

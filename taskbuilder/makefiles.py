@@ -205,7 +205,7 @@ class Makefile(MakefileBase):
         return '\n'.join((rule.dump() for rule in self.rules))
 
     def save_makefile(self):
-        self.repo.open('Makefile', 'w', encoding='utf8').write(self.dump())
+        self.repo.open('Makefile', 'w').write(self.dump())
 
     def __init__(self, repo):
         super().__init__(repo)

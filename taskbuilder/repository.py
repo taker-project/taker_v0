@@ -43,8 +43,8 @@ class TaskRepository:
     def to_task_dir(self):
         os.chdir(str(self.directory))
 
-    def open(self, filename, *args, **kwargs):
-        return self.abspath(filename).open(*args, **kwargs)
+    def open(self, filename, *args, encoding='utf8', **kwargs):
+        return self.abspath(filename).open(*args, encoding=encoding, **kwargs)
 
     def __init__(self, directory=None):
         if directory is None:
