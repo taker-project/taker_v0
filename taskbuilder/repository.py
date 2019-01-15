@@ -3,7 +3,7 @@ from os import path
 from pathlib import Path
 from taskbuilder import utils
 
-'''
+"""
 Important notice about paths in this module:
 
 All relative paths in TaskRepository are calculated relative to the task
@@ -12,17 +12,17 @@ which considers relative paths as relative to the current directory.
 
 Also, the paths use pathlib.Path class and are not stored in "raw" string
 format.
-'''
+"""
 
 # TODO : Make the buildsystem work on Windows
 
-internal_dir = '.taker'
-internal_path = Path(internal_dir)
+INTERNAL_DIR = '.taker'
+INTERNAL_PATH = Path(INTERNAL_DIR)
 
 
 class TaskRepository:
     def init_task(self):
-        self.mkdir(internal_path)
+        self.mkdir(INTERNAL_PATH)
 
     def relpath(self, cur_path):
         cur_path = Path(cur_path)
@@ -34,8 +34,7 @@ class TaskRepository:
         cur_path = Path(cur_path)
         if cur_path.is_absolute():
             return utils.abspath(cur_path)
-        else:
-            return utils.abspath(self.directory.joinpath(cur_path))
+        return utils.abspath(self.directory.joinpath(cur_path))
 
     def mkdir(self, location):
         self.abspath(location).mkdir()
@@ -55,9 +54,9 @@ class TaskRepository:
 def find_task_dir(start_dir=None):
     if start_dir is None:
         start_dir = Path.cwd()
-    if (start_dir / internal_dir).is_dir():
+    if (start_dir / INTERNAL_DIR).is_dir():
         return start_dir
     for cur_dir in utils.abspath(start_dir).parents:
-        if (cur_dir / internal_dir).is_dir():
+        if (cur_dir / INTERNAL_DIR).is_dir():
             return cur_dir
     raise FileNotFoundError('not in task directory')

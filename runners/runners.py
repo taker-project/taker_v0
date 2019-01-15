@@ -140,10 +140,12 @@ class Runner:
             try:
                 if self.capture_stdout:
                     self.stdout = open(
-                        self.parameters.stdout_redir, 'r', encoding='utf8').read()
+                        self.parameters.stdout_redir, 'r',
+                        encoding='utf8').read()
                 if self.capture_stderr:
                     self.stderr = open(
-                        self.parameters.stderr_redir, 'r', encoding='utf8').read()
+                        self.parameters.stderr_redir, 'r',
+                        encoding='utf8').read()
             except FileNotFoundError:
                 pass
         finally:

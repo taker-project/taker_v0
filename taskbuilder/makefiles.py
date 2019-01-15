@@ -1,8 +1,8 @@
-from taskbuilder import repository
-from taskbuilder.commands import *
-from .repository import internal_path
 import warnings
 from enum import Enum, unique
+from taskbuilder import repository
+from .commands import *
+from .repository import INTERNAL_PATH
 
 # FIXME : move tests to separate folder (also in runners)!
 
@@ -23,7 +23,7 @@ class RuleOptions(Enum):
     RULE_IGNORE = 4
 
 
-default_options = {RuleOptions.CHECK_SINGLE_TARGET}
+DEFAULT_OPTIONS = {RuleOptions.CHECK_SINGLE_TARGET}
 
 
 class MakefileBase:
@@ -33,27 +33,27 @@ class MakefileBase:
 
     def alias(self, word, meaning):
         if word in self.aliases:
-            raise KeyError('alias {} already defined', word)
+            raise KeyError('alias {} already defined'.format(word))
         self.aliases[word] = meaning
 
-    def _unalias(self, word):
+    def unalias(self, word):
         return self.aliases[word] if word in self.aliases else word
 
     def list_targets(self, rule):
-        result = [self._unalias(rule.name)]
-        for target in sorted(rule._get_targets()):
-            target = self._unalias(target)
+        result = [self.unalias(rule.name)]
+        for target in sorted(rule.get_targets()):
+            target = self.unalias(target)
             if target != result[0] and target != result[-1]:
                 result += [target]
         return result
 
     def list_depends(self, rule):
-        return sorted({self._unalias(dep) for dep in rule._get_depends()})
+        return sorted({self.unalias(dep) for dep in rule.get_depends()})
 
 
 class RuleBase:
     def __init__(self, makefile, target_name, description=None,
-                 options=default_options):
+                 options=DEFAULT_OPTIONS):
         self.makefile = makefile
         self.repo = makefile.repo
         self.commands = []
@@ -65,7 +65,7 @@ class RuleBase:
         self.name = target_name
         self.description = description
         if description is not None:
-            self.makefile._add_rule_description(target_name, description)
+            self.makefile.add_rule_description(target_name, description)
 
     def _do_add_command(self, command):
         for the_file in command.get_output_files():
@@ -102,16 +102,16 @@ class RuleBase:
     def add_shell_cmd(self, cmd_name, *args, **kwargs):
         self.add_command(Command, ShellCmd(Path(cmd_name)), *args, **kwargs)
 
-    def _get_targets(self):
+    def get_targets(self):
         if RuleOptions.FORCE_SINGLE_TARGET in self.options:
             return {self.name}
         return self.output_files
 
-    def _get_depends(self):
+    def get_depends(self):
         return self.input_files | self.depends
 
     def _unaliased_name(self):
-        return self.makefile._unalias(self.name)
+        return self.makefile.unalias(self.name)
 
     def _do_dump(self):
         result = []
@@ -141,13 +141,13 @@ class RuleBase:
 
 
 class FileRule(RuleBase):
-    def __init__(self, makefile, filename, options=default_options):
+    def __init__(self, makefile, filename, options=DEFAULT_OPTIONS):
         super().__init__(makefile, filename, options=options)
 
 
 class DynamicRule(RuleBase):
     def __init__(self, makefile, target_name, description=None,
-                 options=default_options):
+                 options=DEFAULT_OPTIONS):
         super().__init__(makefile, target_name, description, options)
         self.name = target_name
         self.target_file = self.target_path() / target_name
@@ -168,7 +168,7 @@ class DynamicRule(RuleBase):
         return result
 
     def target_path(self):
-        return internal_path / 'make_targets'
+        return INTERNAL_PATH / 'make_targets'
 
 
 class PhonyRule(RuleBase):
@@ -196,7 +196,7 @@ class Makefile(MakefileBase):
     def __init_help_rule(self):
         self.help_rule.add_command(EchoCommand, 'Available commands:')
 
-    def _add_rule_description(self, name, description):
+    def add_rule_description(self, name, description):
         self.help_rule.add_command(EchoCommand, '{:>20}: {}'
                                                 .format(name, description))
 
@@ -212,4 +212,4 @@ class Makefile(MakefileBase):
         self.default_rule = self.add_phony_rule('default')
         self.help_rule = self.add_phony_rule('help')
         self.__init_help_rule()
-        self._add_rule_description('help', 'Prints this help')
+        self.add_rule_description('help', 'Prints this help')

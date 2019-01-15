@@ -1,7 +1,7 @@
-from taskbuilder.commands import *
-from taskbuilder.repository import TaskRepository
 from os import path
 import shutil
+from taskbuilder.commands import *
+from taskbuilder.repository import TaskRepository
 
 
 def test_command_flags():
@@ -16,10 +16,10 @@ def test_files():
     assert str(infile) == 'q.txt'
     assert str(outfile) == 'w.txt'
     assert InputFile('q.txt') == InputFile('q.txt')
-    assert not (InputFile('q.txt') != InputFile('q.txt'))
+    assert not InputFile('q.txt') != InputFile('q.txt')
     assert InputFile('q.txt') != InputFile('w.txt')
-    assert not (InputFile('q.txt') == InputFile('w.txt'))
-    assert not (File('q.txt') == InputFile('q.txt'))
+    assert not InputFile('q.txt') == InputFile('w.txt')
+    assert not File('q.txt') == InputFile('q.txt')
     assert File('q.txt') != InputFile('q.txt')
 
 
@@ -100,3 +100,4 @@ def test_commands(tmpdir):
                       path.join(path.pardir, path.pardir, 'file3.txt'),
                       '>file4.txt',
                       '2>' + path.devnull)))
+

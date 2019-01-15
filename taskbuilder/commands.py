@@ -3,13 +3,13 @@ from pathlib import Path
 import shlex
 import shutil
 from copy import copy, deepcopy
-from taskbuilder import utils
 from enum import Enum, unique
+from taskbuilder import utils
 
 # TODO : Enable using windows cmd as a shell
 # FIXME : Escape line breaks properly (?)
 
-'''
+"""
 Important notice about paths in this module:
 
 All paths are stored relative to the task directory. Except for AbsoluteFile,
@@ -19,7 +19,7 @@ directory, NOT to the current directory.
 
 Also, the paths use pathlib.Path class and are not stored in "raw" string
 format.
-'''
+"""
 
 
 @unique
@@ -39,7 +39,7 @@ class File:
                 (self.filename == other.filename))
 
     def __neq__(self, other):
-        return not (self == other)
+        return not self == other
 
     def __str__(self):
         return str(self.filename)
@@ -71,7 +71,7 @@ class AbsoluteFile(File):
 
 class NullFile(AbsoluteFile):
     def __init__(self):
-        self.filename = Path(path.devnull)
+        super().__init__(path.devnull)
 
 
 class InputFile(File):
@@ -134,7 +134,9 @@ class AbstractCommand:
     def work_dir_abs(self):
         return self.repo.abspath(self.work_dir)
 
-    def __init__(self, repo, work_dir=None, flags=set()):
+    def __init__(self, repo, work_dir=None, flags=None):
+        if flags is None:
+            flags = set()
         if work_dir is None:
             work_dir = repo.directory
         self.repo = repo
@@ -168,7 +170,7 @@ class Command(AbstractCommand):
         for the_file in self.args:
             self.__normalize_file(the_file)
 
-    def __init__(self, repo, executable, work_dir=None, flags=set(), args=[],
+    def __init__(self, repo, executable, work_dir=None, flags=None, args=[],
                  stdin_redir=None, stdout_redir=None, stderr_redir=None):
         super().__init__(repo, work_dir, flags)
         self.executable = copy(executable)

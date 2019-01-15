@@ -1,7 +1,7 @@
-from taskbuilder.repository import *
 from pathlib import Path
 import pytest
 from unittest import mock
+from taskbuilder.repository import *
 
 
 def test_repo(tmpdir, monkeypatch):

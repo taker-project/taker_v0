@@ -37,7 +37,7 @@ def test_parameters_to_json():
                 'stderr-redir': 'err.txt',
                 'isolate-dir': 'work',
                 'isolate-policy': 'normal'
-    })
+            })
 
 
 def test_results_from_json():
@@ -77,6 +77,9 @@ def test_runner_info_from_json():
             RunnerInfo(name='myName', description='myDescr', author='me',
                        version='1.2.3', version_number=42, license='GPL-3+',
                        features=set([RunnerFeature.ISOLATE])))
+
+
+# TODO : split to small methods using test fixtrures
 
 
 def do_runner_test(runner_name):
