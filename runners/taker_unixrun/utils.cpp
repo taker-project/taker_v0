@@ -16,6 +16,7 @@
  */
 
 #include "utils.hpp"
+#include <errno.h>
 #include <fcntl.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
