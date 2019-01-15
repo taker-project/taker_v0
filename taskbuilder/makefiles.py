@@ -1,4 +1,5 @@
-from taskbuilder import repository, commands
+from taskbuilder import repository
+from taskbuilder.commands import *
 from .repository import internal_path
 import warnings
 from enum import Enum, unique
@@ -87,7 +88,7 @@ class AbstractRule:
             self.files.append(the_file)
 
     def add_command(self, cmdtype, *args, **kwargs):
-        command = cmdtype(repo, *args, **kwargs)
+        command = cmdtype(self.repo, *args, **kwargs)
         self._do_add_command(command)
         commands += [command]
 
@@ -99,10 +100,10 @@ class AbstractRule:
         self.add_command(Command, Executable(Path(exe_name)), *args, **kwargs)
 
     def add_global_cmd(self, cmd_name, *args, **kwargs):
-        self.add_command(Command, GlobalCmd(Path(exe_name)), *args, **kwargs)
+        self.add_command(Command, GlobalCmd(Path(cmd_name)), *args, **kwargs)
 
     def add_shell_cmd(self, cmd_name, *args, **kwargs):
-        self.add_command(Command, ShellCmd(Path(exe_name)), *args, **kwargs)
+        self.add_command(Command, ShellCmd(Path(cmd_name)), *args, **kwargs)
 
     def _get_targets(self):
         if RuleOptions.FORCE_SINGLE_TARGET in self.options:
@@ -117,8 +118,8 @@ class AbstractRule:
 
     def _do_dump(self):
         result = []
-        result += ['{}: {}'.format(' '.join(makefile.list_targets(self)),
-                                   ' '.join(makefile.list_depends(self)))]
+        result += ['{}: {}'.format(' '.join(self.makefile.list_targets(self)),
+                                   ' '.join(self.makefile.list_depends(self)))]
         for command in self.commands:
             result += [command_to_make(command)]
         if RuleOptions.RULE_IGNORE in self.options:
