@@ -4,8 +4,6 @@ from .commands import Executable, GlobalCmd, ShellCmd, File, Command
 from .commands import MakeDirCommand, EchoCommand, TouchCommand
 from .repository import INTERNAL_PATH
 
-# FIXME : move tests to separate folder (also in runners)!
-
 
 def command_to_make(command):
     return '\t' + command.shell_str()
