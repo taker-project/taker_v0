@@ -5,9 +5,13 @@ from os import path
 import shutil
 import pytest
 
-# FIXME : write tests!
-
 test_dir = path.join('taskbuilder', 'tests')
+
+
+def load_answer_file(file_name):
+    result = open(path.join(test_dir, file_name)).read()
+    return result.format(shutil.which('mkdir'),
+                         shutil.which('touch'))
 
 
 @pytest.fixture(scope='session')
@@ -26,8 +30,7 @@ def test_file_rule1(makefile):
                                       InputFile('file3.txt'),
                                       InputFile('file4.txt')])
     f.add_command(EchoCommand, 'ok')
-    f_dump_expected = open(path.join(test_dir, 'file_rule1.make')).read()
-    assert f.dump() == f_dump_expected
+    assert f.dump() == load_answer_file('file_rule1.make')
 
 
 def test_file_rule2(makefile):
@@ -42,20 +45,14 @@ def test_file_rule2(makefile):
         f.dump()
     f.options = {RuleOptions.RULE_IGNORE}
 
-    f_dump_expected = open(path.join(test_dir, 'file_rule2.make')).read()
-    f_dump_expected = f_dump_expected.format(shutil.which('touch'))
-    assert f.dump() == f_dump_expected
+    assert f.dump() == load_answer_file('file_rule2.make')
 
 
 def test_dynamic_rule1(makefile):
     f = makefile.add_dynamic_rule('hello')
     f.add_depend('world')
     f.add_command(EchoCommand, 'hello')
-
-    f_dump_expected = open(path.join(test_dir, 'dyn_rule1.make')).read()
-    f_dump_expected = f_dump_expected.format(shutil.which('mkdir'),
-                                             shutil.which('touch'))
-    assert f.dump() == f_dump_expected
+    assert f.dump() == load_answer_file('dyn_rule1.make')
 
 
 def test_dynamic_rule2(makefile):
@@ -72,15 +69,14 @@ def test_dynamic_rule2(makefile):
     f2 = makefile.add_file_rule('file3.txt')
     f2.add_depend('rule2')
 
-    f_dump_expected = open(path.join(test_dir, 'dyn_rule2.make')).read()
-    f_dump_expected = f_dump_expected.format(shutil.which('mkdir'),
-                                             shutil.which('touch'))
-    assert f.dump() + '\n\n' + f2.dump() == f_dump_expected
+    assert f.dump() + '\n\n' + f2.dump() == load_answer_file('dyn_rule2.make')
 
 
 def test_phony_rule(makefile):
     f = makefile.add_phony_rule('doit', options={RuleOptions.RULE_IGNORE})
     f.add_shell_cmd('ls', work_dir='..', stdout_redir=File('log.txt'))
+    assert f.dump() == load_answer_file('phony_rule.make')
 
-    f_dump_expected = open(path.join(test_dir, 'phony_rule.make')).read()
-    assert f.dump() == f_dump_expected
+
+def test_makefile(makefile):
+    pass
