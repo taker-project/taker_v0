@@ -130,7 +130,7 @@ def do_runner_test(runner_name):
         runner.parameters.memory_limit = 20.0
         runner.run()
         assert runner.results.status == Status.MEMORY_LIMIT
-    runner.parameters.memory_limit = 40.0
+    runner.parameters.memory_limit = 36.0
     runner.run()
     assert runner.results.status == Status.MEMORY_LIMIT
     runner.parameters.memory_limit = 256.0
