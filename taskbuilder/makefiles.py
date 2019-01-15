@@ -53,8 +53,8 @@ class MakefileBase:
 
 
 class RuleBase:
-    def __init__(self, makefile, target_name, options=default_options,
-                 description=None):
+    def __init__(self, makefile, target_name, description=None,
+                 options=default_options):
         self.makefile = makefile
         self.repo = makefile.repo
         self.commands = []
@@ -66,7 +66,7 @@ class RuleBase:
         self.name = target_name
         self.description = description
         if description is not None:
-            self.makefile.add_rule_description(target_name, description)
+            self.makefile._add_rule_description(target_name, description)
 
     def _do_add_command(self, command):
         for the_file in command.get_output_files():
@@ -138,18 +138,18 @@ class RuleBase:
 
     def dump(self):
         self.validate()
-        return '\n'.join(self._do_dump() + self._do_end_dump())
+        return '\n'.join(self._do_dump() + self._do_end_dump()) + '\n'
 
 
 class FileRule(RuleBase):
     def __init__(self, makefile, filename, options=default_options):
-        super().__init__(makefile, filename, options)
+        super().__init__(makefile, filename, options=options)
 
 
 class DynamicRule(RuleBase):
-    def __init__(self, makefile, target_name, options=default_options,
-                 description=None):
-        super().__init__(makefile, target_name, options, description)
+    def __init__(self, makefile, target_name, description=None,
+                 options=default_options):
+        super().__init__(makefile, target_name, description, options)
         self.name = target_name
         self.target_file = self.target_path() / target_name
         self.makefile.alias(self.name, str(self.target_file))
@@ -194,18 +194,15 @@ class Makefile(MakefileBase):
     def add_phony_rule(self, *args, **kwargs):
         return self.add_custom_rule(PhonyRule, *args, **kwargs)
 
-    def init_help_rule(self):
+    def __init_help_rule(self):
         self.help_rule.add_command(EchoCommand, 'Available commands:')
 
-    def add_rule_description(self, name, description):
-        self.help_rule.add_command(EchoCommand, '{:20}: {}'
+    def _add_rule_description(self, name, description):
+        self.help_rule.add_command(EchoCommand, '{:>20}: {}'
                                                 .format(name, description))
 
     def dump(self):
-        result = ''
-        for rule in self.rules:
-            result += rule.dump() + '\n'
-        return result
+        return '\n'.join((rule.dump() for rule in self.rules))
 
     def save_makefile(self):
         self.repo.open('Makefile', 'w', encoding='utf8').write(self.dump())
@@ -215,5 +212,5 @@ class Makefile(MakefileBase):
         self.rules = []
         self.default_rule = self.add_phony_rule('default')
         self.help_rule = self.add_phony_rule('help')
-        self.init_help_rule()
-        self.add_rule_description('help', 'Prints this help')
+        self.__init_help_rule()
+        self._add_rule_description('help', 'Prints this help')

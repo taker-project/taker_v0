@@ -1,6 +1,4 @@
 [*.make]
 indent_style = tab
 tab_width = 4
-
-[*rule*.make]
-insert_final_newline = false
+insert_final_newline = true

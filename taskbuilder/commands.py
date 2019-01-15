@@ -204,7 +204,7 @@ class TouchCommand(Command):
 
 
 class MakeDirCommand(Command):
-    def __init__(self, repo, dirname, parents=True):
+    def __init__(self, repo, dirname, parents=False):
         args = []
         if parents:
             args += ['-p']
