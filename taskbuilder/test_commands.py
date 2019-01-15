@@ -100,4 +100,3 @@ def test_commands(tmpdir):
                       path.join(path.pardir, path.pardir, 'file3.txt'),
                       '>file4.txt',
                       '2>' + path.devnull)))
-

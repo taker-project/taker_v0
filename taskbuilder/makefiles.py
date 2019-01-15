@@ -1,7 +1,7 @@
-import warnings
 from enum import Enum, unique
-from taskbuilder import repository
-from .commands import *
+from pathlib import Path
+from .commands import Executable, GlobalCmd, ShellCmd, File, Command
+from .commands import MakeDirCommand, EchoCommand, TouchCommand
 from .repository import INTERNAL_PATH
 
 # FIXME : move tests to separate folder (also in runners)!
@@ -43,7 +43,7 @@ class MakefileBase:
         result = [self.unalias(rule.name)]
         for target in sorted(rule.get_targets()):
             target = self.unalias(target)
-            if target != result[0] and target != result[-1]:
+            if target not in (result[0], result[-1]):
                 result += [target]
         return result
 
@@ -167,7 +167,8 @@ class DynamicRule(RuleBase):
                    '.PHONY: {}'.format(self.name)]
         return result
 
-    def target_path(self):
+    @staticmethod
+    def target_path():
         return INTERNAL_PATH / 'make_targets'
 
 
@@ -197,8 +198,8 @@ class Makefile(MakefileBase):
         self.help_rule.add_command(EchoCommand, 'Available commands:')
 
     def add_rule_description(self, name, description):
-        self.help_rule.add_command(EchoCommand, '{:>20}: {}'
-                                                .format(name, description))
+        self.help_rule.add_command(EchoCommand,
+                                   '{:>20}: {}'.format(name, description))
 
     def dump(self):
         return '\n'.join((rule.dump() for rule in self.rules))

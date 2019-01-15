@@ -1,9 +1,4 @@
-import os
-from os import path
-from pathlib import Path
-from taskbuilder import utils
-
-"""
+'''
 Important notice about paths in this module:
 
 All relative paths in TaskRepository are calculated relative to the task
@@ -12,7 +7,10 @@ which considers relative paths as relative to the current directory.
 
 Also, the paths use pathlib.Path class and are not stored in "raw" string
 format.
-"""
+'''
+import os
+from pathlib import Path
+from taskbuilder import utils
 
 # TODO : Make the buildsystem work on Windows
 

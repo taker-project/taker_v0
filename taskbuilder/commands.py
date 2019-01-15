@@ -1,3 +1,14 @@
+'''
+Important notice about paths in this module:
+
+All paths are stored relative to the task directory. Except for AbsoluteFile,
+where paths are stored as absolute. If you want to pass a relative path to the
+command, please keep in mind that they should be relative to the task
+directory, NOT to the current directory.
+
+Also, the paths use pathlib.Path class and are not stored in "raw" string
+format.
+'''
 from os import path
 from pathlib import Path
 import shlex
@@ -8,18 +19,6 @@ from taskbuilder import utils
 
 # TODO : Enable using windows cmd as a shell
 # FIXME : Escape line breaks properly (?)
-
-"""
-Important notice about paths in this module:
-
-All paths are stored relative to the task directory. Except for AbsoluteFile,
-where paths are stored as absolute. If you want to pass a relative path to the
-command, please keep in mind that they should be relative to the task
-directory, NOT to the current directory.
-
-Also, the paths use pathlib.Path class and are not stored in "raw" string
-format.
-"""
 
 
 @unique
