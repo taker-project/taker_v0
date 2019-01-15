@@ -25,10 +25,10 @@ venv: .make_targets/venv
 		&& pip install pytest pytest-pycodestyle pytest-mock pylint'
 
 clean_runners:
-	cd runners && $(MAKE) clean
+	+cd runners && $(MAKE) clean
 
 build_runners: venv
-	cd runners && $(MAKE) PREFIX="$$(pwd)/../venv" install
+	+cd runners && $(MAKE) PREFIX="$$(pwd)/../venv" install
 
 clean: clean_runners
 	rm -rf venv/ build/ dist/ .pytest_cache/
