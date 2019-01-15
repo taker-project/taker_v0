@@ -58,3 +58,7 @@ def find_task_dir(start_dir=None):
         if (cur_dir / INTERNAL_DIR).is_dir():
             return cur_dir
     raise FileNotFoundError('not in task directory')
+
+
+def get_repository(start_dir=None):
+    return TaskRepository(find_task_dir(start_dir))
