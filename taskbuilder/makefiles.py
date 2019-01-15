@@ -4,7 +4,6 @@ from .repository import internal_path
 import warnings
 from enum import Enum, unique
 
-# FIXME : validate resulting Makefiles!
 # FIXME : move tests to separate folder (also in runners)!
 
 

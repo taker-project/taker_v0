@@ -4,11 +4,10 @@ import shlex
 import shutil
 from copy import copy, deepcopy
 from taskbuilder import utils
+from enum import Enum, unique
 
 # TODO : Enable using windows cmd as a shell
-# TODO : Escape line breaks properly (?)
-
-# FIXME : Add flags for commands (quiet, no fail, ...)
+# FIXME : Escape line breaks properly (?)
 
 '''
 Important notice about paths in this module:
@@ -21,6 +20,17 @@ directory, NOT to the current directory.
 Also, the paths use pathlib.Path class and are not stored in "raw" string
 format.
 '''
+
+
+@unique
+class CommandFlag(Enum):
+    IGNORE = '-'
+    SILENT = '@'
+    FORCE = '+'
+
+
+def command_flags_to_str(flags):
+    return ''.join(sorted((f.value for f in flags)))
 
 
 class File:
@@ -115,18 +125,21 @@ class AbstractCommand:
 
     def shell_str(self):
         if str(self.work_dir) == path.curdir:
-            return self._shell_str_internal()
-        return 'cd {} && {}'.format(shlex.quote(str(self.work_dir)),
-                                    self._shell_str_internal())
+            return '{}{}'.format(command_flags_to_str(self.flags),
+                                 self._shell_str_internal())
+        return '{}cd {} && {}'.format(command_flags_to_str(self.flags),
+                                      shlex.quote(str(self.work_dir)),
+                                      self._shell_str_internal())
 
     def work_dir_abs(self):
         return self.repo.abspath(self.work_dir)
 
-    def __init__(self, repo, work_dir=None):
+    def __init__(self, repo, work_dir=None, flags=set()):
         if work_dir is None:
             work_dir = repo.directory
         self.repo = repo
         self.work_dir = repo.relpath(work_dir)
+        self.flags = flags
 
 
 class Command(AbstractCommand):
@@ -155,9 +168,9 @@ class Command(AbstractCommand):
         for the_file in self.args:
             self.__normalize_file(the_file)
 
-    def __init__(self, repo, executable, work_dir=None, args=[],
+    def __init__(self, repo, executable, work_dir=None, flags=set(), args=[],
                  stdin_redir=None, stdout_redir=None, stderr_redir=None):
-        super().__init__(repo, work_dir)
+        super().__init__(repo, work_dir, flags)
         self.executable = copy(executable)
         self.args = deepcopy(args)
         self.stdin_redir = copy(stdin_redir)
@@ -214,4 +227,5 @@ class MakeDirCommand(Command):
 
 class EchoCommand(Command):
     def __init__(self, repo, message):
-        super().__init__(repo, ShellCmd('echo'), args=[message])
+        super().__init__(repo, ShellCmd('echo'),
+                         flags={CommandFlag.SILENT}, args=[message])

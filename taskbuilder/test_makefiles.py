@@ -41,7 +41,8 @@ def test_file_rule2(makefile):
     f.add_command(TouchCommand, OutputFile('file2.txt'))
     f.add_shell_cmd('shellcmd', args=[InputFile('a.txt'), OutputFile('b.txt')])
     f.add_shell_cmd('shellcmd', args=[InputFile('b.txt')],
-                    stdout_redir=OutputFile('c.txt'))
+                    stdout_redir=OutputFile('c.txt'),
+                    flags={CommandFlag.SILENT})
 
     with pytest.raises(MakefileError):
         f.dump()
@@ -64,7 +65,8 @@ def test_dynamic_rule2(makefile):
     f.add_executable(Path('..') / 'exe1', stdin_redir=InputFile('file1.txt'))
     f.add_depend('file1.txt')
     f.add_depend('file2.txt')
-    f.add_executable('exe2', stdin_redir=InputFile('file2.txt'))
+    f.add_executable('exe2', stdin_redir=InputFile('file2.txt'),
+                     flags={CommandFlag.IGNORE})
     f.add_executable('exe0', stdin_redir=InputFile('file0.txt'),
                      stdout_redir='file4.txt')
     f.add_command(MakeDirCommand, path.join('hello', 'world'))

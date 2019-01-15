@@ -4,6 +4,12 @@ from os import path
 import shutil
 
 
+def test_command_flags():
+    assert command_flags_to_str({CommandFlag.FORCE,
+                                 CommandFlag.IGNORE}) == '+-'
+    assert command_flags_to_str({}) == ''
+
+
 def test_files():
     infile = InputFile('q.txt')
     outfile = OutputFile('w.txt')
@@ -29,6 +35,7 @@ def test_commands(tmpdir):
     command = Command(
         repo,
         Executable('local_exe'),
+        flags={CommandFlag.SILENT},
         args=[File('file.txt'),
               InputFile(path.join(path.pardir, 'input_file.txt')),
               OutputFile(path.join(path.pardir, 'output_file.txt')),
@@ -54,7 +61,7 @@ def test_commands(tmpdir):
              OutputFile(path.join(path.pardir, 'out_redir.txt'))})
 
     assert (command.shell_str() ==
-            ' '.join((path.join(path.curdir, 'local_exe'),
+            ' '.join(('@' + path.join(path.curdir, 'local_exe'),
                       'file.txt',
                       path.join(path.pardir, 'input_file.txt'),
                       path.join(path.pardir, 'output_file.txt'),
@@ -68,6 +75,7 @@ def test_commands(tmpdir):
         repo,
         GlobalCmd('mkdir'),
         work_dir=Path('inner'),
+        flags={CommandFlag.SILENT, CommandFlag.FORCE},
         args=[AbsoluteFile(Path.cwd() / 'new'),
               InputFile('file.txt'),
               OutputFile(path.join('inner', 'file2.txt')),
@@ -84,7 +92,7 @@ def test_commands(tmpdir):
              OutputFile(path.join('inner', 'file4.txt'))})
 
     assert (command.shell_str() ==
-            ' '.join(('cd inner &&',
+            ' '.join(('+@cd inner &&',
                       shutil.which('mkdir'),
                       path.abspath(path.join(path.curdir, 'new')),
                       path.join(path.pardir, 'file.txt'),

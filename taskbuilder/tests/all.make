@@ -3,18 +3,18 @@ default:
 .PHONY: default
 
 help:
-	echo 'Available commands:'
-	echo '                help: Prints this help'
-	echo '              descr1: rule 1 with description'
-	echo '              descr2: rule 2 with description'
+	@echo 'Available commands:'
+	@echo '                help: Prints this help'
+	@echo '              descr1: rule 1 with description'
+	@echo '              descr2: rule 2 with description'
 .PHONY: help
 
 descr1: .taker/make_targets/descr2
-	echo here
+	@echo here
 .PHONY: descr1
 
 .taker/make_targets/descr2:
-	echo here
+	@echo here
 	{0} -p .taker/make_targets
 	{1} .taker/make_targets/descr2
 descr2: .taker/make_targets/descr2
