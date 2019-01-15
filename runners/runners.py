@@ -8,6 +8,7 @@ from copy import copy
 from namedlist import namedtuple, namedlist
 
 # TODO : the module architecture is not flexible enough, rewrite it!
+# TODO : migrate away from namedlist (?)
 
 Parameters = namedlist('Parameters',
                        ['time_limit', 'idle_limit', 'memory_limit',

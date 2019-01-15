@@ -1,0 +1,4 @@
+[*rule*.make]
+insert_final_newline = false
+indent_style = tab
+tab_width = 4

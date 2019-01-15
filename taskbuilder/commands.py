@@ -101,16 +101,16 @@ class ShellCmd(GlobalCmd):
 
 
 class AbstractCommand:
-    def get_input_files():
+    def get_input_files(self):
         raise NotImplementedError()
 
-    def get_output_files():
+    def get_output_files(self):
         raise NotImplementedError()
 
-    def get_all_files():
+    def get_all_files(self):
         raise NotImplementedError()
 
-    def _shell_str_internal():
+    def _shell_str_internal(self):
         raise NotImplementedError()
 
     def shell_str(self):
@@ -200,7 +200,7 @@ class Command(AbstractCommand):
 
 class TouchCommand(Command):
     def __init__(self, repo, target_file):
-        super().__init__(self, repo, GlobalCmd('touch'), args=[target_file])
+        super().__init__(repo, GlobalCmd('touch'), args=[target_file])
 
 
 class MakeDirCommand(Command):
@@ -209,9 +209,9 @@ class MakeDirCommand(Command):
         if parents:
             args += ['-p']
         args += [File(dirname)]
-        super().__init__(self, repo, GlobalCmd('mkdir'), args=args)
+        super().__init__(repo, GlobalCmd('mkdir'), args=args)
 
 
 class EchoCommand(Command):
     def __init__(self, repo, message):
-        super().__init__(self, repo, ShellCmd('echo'), args=[message])
+        super().__init__(repo, ShellCmd('echo'), args=[message])
