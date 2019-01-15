@@ -2,12 +2,13 @@ from os import path
 from pathlib import Path
 import shlex
 import shutil
-import warnings
 from copy import copy, deepcopy
-from . import utils
+from taskbuilder import utils
 
 # TODO : Enable using windows cmd as a shell
 # TODO : Escape line breaks properly (?)
+
+# FIXME : Add flags for commands (quiet, no fail, ...)
 
 '''
 Important notice about paths in this module:
@@ -32,6 +33,9 @@ class File:
 
     def __str__(self):
         return str(self.filename)
+
+    def __hash__(self):
+        return hash(type(self)) ^ hash(self.filename)
 
     def __init__(self, filename):
         self.filename = Path(filename)
@@ -86,10 +90,14 @@ class GlobalCmd(Executable):
     def normalize(self, repo):
         new_filename = Path(shutil.which(str(self.filename)))
         if new_filename is None:
-            # FIXME : maybe raise an error here?
-            warnings.warn('command {} not found'.format(new_filename))
-            return
+            raise FileNotFoundError('command {} not found'
+                                    .format(new_filename))
         self.filename = new_filename
+
+
+class ShellCmd(GlobalCmd):
+    def normalize(self, repo):
+        pass
 
 
 class AbstractCommand:
@@ -97,6 +105,9 @@ class AbstractCommand:
         raise NotImplementedError()
 
     def get_output_files():
+        raise NotImplementedError()
+
+    def get_all_files():
         raise NotImplementedError()
 
     def _shell_str_internal():
@@ -155,13 +166,21 @@ class Command(AbstractCommand):
         self.__normalize_files()
 
     def get_input_files(self):
-        return [item for item in self.args + [self.stdin_redir]
+        return [item
+                for item in self.get_all_files()
                 if isinstance(item, InputFile)]
 
     def get_output_files(self):
         return [item
-                for item in self.args + [self.stdout_redir, self.stderr_redir]
+                for item in self.get_all_files()
                 if isinstance(item, OutputFile)]
+
+    def get_all_files(self):
+        possible_files = self.args + [self.stdin_redir, self.stdout_redir,
+                                      self.stderr_redir, self.executable]
+        return [item
+                for item in possible_files
+                if isinstance(item, File)]
 
     def _shell_str_internal(self):
         result = shlex.quote(self.__executable_to_shell(self.executable))
@@ -177,3 +196,22 @@ class Command(AbstractCommand):
             result += ' 2>'
             result += shlex.quote(self.__arg_to_shell(self.stderr_redir))
         return result
+
+
+class TouchCommand(Command):
+    def __init__(self, repo, target_file):
+        super().__init__(self, repo, GlobalCmd('touch'), args=[target_file])
+
+
+class MakeDirCommand(Command):
+    def __init__(self, repo, dirname, parents=True):
+        args = []
+        if parents:
+            args += ['-p']
+        args += [File(dirname)]
+        super().__init__(self, repo, GlobalCmd('mkdir'), args=args)
+
+
+class EchoCommand(Command):
+    def __init__(self, repo, message):
+        super().__init__(self, repo, ShellCmd('echo'), args=[message])

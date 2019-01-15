@@ -39,12 +39,19 @@ def test_commands(tmpdir):
         stdout_redir=OutputFile(tmpdir / 'out_redir.txt')
     )
 
-    assert (command.get_input_files() ==
-            [InputFile(path.join(path.pardir, 'input_file.txt')),
-             InputFile('in_redir.txt')])
-    assert (command.get_output_files() ==
-            [OutputFile(path.join(path.pardir, 'output_file.txt')),
-             OutputFile(path.join(path.pardir, 'out_redir.txt'))])
+    assert (set(command.get_input_files()) ==
+            {InputFile(path.join(path.pardir, 'input_file.txt')),
+             InputFile('in_redir.txt')})
+    assert (set(command.get_output_files()) ==
+            {OutputFile(path.join(path.pardir, 'output_file.txt')),
+             OutputFile(path.join(path.pardir, 'out_redir.txt'))})
+    assert (set(command.get_all_files()) ==
+            {Executable('local_exe'), File('file.txt'),
+             InputFile(path.join(path.pardir, 'input_file.txt')),
+             OutputFile(path.join(path.pardir, 'output_file.txt')),
+             File(path.join(path.pardir, 'file2.txt')),
+             AbsoluteFile(Path.home().root), InputFile('in_redir.txt'),
+             OutputFile(path.join(path.pardir, 'out_redir.txt'))})
 
     assert (command.shell_str() ==
             ' '.join((path.join(path.curdir, 'local_exe'),
@@ -69,12 +76,12 @@ def test_commands(tmpdir):
         stderr_redir=NullFile()
     )
 
-    assert (command.get_input_files() ==
-            [InputFile('file.txt'),
-             InputFile(path.join(path.pardir, 'file3.txt'))])
-    assert (command.get_output_files() ==
-            [OutputFile(path.join('inner', 'file2.txt')),
-             OutputFile(path.join('inner', 'file4.txt'))])
+    assert (set(command.get_input_files()) ==
+            {InputFile('file.txt'),
+             InputFile(path.join(path.pardir, 'file3.txt'))})
+    assert (set(command.get_output_files()) ==
+            {OutputFile(path.join('inner', 'file2.txt')),
+             OutputFile(path.join('inner', 'file4.txt'))})
 
     assert (command.shell_str() ==
             ' '.join(('cd inner &&',

@@ -1,0 +1,12 @@
+file1.txt: file2.txt
+	./command file1.txt file2.txt
+
+file3.txt: in1.txt in2.txt
+	./prog1 in1.txt temp1.txt
+	./prog2 in2.txt temp2.txt file3.txt
+.IGNORE: file3.txt
+
+.taker/make_targets/test: hello.txt custom.txt
+	./prog1 hello.txt
+	/bin/mkdir -p .taker/make_targets
+	/bin/touch .taker/make_targets/test

@@ -1,7 +1,7 @@
 import os
 from os import path
 from pathlib import Path
-from . import utils
+from taskbuilder import utils
 
 '''
 Important notice about paths in this module:
@@ -17,11 +17,12 @@ format.
 # TODO : Make the buildsystem work on Windows
 
 internal_dir = '.taker'
+internal_path = Path(internal_dir)
 
 
 class TaskRepository:
     def init_task(self):
-        self.mkdir(internal_dir)
+        self.mkdir(internal_path)
 
     def relpath(self, cur_path):
         cur_path = Path(cur_path)
@@ -41,6 +42,9 @@ class TaskRepository:
 
     def to_task_dir(self):
         os.chdir(str(self.directory))
+
+    def open(self, filename, *args, **kwargs):
+        return self.abspath(filename).open(*args, **kwargs)
 
     def __init__(self, directory=None):
         if directory is None:
