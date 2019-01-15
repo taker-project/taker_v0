@@ -453,6 +453,8 @@ void ProcessRunner::trySyscall(bool success, const std::string &errorName) {
 void ProcessRunner::handleChild() {
   setsid();
 
+  trySyscall(updateLimit(RLIMIT_CORE, 0), "could not disable core dumps");
+
   // FIXME : avoid overflow when handling very large time and memory limits
 
   int64_t integralTimeLimit =
