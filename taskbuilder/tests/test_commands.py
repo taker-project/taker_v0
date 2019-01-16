@@ -100,3 +100,13 @@ def test_commands(tmpdir):
                       path.join(path.pardir, path.pardir, 'file3.txt'),
                       '>file4.txt',
                       '2>' + path.devnull)))
+
+
+def test_echo(tmpdir):
+    repo = TaskRepository(tmpdir)
+
+    command = EchoCommand(repo, 'hello world')
+    assert command.shell_str() == "@echo 'hello world'"
+
+    command = EchoCommand(repo, 'redirect', stdout_redir=File('42.txt'))
+    assert command.shell_str() == '@echo redirect >42.txt'

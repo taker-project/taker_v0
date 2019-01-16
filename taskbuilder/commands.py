@@ -227,6 +227,7 @@ class MakeDirCommand(Command):
 
 
 class EchoCommand(Command):
-    def __init__(self, repo, message):
+    def __init__(self, repo, message, stdout_redir=None):
         super().__init__(repo, ShellCmd('echo'),
-                         flags={CommandFlag.SILENT}, args=[message])
+                         flags={CommandFlag.SILENT}, args=[message],
+                         stdout_redir=stdout_redir)
