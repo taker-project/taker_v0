@@ -1,7 +1,7 @@
+import math
+import pytest
 from typini.parser import *
 from typini.parseutils import *
-import pytest
-import math
 
 
 def test_unescape():
@@ -246,7 +246,7 @@ def test_full():
     parser.load(
         '[section]\n  a : int = 5\nb: int = 6 # comment\n#another_comment\n\n'
         '[section2]\n c : string\n d:int=2')
-    assert(len(parser) == 8)
+    assert len(parser) == 8
     assert parser.list_sections() == ['section', 'section2']
     assert parser['section'].list_keys() == ['a', 'b']
     assert parser['section2'].list_keys() == ['c', 'd']

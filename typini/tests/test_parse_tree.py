@@ -4,13 +4,13 @@ import json
 
 
 def dump(parser):
-    dict = {}
+    the_dict = {}
     for section in parser.get_sections():
         section_dict = {}
         for key in section.list_keys():
             section_dict[key] = section[key]
-        dict[section.header.key] = section_dict
-    return dict
+        the_dict[section.header.key] = section_dict
+    return the_dict
 
 
 def test_parse_tree():

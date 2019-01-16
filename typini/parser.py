@@ -1,5 +1,5 @@
 import itertools
-from .names import *
+from .names import is_char_valid, is_var_name_valid
 from .parseutils import *
 
 

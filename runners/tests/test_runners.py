@@ -1,7 +1,6 @@
 import json
 import os
 from os import path
-import tempfile
 import pytest
 from runners.runners import *
 
