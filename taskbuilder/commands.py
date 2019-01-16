@@ -57,6 +57,7 @@ class File:
 
     def relative_to(self, repo, work_dir):
         abs_filename = self.absolute(repo)
+        work_dir = repo.abspath(work_dir)
         return utils.relpath(abs_filename, work_dir)
 
 
@@ -97,11 +98,11 @@ class GlobalCmd(Executable):
         return str(self.filename)
 
     def normalize(self, repo):
-        new_filename = Path(shutil.which(str(self.filename)))
+        new_filename = shutil.which(str(self.filename))
         if new_filename is None:
             raise FileNotFoundError('command {} not found'
                                     .format(new_filename))
-        self.filename = new_filename
+        self.filename = Path(new_filename)
 
 
 class ShellCmd(GlobalCmd):
@@ -130,9 +131,6 @@ class AbstractCommand:
                                       shlex.quote(str(self.work_dir)),
                                       self._shell_str_internal())
 
-    def work_dir_abs(self):
-        return self.repo.abspath(self.work_dir)
-
     def __init__(self, repo, work_dir=None, flags=None):
         if flags is None:
             flags = set()
@@ -151,14 +149,14 @@ class Command(AbstractCommand):
 
     def __executable_to_shell(self, exe):
         if isinstance(exe, Executable):
-            return exe.command_name(self.repo, self.work_dir_abs())
+            return exe.command_name(self.repo, self.work_dir)
         raise TypeError('exe has invalid type (Executable expected)')
 
     def __arg_to_shell(self, arg):
         if isinstance(arg, str):
             return arg
         if isinstance(arg, File):
-            return str(arg.relative_to(self.repo, self.work_dir_abs()))
+            return str(arg.relative_to(self.repo, self.work_dir))
         raise TypeError('arg has invalid type (str or File expected)')
 
     def __normalize_files(self):

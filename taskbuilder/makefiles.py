@@ -4,8 +4,10 @@ from .commands import Executable, GlobalCmd, ShellCmd, File, Command
 from .commands import MakeDirCommand, EchoCommand, TouchCommand
 from .repository import INTERNAL_PATH
 
+# TODO : Add strict validation for target names
 
-def command_to_make(command):
+
+def _command_to_make(command):
     return '\t' + command.shell_str()
 
 
@@ -88,7 +90,7 @@ class RuleBase:
         self.commands += [command]
 
     def add_depend(self, depend):
-        if not (depend in self.input_files or depend in self.depends):
+        if depend not in self.input_files:
             self.depends.add(depend)
 
     def add_executable(self, exe_name, *args, **kwargs):
@@ -103,7 +105,7 @@ class RuleBase:
     def get_targets(self):
         if RuleOptions.FORCE_SINGLE_TARGET in self.options:
             return {self.name}
-        return self.output_files
+        return {self.name} | self.output_files
 
     def get_depends(self):
         return self.input_files | self.depends
@@ -116,8 +118,7 @@ class RuleBase:
         header = '{}: {}'.format(' '.join(self.makefile.list_targets(self)),
                                  ' '.join(self.makefile.list_depends(self)))
         result += [header.rstrip()]
-        for command in self.commands:
-            result += [command_to_make(command)]
+        result += [_command_to_make(command) for command in self.commands]
         return result
 
     def _do_end_dump(self):
@@ -130,7 +131,7 @@ class RuleBase:
 
     def validate(self):
         if (RuleOptions.CHECK_SINGLE_TARGET in self.options and
-                len(self.makefile.list_targets(self)) != 1):
+                len(self.get_targets()) != 1):
             raise MakefileError('expected one target, found many')
 
     def dump(self):
@@ -147,16 +148,15 @@ class DynamicRule(RuleBase):
     def __init__(self, makefile, target_name, description=None,
                  options=DEFAULT_OPTIONS):
         super().__init__(makefile, target_name, description, options)
-        self.name = target_name
         self.target_file = self.target_path() / target_name
         self.makefile.alias(self.name, str(self.target_file))
 
     def _do_dump(self):
         result = super()._do_dump()
-        result += [command_to_make(MakeDirCommand(self.repo,
-                                                  self.target_path(), True)),
-                   command_to_make(TouchCommand(self.repo,
-                                                File(self.target_file)))]
+        result += [_command_to_make(MakeDirCommand(self.repo,
+                                                   self.target_path(), True)),
+                   _command_to_make(TouchCommand(self.repo,
+                                                 File(self.target_file)))]
         return result
 
     def _do_end_dump(self):
@@ -178,19 +178,19 @@ class PhonyRule(RuleBase):
 
 
 class Makefile(MakefileBase):
-    def add_custom_rule(self, ruletype, rulename, *args, **kwargs):
+    def _add_custom_rule(self, ruletype, rulename, *args, **kwargs):
         rule = ruletype(self, rulename, *args, **kwargs)
         self.rules += [rule]
         return rule
 
     def add_file_rule(self, *args, **kwargs):
-        return self.add_custom_rule(FileRule, *args, **kwargs)
+        return self._add_custom_rule(FileRule, *args, **kwargs)
 
     def add_dynamic_rule(self, *args, **kwargs):
-        return self.add_custom_rule(DynamicRule, *args, **kwargs)
+        return self._add_custom_rule(DynamicRule, *args, **kwargs)
 
     def add_phony_rule(self, *args, **kwargs):
-        return self.add_custom_rule(PhonyRule, *args, **kwargs)
+        return self._add_custom_rule(PhonyRule, *args, **kwargs)
 
     def __init_help_rule(self):
         self.help_rule.add_command(EchoCommand, 'Available commands:')
