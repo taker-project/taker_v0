@@ -26,9 +26,16 @@ iMeanNothing: float = null
 
 [Chars/And/Strings]
 c1:char='\n'
+c2  : char= c'3'
 s1:string='hello\n\'\"\\\''
 q1:  string = ""
 arr1  : string[] = ['a', 'hello', "array of string", "# this is not comment"]
 arr2: string[] = ["null", null, "non-null"]
-arr3: string[] = null 
+arr3: string[] = null
 arr4:string[]=['1','2','3','4']
+
+[Auto]
+a1 : auto = ['5', '6', '7']  # тип string[]
+a2:auto=3  # тип int
+b1 = c'4'  # тип char
+b2=[1, 2, 3.0]  # тип float[]

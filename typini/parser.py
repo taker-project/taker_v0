@@ -2,6 +2,9 @@ import itertools
 from .names import is_char_valid, is_var_name_valid
 from .parseutils import *
 
+# TODO : fix that array of nulls is of type int[]
+# (it's an error or null must be deduced to type int also?)
+
 
 class EmptyNode:
     @classmethod
@@ -53,7 +56,7 @@ class VariableValue:
         raise NotImplementedError()
 
     def load(self, line, pos=0):
-        new_pos, word = extract_word(line, pos)
+        new_pos, _, word = extract_word(line, pos)
         if word == 'null':
             self.value = None
             return new_pos
@@ -78,12 +81,12 @@ class VariableValue:
 
 class NumberValue(VariableValue):
     def _do_load(self, line, pos=0):
-        pos, word = extract_word(line, pos)
+        pos, start_pos, word = extract_word(line, pos)
         try:
             self.value = self.var_type()(word)
             self.validate()
         except ValueError:
-            raise ParseError(-1, pos, '{} expected, {} token found'
+            raise ParseError(-1, start_pos, '{} expected, {} token found'
                              .format(self.var_type().__name__,
                                      repr(word)))
         return pos
@@ -118,14 +121,14 @@ class BoolValue(VariableValue):
         return 'bool'
 
     def _do_load(self, line, pos=0):
-        pos, word = extract_word(line, pos)
+        pos, start_pos, word = extract_word(line, pos)
         if word == 'true':
             self.value = True
             return pos
         if word == 'false':
             self.value = False
             return pos
-        raise ParseError(-1, pos, 'expected true or false')
+        raise ParseError(-1, start_pos, 'expected true or false')
 
     def _do_save(self):
         return 'true' if self.value else 'false'
@@ -155,7 +158,15 @@ class CharValue(StrValue):
     def type_name(self):
         return 'char'
 
+    def _do_save(self):
+        return 'c' + super()._do_save()
+
     def _do_load(self, line, pos=0):
+        pos = skip_spaces(line, pos)
+        if (pos != len(line)) and line[pos] == 'c':
+            pos += 1
+        if (pos == len(line)) or (line[pos] not in {'"', "'"}):
+            raise ParseError(-1, pos, '\' or \" expected')
         pos = super()._do_load(line, pos)
         if len(self.value) != 1:
             raise ParseError(-1, pos,
@@ -209,10 +220,55 @@ class ArrayValue(VariableValue):
         self.item_value = item_class()
 
 
+class TypeDetector:
+    def __init__(self, binder, line, pos=0):
+        self.binder = binder
+        self.best_exception = None
+        self.best_typename = None
+        self.line = line
+        self.pos = pos
+        self.new_pos = pos
+        self.value = None
+        self.found = False
+
+    def update_exception(self, typename, new_exception):
+        if new_exception.column <= skip_spaces(self.line, self.pos):
+            return
+        if ((self.best_exception is None) or
+                (new_exception.column > self.best_exception.column)):
+            self.best_exception = new_exception
+            self.best_typename = typename
+
+    def try_load_detect_type(self, typename):
+        if self.found:
+            return True
+        self.value = self.binder.create_value(typename)
+        try:
+            self.new_pos = self.value.load(self.line, self.pos)
+        except ParseError as exc:
+            self.update_exception(self.value.type_name(), exc)
+            return False
+        if self.value.value is None:
+            raise ParseError(-1, self.new_pos,
+                             'found null, cannot auto-deduce type')
+        self.found = True
+        return True
+
+    def get_result(self):
+        if self.found:
+            return (self.new_pos, self.value)
+        if self.best_exception is None:
+            raise ParseError(-1, self.pos, 'no type candidates found')
+        self.best_exception.text = '{} (assuming deduced type as {})'.format(
+            self.best_exception.text, self.best_typename)
+        raise self.best_exception
+
+
 class TypeBinder:
     def _bind_type(self, type_class):
         type_name = type_class().type_name()
         self.__binding[type_name] = type_class
+        self.__added_types += [type_name]
 
     def create_value(self, typename):
         # TODO: Add multi-dimensional array support (?)
@@ -220,13 +276,23 @@ class TypeBinder:
             return ArrayValue(self.__binding[typename[:-2]])
         return self.__binding[typename]()
 
-    def __init__(self):
-        self.__binding = {}
+    def get_all_types(self):
+        for typename in self.__added_types:
+            yield typename
+        for typename in self.__added_types:
+            yield typename + '[]'
+
+    def _bind_types(self):
         self._bind_type(IntValue)
         self._bind_type(FloatValue)
-        self._bind_type(CharValue)
         self._bind_type(BoolValue)
         self._bind_type(StrValue)
+        self._bind_type(CharValue)
+
+    def __init__(self):
+        self.__binding = {}
+        self.__added_types = []
+        self._bind_types()
 
 
 class VariableNode(EmptyNode):
@@ -235,22 +301,46 @@ class VariableNode(EmptyNode):
         return is_char_valid(next_nonspace(line))
 
     def load(self, line, pos=0):
-        pos, self.key = extract_word(line, pos)
+        pos, start_pos, self.key = extract_word(line, pos)
         if not is_var_name_valid(self.key):
-            raise ParseError(-1, pos,
+            raise ParseError(-1, start_pos,
                              'invalid variable name: {}'.format(self.key))
         pos = skip_spaces(line, pos)
-        pos = line_expect(line, pos, ':')
-        pos, type_name = extract_word(line, pos, DELIM_CHARS_TYPE)
+        if (pos == len(line)) or (line[pos] not in {':', '='}):
+            raise ParseError(-1, pos, "':' or '=' expected")
+        cur_operator = line[pos]
+        pos += 1
+        if cur_operator == ':':
+            return self.__do_load_typed(line, pos)
+        if cur_operator == '=':
+            return self.__do_load_auto(line, pos)
+        assert False, 'we should never reach this line'
+
+    def __do_load_typed(self, line, pos=0):
+        pos, start_pos, type_name = extract_word(line, pos, DELIM_CHARS_TYPE)
+        if type_name == 'auto':
+            pos = skip_spaces(line, pos)
+            pos = line_expect(line, pos, '=')
+            return self.__do_load_auto(line, pos)
         try:
             self.value = self.parent.binder.create_value(type_name)
         except KeyError:
-            raise ParseError(-1, pos, 'unknown type {}'.format(type_name))
+            raise ParseError(-1, start_pos,
+                             'unknown type {}'.format(type_name))
         pos = skip_spaces(line, pos)
         if pos < len(line) and line[pos] == '=':
             pos += 1
             pos = self.value.load(line, pos)
         return super().load(line, pos)
+
+    def __do_load_auto(self, line, pos=0):
+        detector = TypeDetector(self.parent.binder, line, pos)
+        for typename in self.parent.binder.get_all_types():
+            detector.try_load_detect_type(typename)
+            if detector.found:
+                break
+        pos, self.value = detector.get_result()
+        return pos
 
     def reset(self, key, typename, value):
         self.key = key
@@ -278,9 +368,9 @@ class SectionNode(EmptyNode):
     def load(self, line, pos=0):
         pos = skip_spaces(line, pos)
         pos = line_expect(line, pos, '[')
-        pos, self.key = extract_word(line, pos)
+        pos, start_pos, self.key = extract_word(line, pos)
         if not is_var_name_valid(self.key):
-            raise ParseError(-1, pos,
+            raise ParseError(-1, start_pos,
                              'invalid section name: {}'.format(self.key))
         pos = skip_spaces(line, pos)
         pos = line_expect(line, pos, ']')

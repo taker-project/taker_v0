@@ -94,8 +94,14 @@ def test_string():
 def test_char():
     char_value = CharValue()
 
-    char_value.load(' \"4\"  ')
-    assert char_value.save() == '\'4\''
+    char_value.load(' "4"  ')
+    assert char_value.save() == "c'4'"
+
+    char_value.load('  c"4"  ')
+    assert char_value.save() == "c'4'"
+
+    with pytest.raises(ParseError):
+        char_value.load('c "4"')
 
     with pytest.raises(ParseError) as excinfo:
         char_value.load('\'ab\'')
@@ -134,7 +140,7 @@ def test_array():
 
     char_array = ArrayValue(CharValue)
     char_array.value = ['"', "'"]
-    assert char_array.save() == '[\'"\', "\'"]'
+    assert char_array.save() == '[c\'"\', c"\'"]'
 
 
 def test_type_binder():
@@ -179,6 +185,69 @@ def test_nodes():
     section_node = SectionNode(binder_container)
     section_node.load(' [  42  ]  ')
     assert section_node.key == '42'
+
+
+def test_auto():
+    binder_container = BinderContainer()
+    node = VariableNode(binder_container)
+
+    node.load('a:auto=42')
+    assert node.save() == 'a: int = 42'
+
+    node.load('a=33.0')
+    assert node.save() == 'a: float = 33.0'
+
+    node.load('a =  0')
+    assert node.save() == 'a: int = 0'
+
+    node.load('my-long-identifier : auto = false')
+    assert node.save() == 'my-long-identifier: bool = false'
+
+    node.load('  b = "4"')
+    assert node.save() == "b: string = '4'"
+
+    node.load("a = c'4'")
+    assert node.save() == "a: char = c'4'"
+
+    node.load('b = [1, 2, 3, 4, 5]')
+    assert node.save() == 'b: int[] = [1, 2, 3, 4, 5]'
+
+    node.load('a:auto=[1,2.0,0,-3.5,null]')
+    assert node.save() == 'a: float[] = [1.0, 2.0, 0.0, -3.5, null]'
+
+
+def test_auto_errors():
+    binder_container = BinderContainer()
+    node = VariableNode(binder_container)
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('a: auto')
+    assert excinfo.value.text == "'=' expected"
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('a: auto 42')
+    assert excinfo.value.text == "'=' expected"
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('   a')
+    assert excinfo.value.text == "':' or '=' expected"
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('a, int')
+    assert excinfo.value.text == "':' or '=' expected"
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('a = null')
+    assert excinfo.value.text == 'found null, cannot auto-deduce type'
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('a = monster')
+    assert (excinfo.value.text == 'no type candidates found')
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('b = "hello')
+    assert (excinfo.value.text ==
+            'string is not terminated (assuming deduced type as string)')
 
 
 def test_section():
@@ -293,7 +362,7 @@ def test_full():
 
     with pytest.raises(ParseError) as excinfo:
         parser.load('[section]\n--help:int=5\n')
-    assert str(excinfo.value) == '2:7: error: invalid variable name: --help'
+    assert str(excinfo.value) == '2:1: error: invalid variable name: --help'
 
     with pytest.raises(ParseError) as excinfo:
         parser.load('[--help]')

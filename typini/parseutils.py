@@ -34,13 +34,13 @@ def extract_word(line, pos, delim=DELIM_CHARS):
     lpos = pos
     while (pos < len(line)) and (line[pos] not in delim):
         pos += 1
-    return (pos, line[lpos:pos])
+    return (pos, lpos, line[lpos:pos])
 
 
 def extract_string(line, pos):
     pos = skip_spaces(line, pos)
     if pos == len(line) or (line[pos] != '\'' and line[pos] != '\"'):
-        raise ParseError(-1, pos, 'expected \' or \"')
+        raise ParseError(-1, pos, '\' or \" expected')
     quote = line[pos]
     pos += 1
     lpos = pos
