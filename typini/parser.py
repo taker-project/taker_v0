@@ -462,22 +462,20 @@ class TypiniSection:
         return -1
 
     def __getitem__(self, key):
-        index = self.__get_node_index(key)
-        if index < 0:
-            raise KeyError(key)
-        return self.__nodes[index].value.value
+        return self.find_node(key).value.value
 
     def __setitem__(self, key, value):
-        index = self.__get_node_index(key)
-        if index < 0:
-            raise KeyError(key)
-        self.__nodes[index].value.value = value
-        self.__nodes[index].value.validate()
+        variable = self.find_node(key).value
+        variable.value = value
+        variable.validate()
 
     def __iter__(self):
         for node in self.__nodes:
             if type(node) == VariableNode:
                 yield node
+
+    def __contains__(self, item):
+        return self.exists(item)
 
     def reset(self, key, typename, value, can_overwrite=True):
         index = self.__get_node_index(key, False)
@@ -491,8 +489,14 @@ class TypiniSection:
         if index < 0:
             self.__append_value_node(cur_node)
 
-    def exists(self, node, case_sensitive=True):
-        return self.__get_node_index(node, case_sensitive) >= 0
+    def exists(self, key, case_sensitive=True):
+        return self.__get_node_index(key, case_sensitive) >= 0
+
+    def find_node(self, key, case_sensitive=True):
+        index = self.__get_node_index(key, case_sensitive)
+        if index < 0:
+            raise KeyError(key)
+        return self.__nodes[index]
 
     def rename(self, key, new_key):
         if not is_var_name_valid(new_key):
@@ -537,7 +541,7 @@ class TypiniSection:
             raise ParseError(-1, -1,
                              'section nodes inside sections are not allowed')
         else:
-            assert False
+            assert False, 'we should not enter here'
 
     def get_nodes(self):
         return [self.header] + self.__nodes + self.__comments_tail
@@ -597,15 +601,15 @@ class Typini(NodeList):
     def __iter__(self):
         return iter(self.__sections)
 
+    def __contains__(self, item):
+        return self.has_section(item)
+
     def __len__(self):
         # FIXME : calculate length more efficiently?
         return len(self.__header) + sum(len(i) for i in self.__sections)
 
     def __getitem__(self, key):
-        index = self.__get_section_index(key)
-        if index < 0:
-            raise KeyError(key)
-        return self.__sections[index]
+        return self.find_section(key)
 
     def __get_section_index(self, key, case_sensitive=True):
         if key.lower() not in self.__keys:
@@ -627,9 +631,10 @@ class Typini(NodeList):
                              .format(section_node.key))
         self.__keys.add(section_node.key.lower())
         self.__sections.append(TypiniSection(self, section_node))
+        return self.__sections[-1]
 
     def create_section(self, key):
-        self.__append_section(SectionNode(self, key))
+        return self.__append_section(SectionNode(self, key))
 
     def ensure_section(self, key, can_overwrite=True):
         index = self.__get_section_index(key, False)
@@ -640,6 +645,7 @@ class Typini(NodeList):
         if (not can_overwrite) and section.key != key:
             raise KeyError(key)
         section.key = key
+        return section
 
     def get_sections(self):
         return self.__sections
@@ -649,6 +655,12 @@ class Typini(NodeList):
 
     def has_section(self, key, case_sensitive=True):
         return self.__get_section_index(key, case_sensitive) >= 0
+
+    def find_section(self, key, case_sensitive=True):
+        index = self.__get_section_index(key, case_sensitive)
+        if index < 0:
+            raise KeyError(key)
+        return self.__sections[index]
 
     def erase_section(self, key):
         index = self.__get_section_index(key)
