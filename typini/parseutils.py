@@ -1,7 +1,11 @@
 import codecs
 
 
-class ParseError(Exception):
+class TypiniError(Exception):
+    pass
+
+
+class ParseError(TypiniError):
     def __init__(self, row, column, text):
         super().__init__()
         self.row = row

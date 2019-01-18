@@ -170,7 +170,7 @@ class CharValue(StrValue):
         pos = super()._do_load(line, pos)
         if len(self.value) != 1:
             raise ParseError(-1, pos,
-                             'one character in char type excepted, '
+                             'one character in char type expected, '
                              '{} character(s) found'
                              .format(len(self.value)))
         return pos
@@ -411,19 +411,24 @@ class NodeList:
             self._do_append_node(node)
         except ParseError as parse_error:
             parse_error.row = self.__line_counter
+            if parse_error.row < 0:
+                parse_error.row = len(self)
             if parse_error.column < 0:
                 parse_error.column = len(line) - 1
             raise parse_error
 
-    def load(self, text):
+    def append_lines(self, text):
         try:
-            self.clear()
-            self.__line_counter = 0
+            self.__line_counter = len(self)
             for line in text.splitlines():
                 self.append_line(line)
                 self.__line_counter += 1
         finally:
             self.__line_counter = -1
+
+    def load(self, text):
+        self.clear()
+        self.append_lines(text)
 
     def dump(self):
         return '\n'.join([node.save() for node in self.get_nodes()])
@@ -480,6 +485,19 @@ class TypiniSection:
         cur_node.reset(key, typename, value)
         if index < 0:
             self.append_value_node(cur_node)
+
+    def rename_node(self, key, new_key):
+        if not is_var_name_valid(new_key):
+            raise TypiniError('{} is a bad node name'.format(new_key))
+        index = self.__get_node_index(key)
+        if index < 0:
+            raise TypiniError('{} doesn\'t exist'.format(key))
+        if ((key.lower() != new_key.lower()) and
+                new_key.lower() in self.__keys):
+            raise TypiniError('{} already exists'.format(new_key))
+        self.__nodes[index].key = new_key
+        self.__keys.remove(key.lower())
+        self.__keys.add(new_key.lower())
 
     def clear(self):
         self.__nodes.clear()
@@ -615,6 +633,20 @@ class Typini(NodeList):
         if index < 0:
             raise KeyError(key)
         self.__sections.pop(index)
+        self.__keys.remove(key.lower())
+
+    def rename_section(self, key, new_key):
+        if not is_var_name_valid(new_key):
+            raise TypiniError('{} is a bad section name'.format(new_key))
+        index = self.__get_section_index(key)
+        if index < 0:
+            raise TypiniError('{} doesn\'t exist'.format(key))
+        if ((key.lower() != new_key.lower()) and
+                new_key.lower() in self.__keys):
+            raise TypiniError('{} already exists'.format(new_key))
+        self.__sections[index].header.key = new_key
+        self.__keys.remove(key.lower())
+        self.__keys.add(new_key.lower())
 
     def __init__(self):
         self.__header = []

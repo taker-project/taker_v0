@@ -106,12 +106,12 @@ def test_char():
     with pytest.raises(ParseError) as excinfo:
         char_value.load('\'ab\'')
     assert (excinfo.value.text ==
-            'one character in char type excepted, 2 character(s) found')
+            'one character in char type expected, 2 character(s) found')
 
     with pytest.raises(ParseError) as excinfo:
         char_value.load('\'\'')
     assert (excinfo.value.text ==
-            'one character in char type excepted, 0 character(s) found')
+            'one character in char type expected, 0 character(s) found')
 
 
 def test_array():
@@ -329,6 +329,11 @@ def test_full():
         parser.erase_section('Section')
     parser.erase_section('section')
     assert parser.dump() == '[section2]\nc: string\nd: int = 2'
+
+    parser.append_lines('[section]\nd:string')
+    assert (parser.dump() ==
+            '[section2]\nc: string\nd: int = 2\n[section]\nd: string')
+
     parser.load('#comment\n\n\n\n[section]\na:int\n[section2]\n[section3]\n')
 
     parser.clear()
@@ -372,3 +377,80 @@ def test_full():
         parser.load('[section]\na:int\nA:int\n')
     assert (excinfo.value.text ==
             'key A is duplicate or only the case differs')
+
+
+def test_rename():
+    parser = Typini()
+    parser.load('[small]\nbigA=1\nSMALLb=2\nBIGC=3\n[BIG]\nq=1')
+    assert parser.dump() == '''[small]
+bigA: int = 1
+SMALLb: int = 2
+BIGC: int = 3
+[BIG]
+q: int = 1'''
+
+    with pytest.raises(TypiniError) as excinfo:
+        parser.rename_section('nonExistent', '42')
+    assert str(excinfo.value) == 'nonExistent doesn\'t exist'
+
+    with pytest.raises(TypiniError) as excinfo:
+        parser.rename_section('BIG', 'INVALID!')
+    assert str(excinfo.value) == 'INVALID! is a bad section name'
+
+    with pytest.raises(TypiniError) as excinfo:
+        parser.rename_section('BIG', 'SMALL')
+    assert str(excinfo.value) == 'SMALL already exists'
+
+    with pytest.raises(TypiniError) as excinfo:
+        parser.rename_section('big', 'good')
+    assert str(excinfo.value) == 'big doesn\'t exist'
+
+    parser.rename_section('BIG', 'big')
+    assert parser.dump() == '''[small]
+bigA: int = 1
+SMALLb: int = 2
+BIGC: int = 3
+[big]
+q: int = 1'''
+
+    parser.rename_section('big', 'VeryBig')
+    assert parser.dump() == '''[small]
+bigA: int = 1
+SMALLb: int = 2
+BIGC: int = 3
+[VeryBig]
+q: int = 1'''
+
+    section = parser['small']
+
+    with pytest.raises(TypiniError) as excinfo:
+        section.rename_node('nonExistent', '42')
+    assert str(excinfo.value) == 'nonExistent doesn\'t exist'
+
+    with pytest.raises(TypiniError) as excinfo:
+        section.rename_node('BIGC', 'INVALID!')
+    assert str(excinfo.value) == 'INVALID! is a bad node name'
+
+    with pytest.raises(TypiniError) as excinfo:
+        section.rename_node('BIGC', 'BIGA')
+    assert str(excinfo.value) == 'BIGA already exists'
+
+    with pytest.raises(TypiniError) as excinfo:
+        section.rename_node('bigc', 'good')
+    assert str(excinfo.value) == 'bigc doesn\'t exist'
+
+    section.rename_node('bigA', 'BIGA')
+    assert parser.dump() == '''[small]
+BIGA: int = 1
+SMALLb: int = 2
+BIGC: int = 3
+[VeryBig]
+q: int = 1'''
+
+    section.rename_node('SMALLb', 'smallest_b')
+    assert parser.dump() == '''[small]
+BIGA: int = 1
+smallest_b: int = 2
+BIGC: int = 3
+[VeryBig]
+q: int = 1'''
