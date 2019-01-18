@@ -262,8 +262,8 @@ def test_section():
     with pytest.raises(KeyError):
         section['key'] = '42'
     with pytest.raises(KeyError):
-        section.erase_node('key')
-    section.erase_node('KEY')
+        section.erase('key')
+    section.erase('KEY')
 
     assert len(section) == 1
     section.reset('KEY', 'string', 'value')
@@ -285,11 +285,11 @@ def test_section():
     with pytest.raises(ParseError):
         node = VariableNode(binder_container)
         node.reset('key', 'int', 42)
-        section.append_value_node(node)
+        section.append_node(node)
     with pytest.raises(ParseError):
         node = VariableNode(binder_container)
         node.reset('Key', 'int', 42)
-        section.append_value_node(node)
+        section.append_node(node)
 
     section.clear()
     var_node = VariableNode(binder_container)
@@ -424,22 +424,22 @@ q: int = 1'''
     section = parser['small']
 
     with pytest.raises(TypiniError) as excinfo:
-        section.rename_node('nonExistent', '42')
+        section.rename('nonExistent', '42')
     assert str(excinfo.value) == 'nonExistent doesn\'t exist'
 
     with pytest.raises(TypiniError) as excinfo:
-        section.rename_node('BIGC', 'INVALID!')
-    assert str(excinfo.value) == 'INVALID! is a bad node name'
+        section.rename('BIGC', 'INVALID!')
+    assert str(excinfo.value) == 'INVALID! is a bad key name'
 
     with pytest.raises(TypiniError) as excinfo:
-        section.rename_node('BIGC', 'BIGA')
+        section.rename('BIGC', 'BIGA')
     assert str(excinfo.value) == 'BIGA already exists'
 
     with pytest.raises(TypiniError) as excinfo:
-        section.rename_node('bigc', 'good')
+        section.rename('bigc', 'good')
     assert str(excinfo.value) == 'bigc doesn\'t exist'
 
-    section.rename_node('bigA', 'BIGA')
+    section.rename('bigA', 'BIGA')
     assert parser.dump() == '''[small]
 BIGA: int = 1
 SMALLb: int = 2
@@ -447,7 +447,7 @@ BIGC: int = 3
 [VeryBig]
 q: int = 1'''
 
-    section.rename_node('SMALLb', 'smallest_b')
+    section.rename('SMALLb', 'smallest_b')
     assert parser.dump() == '''[small]
 BIGA: int = 1
 smallest_b: int = 2

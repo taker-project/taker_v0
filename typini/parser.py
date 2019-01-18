@@ -489,11 +489,14 @@ class TypiniSection:
                 raise KeyError(key)
         cur_node.reset(key, typename, value)
         if index < 0:
-            self.append_value_node(cur_node)
+            self.__append_value_node(cur_node)
 
-    def rename_node(self, key, new_key):
+    def exists(self, node, case_sensitive=True):
+        return self.__get_node_index(node, case_sensitive) >= 0
+
+    def rename(self, key, new_key):
         if not is_var_name_valid(new_key):
-            raise TypiniError('{} is a bad node name'.format(new_key))
+            raise TypiniError('{} is a bad key name'.format(new_key))
         index = self.__get_node_index(key)
         if index < 0:
             raise TypiniError('{} doesn\'t exist'.format(key))
@@ -508,7 +511,7 @@ class TypiniSection:
         self.__nodes.clear()
         self.__comments_tail.clear()
 
-    def append_value_node(self, node):
+    def __append_value_node(self, node):
         if node.key.lower() in self.__keys:
             raise ParseError(-1, -1,
                              'key {} is duplicate or only the case differs'
@@ -516,7 +519,7 @@ class TypiniSection:
         self.__keys.add(node.key.lower())
         self.__nodes.append(node)
 
-    def erase_node(self, key):
+    def erase(self, key):
         index = self.__get_node_index(key)
         if index < 0:
             raise KeyError(key)
@@ -529,7 +532,7 @@ class TypiniSection:
         elif type(node) == VariableNode:
             self.__nodes.extend(self.__comments_tail)
             self.__comments_tail.clear()
-            self.append_value_node(node)
+            self.__append_value_node(node)
         elif type(node) == SectionNode:
             raise ParseError(-1, -1,
                              'section nodes inside sections are not allowed')
@@ -643,6 +646,9 @@ class Typini(NodeList):
 
     def list_sections(self):
         return [section.key for section in self.__sections]
+
+    def has_section(self, key, case_sensitive=True):
+        return self.__get_section_index(key, case_sensitive) >= 0
 
     def erase_section(self, key):
         index = self.__get_section_index(key)
