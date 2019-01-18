@@ -474,6 +474,11 @@ class TypiniSection:
         self.__nodes[index].value.value = value
         self.__nodes[index].value.validate()
 
+    def __iter__(self):
+        for node in self.__nodes:
+            if type(node) == VariableNode:
+                yield node
+
     def reset(self, key, typename, value, can_overwrite=True):
         index = self.__get_node_index(key, False)
         cur_node = (self.__nodes[index]
@@ -542,6 +547,14 @@ class TypiniSection:
     def dump(self):
         return '\n'.join([node.save() for node in self.get_nodes()])
 
+    @property
+    def key(self):
+        return self.header.key
+
+    @key.setter
+    def key(self, value):
+        self.header.key = value
+
     def __len__(self):
         return 1 + len(self.__nodes) + len(self.__comments_tail)
 
@@ -578,6 +591,9 @@ class Typini(NodeList):
                                     *(section.get_nodes()
                                       for section in self.__sections)))
 
+    def __iter__(self):
+        return iter(self.__sections)
+
     def __len__(self):
         # FIXME : calculate length more efficiently?
         return len(self.__header) + sum(len(i) for i in self.__sections)
@@ -594,10 +610,10 @@ class Typini(NodeList):
         if not case_sensitive:
             key = key.lower()
         for i in range(len(self.__sections)):
-            header_key = self.__sections[i].header.key
+            section_key = self.__sections[i].key
             if not case_sensitive:
-                header_key = header_key.lower()
-            if header_key == key:
+                section_key = section_key.lower()
+            if section_key == key:
                 return i
         return -1
 
@@ -618,15 +634,15 @@ class Typini(NodeList):
             index = len(self.__sections)
             self.__append_section(SectionNode(self, key))
         section = self.__sections[index]
-        if (not can_overwrite) and section.header.key != key:
+        if (not can_overwrite) and section.key != key:
             raise KeyError(key)
-        section.header.key = key
+        section.key = key
 
     def get_sections(self):
         return self.__sections
 
     def list_sections(self):
-        return [section.header.key for section in self.__sections]
+        return [section.key for section in self.__sections]
 
     def erase_section(self, key):
         index = self.__get_section_index(key)
@@ -644,7 +660,7 @@ class Typini(NodeList):
         if ((key.lower() != new_key.lower()) and
                 new_key.lower() in self.__keys):
             raise TypiniError('{} already exists'.format(new_key))
-        self.__sections[index].header.key = new_key
+        self.__sections[index].key = new_key
         self.__keys.remove(key.lower())
         self.__keys.add(new_key.lower())
 

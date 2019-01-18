@@ -454,3 +454,14 @@ smallest_b: int = 2
 BIGC: int = 3
 [VeryBig]
 q: int = 1'''
+
+
+def test_iter():
+    parser = Typini()
+    parser.load('[f]\ne=1\n#\nd=2\n[c]\nb=1\n#\na=2')
+
+    all_sections = [section.key for section in parser]
+    all_nodes = [node.key for section in parser for node in section]
+
+    assert all_sections == ['f', 'c']
+    assert all_nodes == ['e', 'd', 'b', 'a']
