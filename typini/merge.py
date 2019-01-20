@@ -1,6 +1,3 @@
-from enum import Enum, unique
-from copy import deepcopy
-from .parser import Typini, TypiniSection
 from .parseutils import TypiniError
 
 
@@ -19,11 +16,11 @@ def merge_section(dest, source):
                 raise MergeError('type mismatch for {}::{}: expected {}, '
                                  'got {}'.format(source.key, src_key,
                                                  dst_type, src_type))
-        except KeyError as err:
+        except KeyError:
             pass
         try:
             dest.reset(src_key, src_type, src_node.value.value, False)
-        except KeyError as err:
+        except KeyError:
             raise MergeError('key {}::{} exists, but uses different case'
                              .format(source.key, src_key))
 
@@ -33,7 +30,7 @@ def merge(dest, source):
     for src_section in source:
         try:
             dst_section = dest.ensure_section(src_section.key, False)
-        except KeyError as err:
+        except KeyError:
             raise MergeError('section {} exists, but uses different case'
                              .format(src_section.key))
         merge_section(dst_section, src_section)

@@ -11,9 +11,13 @@ class ParseError(TypiniError):
         self.row = row
         self.column = column
         self.text = text
+        self.filename = None
 
     def __str__(self):
-        return '{}:{}: error: {}'.format(self.row+1, self.column+1, self.text)
+        res = '{}:{}: error: {}'.format(self.row+1, self.column+1, self.text)
+        if self.filename is not None:
+            res = str(self.filename) + ':' + res
+        return res
 
 
 SPACE_CHARS = set([' ', '\t'])

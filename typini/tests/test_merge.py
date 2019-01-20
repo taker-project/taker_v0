@@ -1,7 +1,7 @@
-from typini.merge import *
-from typini.parser import Typini
 from copy import deepcopy
 import pytest
+from typini.merge import *
+from typini.parser import Typini
 
 
 def test_merge():
