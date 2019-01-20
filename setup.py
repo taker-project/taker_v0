@@ -22,5 +22,5 @@ setup(
         'Programming Language :: Python :: 3'
     ],
     packages=find_packages(),
-    install_requires=['namedlist'],
+    install_requires=['namedlist', 'appdirs'],
 )
