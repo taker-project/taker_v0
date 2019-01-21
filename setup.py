@@ -21,6 +21,7 @@ setup(
         'Operating System :: POSIX',
         'Programming Language :: Python :: 3'
     ],
-    packages=find_packages(),
+    package_dir={'': 'src'},
+    packages=find_packages('src'),
     install_requires=['namedlist', 'appdirs'],
 )

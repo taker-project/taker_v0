@@ -25,22 +25,23 @@ venv: .make_targets/venv
 		&& pip install pytest pytest-pycodestyle pytest-mock pylint'
 
 clean_runners:
-	+cd runners && $(MAKE) clean
+	+cd src/runners && $(MAKE) clean
 
 build_runners: venv
-	+cd runners && $(MAKE) PREFIX="$$(pwd)/../venv" install
+	+cd src/runners && $(MAKE) PREFIX="$$(pwd)/../../venv" install
 
 clean: clean_runners
 	rm -rf venv/ build/ dist/ .pytest_cache/
 	rm -rf *.egg-info/
 	rm -rf .make_targets
+	find . -name "__pycache__" -type d -print0 | xargs -0 -n 1 rm -rf
 
 build: venv build_runners
-	cd runners && $(MAKE) build
+	cd src/runners && $(MAKE) build
 	bash -c '. pyenv.sh && python setup.py install'
 
 test_prepare:
-	cd runners && $(MAKE) test_prepare
+	cd src/runners && $(MAKE) test_prepare
 
 test: venv build test_prepare
 	bash -c '. pyenv.sh && pytest --codestyle'

@@ -14,7 +14,7 @@ def dump(parser):
 
 
 def test_parse_tree():
-    test_dir = path.join('typini', 'tests')
+    test_dir = path.join('src', 'typini', 'tests')
     parser = Typini()
     parser.load_from_file(path.join(test_dir, 'test1.tini'))
     parsed = dump(parser)
