@@ -32,7 +32,7 @@ build_runners: venv
 
 clean: clean_runners
 	rm -rf venv/ build/ dist/ .pytest_cache/
-	rm -rf *.egg-info/
+	rm -rf src/*.egg-info/
 	rm -rf .make_targets
 	find . -name "__pycache__" -type d -print0 | xargs -0 -n 1 rm -rf
 
