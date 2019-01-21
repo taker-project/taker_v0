@@ -242,7 +242,7 @@ def test_auto_errors():
 
     with pytest.raises(ParseError) as excinfo:
         node.load('a = monster')
-    assert (excinfo.value.text == 'no type candidates found')
+    assert excinfo.value.text == 'no type candidates found'
 
     with pytest.raises(ParseError) as excinfo:
         node.load('b = "hello')
