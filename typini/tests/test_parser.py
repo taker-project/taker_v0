@@ -94,18 +94,24 @@ def test_string():
 def test_char():
     char_value = CharValue()
 
-    char_value.load(' \"4\"  ')
-    assert char_value.save() == '\'4\''
+    char_value.load(' "4"  ')
+    assert char_value.save() == "c'4'"
+
+    char_value.load('  c"4"  ')
+    assert char_value.save() == "c'4'"
+
+    with pytest.raises(ParseError):
+        char_value.load('c "4"')
 
     with pytest.raises(ParseError) as excinfo:
         char_value.load('\'ab\'')
     assert (excinfo.value.text ==
-            'one character in char type excepted, 2 character(s) found')
+            'one character in char type expected, 2 character(s) found')
 
     with pytest.raises(ParseError) as excinfo:
         char_value.load('\'\'')
     assert (excinfo.value.text ==
-            'one character in char type excepted, 0 character(s) found')
+            'one character in char type expected, 0 character(s) found')
 
 
 def test_array():
@@ -134,7 +140,7 @@ def test_array():
 
     char_array = ArrayValue(CharValue)
     char_array.value = ['"', "'"]
-    assert char_array.save() == '[\'"\', "\'"]'
+    assert char_array.save() == '[c\'"\', c"\'"]'
 
 
 def test_type_binder():
@@ -181,6 +187,69 @@ def test_nodes():
     assert section_node.key == '42'
 
 
+def test_auto():
+    binder_container = BinderContainer()
+    node = VariableNode(binder_container)
+
+    node.load('a:auto=42')
+    assert node.save() == 'a: int = 42'
+
+    node.load('a=33.0')
+    assert node.save() == 'a: float = 33.0'
+
+    node.load('a =  0')
+    assert node.save() == 'a: int = 0'
+
+    node.load('my-long-identifier : auto = false')
+    assert node.save() == 'my-long-identifier: bool = false'
+
+    node.load('  b = "4"')
+    assert node.save() == "b: string = '4'"
+
+    node.load("a = c'4'")
+    assert node.save() == "a: char = c'4'"
+
+    node.load('b = [1, 2, 3, 4, 5]')
+    assert node.save() == 'b: int[] = [1, 2, 3, 4, 5]'
+
+    node.load('a:auto=[1,2.0,0,-3.5,null]')
+    assert node.save() == 'a: float[] = [1.0, 2.0, 0.0, -3.5, null]'
+
+
+def test_auto_errors():
+    binder_container = BinderContainer()
+    node = VariableNode(binder_container)
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('a: auto')
+    assert excinfo.value.text == "'=' expected"
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('a: auto 42')
+    assert excinfo.value.text == "'=' expected"
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('   a')
+    assert excinfo.value.text == "':' or '=' expected"
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('a, int')
+    assert excinfo.value.text == "':' or '=' expected"
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('a = null')
+    assert excinfo.value.text == 'found null, cannot auto-deduce type'
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('a = monster')
+    assert (excinfo.value.text == 'no type candidates found')
+
+    with pytest.raises(ParseError) as excinfo:
+        node.load('b = "hello')
+    assert (excinfo.value.text ==
+            'string is not terminated (assuming deduced type as string)')
+
+
 def test_section():
     binder_container = BinderContainer()
     section = TypiniSection(
@@ -193,8 +262,8 @@ def test_section():
     with pytest.raises(KeyError):
         section['key'] = '42'
     with pytest.raises(KeyError):
-        section.erase_node('key')
-    section.erase_node('KEY')
+        section.erase('key')
+    section.erase('KEY')
 
     assert len(section) == 1
     section.reset('KEY', 'string', 'value')
@@ -216,11 +285,11 @@ def test_section():
     with pytest.raises(ParseError):
         node = VariableNode(binder_container)
         node.reset('key', 'int', 42)
-        section.append_value_node(node)
+        section.append_node(node)
     with pytest.raises(ParseError):
         node = VariableNode(binder_container)
         node.reset('Key', 'int', 42)
-        section.append_value_node(node)
+        section.append_node(node)
 
     section.clear()
     var_node = VariableNode(binder_container)
@@ -260,6 +329,11 @@ def test_full():
         parser.erase_section('Section')
     parser.erase_section('section')
     assert parser.dump() == '[section2]\nc: string\nd: int = 2'
+
+    parser.append_lines('[section]\nd:string')
+    assert (parser.dump() ==
+            '[section2]\nc: string\nd: int = 2\n[section]\nd: string')
+
     parser.load('#comment\n\n\n\n[section]\na:int\n[section2]\n[section3]\n')
 
     parser.clear()
@@ -293,7 +367,7 @@ def test_full():
 
     with pytest.raises(ParseError) as excinfo:
         parser.load('[section]\n--help:int=5\n')
-    assert str(excinfo.value) == '2:7: error: invalid variable name: --help'
+    assert str(excinfo.value) == '2:1: error: invalid variable name: --help'
 
     with pytest.raises(ParseError) as excinfo:
         parser.load('[--help]')
@@ -303,3 +377,91 @@ def test_full():
         parser.load('[section]\na:int\nA:int\n')
     assert (excinfo.value.text ==
             'key A is duplicate or only the case differs')
+
+
+def test_rename():
+    parser = Typini()
+    parser.load('[small]\nbigA=1\nSMALLb=2\nBIGC=3\n[BIG]\nq=1')
+    assert parser.dump() == '''[small]
+bigA: int = 1
+SMALLb: int = 2
+BIGC: int = 3
+[BIG]
+q: int = 1'''
+
+    with pytest.raises(TypiniError) as excinfo:
+        parser.rename_section('nonExistent', '42')
+    assert str(excinfo.value) == 'nonExistent doesn\'t exist'
+
+    with pytest.raises(TypiniError) as excinfo:
+        parser.rename_section('BIG', 'INVALID!')
+    assert str(excinfo.value) == 'INVALID! is a bad section name'
+
+    with pytest.raises(TypiniError) as excinfo:
+        parser.rename_section('BIG', 'SMALL')
+    assert str(excinfo.value) == 'SMALL already exists'
+
+    with pytest.raises(TypiniError) as excinfo:
+        parser.rename_section('big', 'good')
+    assert str(excinfo.value) == 'big doesn\'t exist'
+
+    parser.rename_section('BIG', 'big')
+    assert parser.dump() == '''[small]
+bigA: int = 1
+SMALLb: int = 2
+BIGC: int = 3
+[big]
+q: int = 1'''
+
+    parser.rename_section('big', 'VeryBig')
+    assert parser.dump() == '''[small]
+bigA: int = 1
+SMALLb: int = 2
+BIGC: int = 3
+[VeryBig]
+q: int = 1'''
+
+    section = parser['small']
+
+    with pytest.raises(TypiniError) as excinfo:
+        section.rename('nonExistent', '42')
+    assert str(excinfo.value) == 'nonExistent doesn\'t exist'
+
+    with pytest.raises(TypiniError) as excinfo:
+        section.rename('BIGC', 'INVALID!')
+    assert str(excinfo.value) == 'INVALID! is a bad key name'
+
+    with pytest.raises(TypiniError) as excinfo:
+        section.rename('BIGC', 'BIGA')
+    assert str(excinfo.value) == 'BIGA already exists'
+
+    with pytest.raises(TypiniError) as excinfo:
+        section.rename('bigc', 'good')
+    assert str(excinfo.value) == 'bigc doesn\'t exist'
+
+    section.rename('bigA', 'BIGA')
+    assert parser.dump() == '''[small]
+BIGA: int = 1
+SMALLb: int = 2
+BIGC: int = 3
+[VeryBig]
+q: int = 1'''
+
+    section.rename('SMALLb', 'smallest_b')
+    assert parser.dump() == '''[small]
+BIGA: int = 1
+smallest_b: int = 2
+BIGC: int = 3
+[VeryBig]
+q: int = 1'''
+
+
+def test_iter():
+    parser = Typini()
+    parser.load('[f]\ne=1\n#\nd=2\n[c]\nb=1\n#\na=2')
+
+    all_sections = [section.key for section in parser]
+    all_nodes = [node.key for section in parser for node in section]
+
+    assert all_sections == ['f', 'c']
+    assert all_nodes == ['e', 'd', 'b', 'a']

@@ -2,6 +2,9 @@ import itertools
 from .names import is_char_valid, is_var_name_valid
 from .parseutils import *
 
+# TODO : fix that array of nulls is of type int[]
+# (it's an error or null must be deduced to type int also?)
+
 
 class EmptyNode:
     @classmethod
@@ -53,7 +56,7 @@ class VariableValue:
         raise NotImplementedError()
 
     def load(self, line, pos=0):
-        new_pos, word = extract_word(line, pos)
+        new_pos, _, word = extract_word(line, pos)
         if word == 'null':
             self.value = None
             return new_pos
@@ -78,12 +81,12 @@ class VariableValue:
 
 class NumberValue(VariableValue):
     def _do_load(self, line, pos=0):
-        pos, word = extract_word(line, pos)
+        pos, start_pos, word = extract_word(line, pos)
         try:
             self.value = self.var_type()(word)
             self.validate()
         except ValueError:
-            raise ParseError(-1, pos, '{} expected, {} token found'
+            raise ParseError(-1, start_pos, '{} expected, {} token found'
                              .format(self.var_type().__name__,
                                      repr(word)))
         return pos
@@ -118,14 +121,14 @@ class BoolValue(VariableValue):
         return 'bool'
 
     def _do_load(self, line, pos=0):
-        pos, word = extract_word(line, pos)
+        pos, start_pos, word = extract_word(line, pos)
         if word == 'true':
             self.value = True
             return pos
         if word == 'false':
             self.value = False
             return pos
-        raise ParseError(-1, pos, 'expected true or false')
+        raise ParseError(-1, start_pos, 'expected true or false')
 
     def _do_save(self):
         return 'true' if self.value else 'false'
@@ -155,11 +158,19 @@ class CharValue(StrValue):
     def type_name(self):
         return 'char'
 
+    def _do_save(self):
+        return 'c' + super()._do_save()
+
     def _do_load(self, line, pos=0):
+        pos = skip_spaces(line, pos)
+        if (pos != len(line)) and line[pos] == 'c':
+            pos += 1
+        if (pos == len(line)) or (line[pos] not in {'"', "'"}):
+            raise ParseError(-1, pos, '\' or \" expected')
         pos = super()._do_load(line, pos)
         if len(self.value) != 1:
             raise ParseError(-1, pos,
-                             'one character in char type excepted, '
+                             'one character in char type expected, '
                              '{} character(s) found'
                              .format(len(self.value)))
         return pos
@@ -209,10 +220,55 @@ class ArrayValue(VariableValue):
         self.item_value = item_class()
 
 
+class TypeDetector:
+    def __init__(self, binder, line, pos=0):
+        self.binder = binder
+        self.best_exception = None
+        self.best_typename = None
+        self.line = line
+        self.pos = pos
+        self.new_pos = pos
+        self.value = None
+        self.found = False
+
+    def update_exception(self, typename, new_exception):
+        if new_exception.column <= skip_spaces(self.line, self.pos):
+            return
+        if ((self.best_exception is None) or
+                (new_exception.column > self.best_exception.column)):
+            self.best_exception = new_exception
+            self.best_typename = typename
+
+    def try_load_detect_type(self, typename):
+        if self.found:
+            return True
+        self.value = self.binder.create_value(typename)
+        try:
+            self.new_pos = self.value.load(self.line, self.pos)
+        except ParseError as exc:
+            self.update_exception(self.value.type_name(), exc)
+            return False
+        if self.value.value is None:
+            raise ParseError(-1, self.new_pos,
+                             'found null, cannot auto-deduce type')
+        self.found = True
+        return True
+
+    def get_result(self):
+        if self.found:
+            return (self.new_pos, self.value)
+        if self.best_exception is None:
+            raise ParseError(-1, self.pos, 'no type candidates found')
+        self.best_exception.text = '{} (assuming deduced type as {})'.format(
+            self.best_exception.text, self.best_typename)
+        raise self.best_exception
+
+
 class TypeBinder:
     def _bind_type(self, type_class):
         type_name = type_class().type_name()
         self.__binding[type_name] = type_class
+        self.__added_types += [type_name]
 
     def create_value(self, typename):
         # TODO: Add multi-dimensional array support (?)
@@ -220,13 +276,23 @@ class TypeBinder:
             return ArrayValue(self.__binding[typename[:-2]])
         return self.__binding[typename]()
 
-    def __init__(self):
-        self.__binding = {}
+    def get_all_types(self):
+        for typename in self.__added_types:
+            yield typename
+        for typename in self.__added_types:
+            yield typename + '[]'
+
+    def _bind_types(self):
         self._bind_type(IntValue)
         self._bind_type(FloatValue)
-        self._bind_type(CharValue)
         self._bind_type(BoolValue)
         self._bind_type(StrValue)
+        self._bind_type(CharValue)
+
+    def __init__(self):
+        self.__binding = {}
+        self.__added_types = []
+        self._bind_types()
 
 
 class VariableNode(EmptyNode):
@@ -235,22 +301,46 @@ class VariableNode(EmptyNode):
         return is_char_valid(next_nonspace(line))
 
     def load(self, line, pos=0):
-        pos, self.key = extract_word(line, pos)
+        pos, start_pos, self.key = extract_word(line, pos)
         if not is_var_name_valid(self.key):
-            raise ParseError(-1, pos,
+            raise ParseError(-1, start_pos,
                              'invalid variable name: {}'.format(self.key))
         pos = skip_spaces(line, pos)
-        pos = line_expect(line, pos, ':')
-        pos, type_name = extract_word(line, pos, DELIM_CHARS_TYPE)
+        if (pos == len(line)) or (line[pos] not in {':', '='}):
+            raise ParseError(-1, pos, "':' or '=' expected")
+        cur_operator = line[pos]
+        pos += 1
+        if cur_operator == ':':
+            return self.__do_load_typed(line, pos)
+        if cur_operator == '=':
+            return self.__do_load_auto(line, pos)
+        assert False, 'we should never reach this line'
+
+    def __do_load_typed(self, line, pos=0):
+        pos, start_pos, type_name = extract_word(line, pos, DELIM_CHARS_TYPE)
+        if type_name == 'auto':
+            pos = skip_spaces(line, pos)
+            pos = line_expect(line, pos, '=')
+            return self.__do_load_auto(line, pos)
         try:
             self.value = self.parent.binder.create_value(type_name)
         except KeyError:
-            raise ParseError(-1, pos, 'unknown type {}'.format(type_name))
+            raise ParseError(-1, start_pos,
+                             'unknown type {}'.format(type_name))
         pos = skip_spaces(line, pos)
         if pos < len(line) and line[pos] == '=':
             pos += 1
             pos = self.value.load(line, pos)
         return super().load(line, pos)
+
+    def __do_load_auto(self, line, pos=0):
+        detector = TypeDetector(self.parent.binder, line, pos)
+        for typename in self.parent.binder.get_all_types():
+            detector.try_load_detect_type(typename)
+            if detector.found:
+                break
+        pos, self.value = detector.get_result()
+        return pos
 
     def reset(self, key, typename, value):
         self.key = key
@@ -278,9 +368,9 @@ class SectionNode(EmptyNode):
     def load(self, line, pos=0):
         pos = skip_spaces(line, pos)
         pos = line_expect(line, pos, '[')
-        pos, self.key = extract_word(line, pos)
+        pos, start_pos, self.key = extract_word(line, pos)
         if not is_var_name_valid(self.key):
-            raise ParseError(-1, pos,
+            raise ParseError(-1, start_pos,
                              'invalid section name: {}'.format(self.key))
         pos = skip_spaces(line, pos)
         pos = line_expect(line, pos, ']')
@@ -321,19 +411,24 @@ class NodeList:
             self._do_append_node(node)
         except ParseError as parse_error:
             parse_error.row = self.__line_counter
+            if parse_error.row < 0:
+                parse_error.row = len(self)
             if parse_error.column < 0:
                 parse_error.column = len(line) - 1
             raise parse_error
 
-    def load(self, text):
+    def append_lines(self, text):
         try:
-            self.clear()
-            self.__line_counter = 0
+            self.__line_counter = len(self)
             for line in text.splitlines():
                 self.append_line(line)
                 self.__line_counter += 1
         finally:
             self.__line_counter = -1
+
+    def load(self, text):
+        self.clear()
+        self.append_lines(text)
 
     def dump(self):
         return '\n'.join([node.save() for node in self.get_nodes()])
@@ -367,17 +462,20 @@ class TypiniSection:
         return -1
 
     def __getitem__(self, key):
-        index = self.__get_node_index(key)
-        if index < 0:
-            raise KeyError(key)
-        return self.__nodes[index].value.value
+        return self.find_node(key).value.value
 
     def __setitem__(self, key, value):
-        index = self.__get_node_index(key)
-        if index < 0:
-            raise KeyError(key)
-        self.__nodes[index].value.value = value
-        self.__nodes[index].value.validate()
+        variable = self.find_node(key).value
+        variable.value = value
+        variable.validate()
+
+    def __iter__(self):
+        for node in self.__nodes:
+            if type(node) == VariableNode:
+                yield node
+
+    def __contains__(self, item):
+        return self.exists(item)
 
     def reset(self, key, typename, value, can_overwrite=True):
         index = self.__get_node_index(key, False)
@@ -389,13 +487,35 @@ class TypiniSection:
                 raise KeyError(key)
         cur_node.reset(key, typename, value)
         if index < 0:
-            self.append_value_node(cur_node)
+            self.__append_value_node(cur_node)
+
+    def exists(self, key, case_sensitive=True):
+        return self.__get_node_index(key, case_sensitive) >= 0
+
+    def find_node(self, key, case_sensitive=True):
+        index = self.__get_node_index(key, case_sensitive)
+        if index < 0:
+            raise KeyError(key)
+        return self.__nodes[index]
+
+    def rename(self, key, new_key):
+        if not is_var_name_valid(new_key):
+            raise TypiniError('{} is a bad key name'.format(new_key))
+        index = self.__get_node_index(key)
+        if index < 0:
+            raise TypiniError('{} doesn\'t exist'.format(key))
+        if ((key.lower() != new_key.lower()) and
+                new_key.lower() in self.__keys):
+            raise TypiniError('{} already exists'.format(new_key))
+        self.__nodes[index].key = new_key
+        self.__keys.remove(key.lower())
+        self.__keys.add(new_key.lower())
 
     def clear(self):
         self.__nodes.clear()
         self.__comments_tail.clear()
 
-    def append_value_node(self, node):
+    def __append_value_node(self, node):
         if node.key.lower() in self.__keys:
             raise ParseError(-1, -1,
                              'key {} is duplicate or only the case differs'
@@ -403,7 +523,7 @@ class TypiniSection:
         self.__keys.add(node.key.lower())
         self.__nodes.append(node)
 
-    def erase_node(self, key):
+    def erase(self, key):
         index = self.__get_node_index(key)
         if index < 0:
             raise KeyError(key)
@@ -416,12 +536,12 @@ class TypiniSection:
         elif type(node) == VariableNode:
             self.__nodes.extend(self.__comments_tail)
             self.__comments_tail.clear()
-            self.append_value_node(node)
+            self.__append_value_node(node)
         elif type(node) == SectionNode:
             raise ParseError(-1, -1,
                              'section nodes inside sections are not allowed')
         else:
-            assert False
+            assert False, 'we should not enter here'
 
     def get_nodes(self):
         return [self.header] + self.__nodes + self.__comments_tail
@@ -433,6 +553,14 @@ class TypiniSection:
 
     def dump(self):
         return '\n'.join([node.save() for node in self.get_nodes()])
+
+    @property
+    def key(self):
+        return self.header.key
+
+    @key.setter
+    def key(self, value):
+        self.header.key = value
 
     def __len__(self):
         return 1 + len(self.__nodes) + len(self.__comments_tail)
@@ -470,15 +598,18 @@ class Typini(NodeList):
                                     *(section.get_nodes()
                                       for section in self.__sections)))
 
+    def __iter__(self):
+        return iter(self.__sections)
+
+    def __contains__(self, item):
+        return self.has_section(item)
+
     def __len__(self):
         # FIXME : calculate length more efficiently?
         return len(self.__header) + sum(len(i) for i in self.__sections)
 
     def __getitem__(self, key):
-        index = self.__get_section_index(key)
-        if index < 0:
-            raise KeyError(key)
-        return self.__sections[index]
+        return self.find_section(key)
 
     def __get_section_index(self, key, case_sensitive=True):
         if key.lower() not in self.__keys:
@@ -486,10 +617,10 @@ class Typini(NodeList):
         if not case_sensitive:
             key = key.lower()
         for i in range(len(self.__sections)):
-            header_key = self.__sections[i].header.key
+            section_key = self.__sections[i].key
             if not case_sensitive:
-                header_key = header_key.lower()
-            if header_key == key:
+                section_key = section_key.lower()
+            if section_key == key:
                 return i
         return -1
 
@@ -500,9 +631,10 @@ class Typini(NodeList):
                              .format(section_node.key))
         self.__keys.add(section_node.key.lower())
         self.__sections.append(TypiniSection(self, section_node))
+        return self.__sections[-1]
 
     def create_section(self, key):
-        self.__append_section(SectionNode(self, key))
+        return self.__append_section(SectionNode(self, key))
 
     def ensure_section(self, key, can_overwrite=True):
         index = self.__get_section_index(key, False)
@@ -510,21 +642,45 @@ class Typini(NodeList):
             index = len(self.__sections)
             self.__append_section(SectionNode(self, key))
         section = self.__sections[index]
-        if (not can_overwrite) and section.header.key != key:
+        if (not can_overwrite) and section.key != key:
             raise KeyError(key)
-        section.header.key = key
+        section.key = key
+        return section
 
     def get_sections(self):
         return self.__sections
 
     def list_sections(self):
-        return [section.header.key for section in self.__sections]
+        return [section.key for section in self.__sections]
+
+    def has_section(self, key, case_sensitive=True):
+        return self.__get_section_index(key, case_sensitive) >= 0
+
+    def find_section(self, key, case_sensitive=True):
+        index = self.__get_section_index(key, case_sensitive)
+        if index < 0:
+            raise KeyError(key)
+        return self.__sections[index]
 
     def erase_section(self, key):
         index = self.__get_section_index(key)
         if index < 0:
             raise KeyError(key)
         self.__sections.pop(index)
+        self.__keys.remove(key.lower())
+
+    def rename_section(self, key, new_key):
+        if not is_var_name_valid(new_key):
+            raise TypiniError('{} is a bad section name'.format(new_key))
+        index = self.__get_section_index(key)
+        if index < 0:
+            raise TypiniError('{} doesn\'t exist'.format(key))
+        if ((key.lower() != new_key.lower()) and
+                new_key.lower() in self.__keys):
+            raise TypiniError('{} already exists'.format(new_key))
+        self.__sections[index].key = new_key
+        self.__keys.remove(key.lower())
+        self.__keys.add(new_key.lower())
 
     def __init__(self):
         self.__header = []

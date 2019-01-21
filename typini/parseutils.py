@@ -1,15 +1,23 @@
 import codecs
 
 
-class ParseError(Exception):
+class TypiniError(Exception):
+    pass
+
+
+class ParseError(TypiniError):
     def __init__(self, row, column, text):
         super().__init__()
         self.row = row
         self.column = column
         self.text = text
+        self.filename = None
 
     def __str__(self):
-        return '{}:{}: error: {}'.format(self.row+1, self.column+1, self.text)
+        res = '{}:{}: error: {}'.format(self.row+1, self.column+1, self.text)
+        if self.filename is not None:
+            res = str(self.filename) + ':' + res
+        return res
 
 
 SPACE_CHARS = set([' ', '\t'])
@@ -34,13 +42,13 @@ def extract_word(line, pos, delim=DELIM_CHARS):
     lpos = pos
     while (pos < len(line)) and (line[pos] not in delim):
         pos += 1
-    return (pos, line[lpos:pos])
+    return (pos, lpos, line[lpos:pos])
 
 
 def extract_string(line, pos):
     pos = skip_spaces(line, pos)
     if pos == len(line) or (line[pos] != '\'' and line[pos] != '\"'):
-        raise ParseError(-1, pos, 'expected \' or \"')
+        raise ParseError(-1, pos, '\' or \" expected')
     quote = line[pos]
     pos += 1
     lpos = pos
