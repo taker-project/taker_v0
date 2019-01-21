@@ -79,12 +79,12 @@ def test_runner_info_from_json():
 
 
 def tests_location():
-    return path.abspath(path.join('runners', 'tests', 'build'))
+    return path.abspath(path.join('src', 'runners', 'tests', 'build'))
 
 
 @pytest.fixture(scope='function')
 def runner():
-    runner_path = path.abspath(path.join('runners', 'taker_unixrun',
+    runner_path = path.abspath(path.join('src', 'runners', 'taker_unixrun',
                                          'build', 'taker_unixrun'))
     return Runner(runner_path)
 

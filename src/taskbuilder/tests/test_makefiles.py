@@ -5,7 +5,7 @@ from taskbuilder.makefiles import *
 from taskbuilder.commands import *
 from taskbuilder.repository import TaskRepository
 
-TEST_DIR = path.join('taskbuilder', 'tests')
+TEST_DIR = path.join('src', 'taskbuilder', 'tests')
 
 
 def load_answer_file(file_name):
