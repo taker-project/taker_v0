@@ -1,4 +1,6 @@
 '''
+Base task directory management
+
 Important notice about paths in this module:
 
 All relative paths in TaskRepository are calculated relative to the task
@@ -34,8 +36,8 @@ class TaskRepository:
             return utils.abspath(cur_path)
         return utils.abspath(self.directory.joinpath(cur_path))
 
-    def mkdir(self, location):
-        self.abspath(location).mkdir()
+    def mkdir(self, location, *args, **kwargs):
+        self.abspath(location).mkdir(*args, **kwargs)
 
     def to_task_dir(self):
         os.chdir(str(self.directory))

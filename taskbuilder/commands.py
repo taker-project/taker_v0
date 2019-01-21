@@ -1,4 +1,6 @@
 '''
+Commands impelementation for build system
+
 Important notice about paths in this module:
 
 All paths are stored relative to the task directory. Except for AbsoluteFile,
