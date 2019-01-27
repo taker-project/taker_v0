@@ -44,7 +44,7 @@ test_prepare:
 	cd src/runners && $(MAKE) test_prepare
 
 test: venv build test_prepare
-	bash -c '. pyenv.sh && pytest --codestyle'
+	bash -c 'scripts/test.sh'
 
 autopep8: venv
 	bash -c 'scripts/autopep8.sh'
