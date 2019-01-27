@@ -30,7 +30,7 @@ I don't know.
 
 ## Build dependencies
 
-* `bash`, `make` (not necessarily GNU Make, because Makefiles in this project try to be POSIX-compatible)
+* `make` (not necessarily GNU Make, because Makefiles in this project try to be POSIX-compatible)
 * `python (tested on 3.6)`, `pip`, `venv`
 * `g++` (or `clang`)
 * `cmake` for runners
