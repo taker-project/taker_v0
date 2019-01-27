@@ -4,7 +4,7 @@ from .commands import Executable, GlobalCmd, ShellCmd, File, Command
 from .commands import MakeDirCommand, EchoCommand, TouchCommand
 from .repository import INTERNAL_PATH
 
-# TODO : Add strict validation for target names
+# TODO : Add strict validation for target names (?)
 
 
 def _command_to_make(command):

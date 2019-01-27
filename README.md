@@ -31,10 +31,22 @@ I don't know.
 
 ## Build dependencies
 
-* `make` (not necessarily GNU Make, because Makefiles in this project try to be POSIX-compatible)
+* `make` (not necessarily GNU Make, because Makefiles in this project tries to be POSIX-compatible)
 * `python (tested on 3.6)`, `pip`, `venv`
 * `g++` (or `clang`)
 * `cmake` for runners
 * `libjsoncpp` for runners (on Debian/Ubuntu, you can use `libjsoncpp-dev` package)
 
-Currently the project targets UNIX-like OSes and will be tested on GNU/Linux and FreeBSD. Other OS support will be added later.
+## OS support
+
+Currently the project targets UNIX-like OSes and is tested on GNU/Linux, macOS and FreeBSD. Other OS support will be added later.
+
+The least portable part is the process runner. For UNIXes, it is `taker_unixrun`. It mostly uses POSIX-compatible routines, but there may be some problems while porting it to some UNIX-like OS. Now it work on the following ones:
+
+* GNU/Linux
+* FreeBSD
+* macOS (thanks to [Travis CI](https://travis-ci.org) for macOS builds :) )
+
+Note that on OSes other than GNU/Linux, `taker_unixrun` uses `ru_maxrss` for `getrusage()`, which not always gives the correct value for consumed memory. So, GNU/Linux is supported best now.
+
+Taker's build system is also tightly integrated with UNIXes. So, to port Taker on Windows, some additional effort is required.

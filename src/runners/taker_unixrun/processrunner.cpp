@@ -190,7 +190,7 @@ Json::Value ProcessRunner::runnerInfoJson() const {
   Json::Value res;
   res["name"] = "Taker UNIX Runner";
   res["description"] =
-      "A simple runner for UNIX-like systems (like GNU/Linux or FreeBSD)";
+      "A simple runner for UNIX-like systems (like GNU/Linux, macOS and FreeBSD)";
   res["author"] = "Alexander Kernozhitsky";
   res["version"] = TAKER_UNIXRUN_VERSION;
   res["version-number"] = TAKER_UNIXRUN_VERSION_NUMBER;
