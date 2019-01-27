@@ -114,8 +114,8 @@ def test_sleepy(runner):
     runner.parameters.idle_limit = 0.7
     runner.run()
     assert runner.results.status == Status.OK
-    assert abs(runner.results.clock_time - 0.55) < 0.03
-    assert runner.results.time < 0.03
+    assert abs(runner.results.clock_time - 0.55) < 0.05
+    assert runner.results.time < 0.05
 
 
 def test_worky(runner):
@@ -127,7 +127,7 @@ def test_worky(runner):
     runner.parameters.time_limit = 0.7
     runner.run()
     assert runner.results.status == Status.OK
-    assert abs(runner.results.time - 0.55) < 0.03
+    assert abs(runner.results.time - 0.55) < 0.05
 
 
 def test_memory(runner):
@@ -208,21 +208,27 @@ def test_env(runner):
         tests_location(), 'env_test')
     runner.capture_stdout = True
     runner.run()
+    assert runner.status == Status.OK
     assert runner.stdout == 'none\n'
     runner.parameters.env['HELLO'] = '42'
     runner.run()
+    assert runner.status == Status.OK
     assert runner.stdout == 'env=42\n'
     os.environ['HELLO'] = 'world'
     runner.run()
+    assert runner.status == Status.OK
     assert runner.stdout == 'env=42\n'
     runner.parameters.env.pop('HELLO')
     runner.run()
+    assert runner.status == Status.OK
     assert runner.stdout == 'env=world\n'
     runner.parameters.clear_env = True
     runner.run()
+    assert runner.status == Status.OK
     assert runner.stdout == 'none\n'
     runner.parameters.env['HELLO'] = '42'
     runner.run()
+    assert runner.status == Status.OK
     assert runner.stdout == 'env=42\n'
     os.environ.pop('HELLO')
 
