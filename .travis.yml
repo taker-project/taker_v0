@@ -1,12 +1,21 @@
 dist: xenial
+os: osx
 language: python
+addons:
+  apt:
+    packages:
+      - g++
+      - cmake
+      - libjsoncpp-dev
+    update: true
+  homebrew:
+    packages:
+      - jsoncpp
+    update: true
 python:
   - "3.5"
   - "3.6"
   - "3.7"
-before_install:
-  - sudo apt-get update
-  - sudo apt-get install g++ cmake libjsoncpp-dev
 install:
   - make venv
 script:
