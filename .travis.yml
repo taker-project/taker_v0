@@ -20,6 +20,8 @@ python:
 - "3.6"
 - "3.7"
 
+env: COVERAGE=1
+
 # Workaround to install Python on OS X, based on https://gist.github.com/Bouke/11261620
 matrix:
   include:
@@ -46,5 +48,7 @@ before_install: |
 
 install:
 - make venv
+- pip install codecov
 script:
 - make test
+- codecov
