@@ -114,8 +114,8 @@ def test_sleepy(runner):
     runner.parameters.idle_limit = 0.7
     runner.run()
     assert runner.results.status == Status.OK
-    assert abs(runner.results.clock_time - 0.55) < 0.02
-    assert runner.results.time < 0.02
+    assert abs(runner.results.clock_time - 0.55) < 0.03
+    assert runner.results.time < 0.03
 
 
 def test_worky(runner):
@@ -127,7 +127,7 @@ def test_worky(runner):
     runner.parameters.time_limit = 0.7
     runner.run()
     assert runner.results.status == Status.OK
-    assert abs(runner.results.time - 0.55) < 0.02
+    assert abs(runner.results.time - 0.55) < 0.03
 
 
 def test_memory(runner):
@@ -185,8 +185,10 @@ def test_alloc1(runner):
     runner.parameters.executable = path.join(
         tests_location(), 'alloc1_test')
     runner.run()
+    assert runner.results.status == Status.OK
+    precise_measure = runner.comment.find('not precise') < 0
     assert runner.results.memory >= 60.0
-    assert runner.results.memory <= 75.0
+    assert runner.results.memory <= (75.0 if precise_measure else 85.0)
 
 
 def test_alloc2(runner):
@@ -194,7 +196,9 @@ def test_alloc2(runner):
     runner.parameters.executable = path.join(
         tests_location(), 'alloc2_test')
     runner.run()
-    assert runner.results.memory >= 20.0
+    assert runner.results.status == Status.OK
+    precise_measure = runner.comment.find('not precise') < 0
+    assert runner.results.memory >= (20.0 if precise_measure else 15.0)
     assert runner.results.memory <= 35.0
 
 
