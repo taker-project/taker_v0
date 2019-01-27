@@ -14,7 +14,8 @@ void sleep(int msec) {
 
 void work(int msec) {
   clock_t start = clock();
-  while (clock() - start < static_cast<int64_t>(CLOCKS_PER_SEC) * msec / 1000) {
+  while (static_cast<int64_t>(clock() - start) <
+         static_cast<int64_t>(CLOCKS_PER_SEC) * msec / 1000) {
     // do nothing
   }
 }
