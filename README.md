@@ -1,4 +1,8 @@
-# Taker-v0 [![Build Status](https://travis-ci.com/taker-project/taker_v0.svg?branch=master)](https://travis-ci.com/taker-project/taker_v0)
+# Taker-v0
+
+[![Build Status](https://travis-ci.com/taker-project/taker_v0.svg?branch=master)](https://travis-ci.com/taker-project/taker_v0)
+[![codecov](https://codecov.io/gh/taker-project/taker_v0/branch/master/graph/badge.svg)](https://codecov.io/gh/taker-project/taker_v0)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 First version of Taker problem preparation system.
 
