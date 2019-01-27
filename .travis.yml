@@ -1,18 +1,18 @@
-os:
-- linux
-- osx
+os: linux
 dist: xenial
 
 addons:
   apt:
     packages:
-      - g++
-      - cmake
-      - libjsoncpp-dev
+    - g++
+    - cmake
+    - libjsoncpp-dev
     update: true
   homebrew:
     packages:
-      - jsoncpp
+    - jsoncpp
+    - pyenv
+    - pyenv-virtualenv
     update: true
 
 language: python
@@ -20,6 +20,30 @@ python:
 - "3.5"
 - "3.6"
 - "3.7"
+
+# Workaround to install Python on OS X, based on https://gist.github.com/Bouke/11261620
+matrix:
+  include:
+  - name: "Python 3.5"
+    os: osx
+    language: generic
+    env: PYTHON=3.5.6
+  - name: "Python 3.6"
+    os: osx
+    language: generic
+    env: PYTHON=3.6.8
+  - name: "Python 3.7"
+    os: osx
+    language: generic
+    env: PYTHON=3.7.2
+
+before_install: |
+  if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+    pyenv install $PYTHON
+    export PYENV_VERSION=$PYTHON
+    export PATH="/Users/travis/.pyenv/shims:${PATH}"
+    python --version
+  fi
 
 install:
 - make venv
