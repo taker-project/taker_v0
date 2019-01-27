@@ -24,15 +24,15 @@ python:
 # Workaround to install Python on OS X, based on https://gist.github.com/Bouke/11261620
 matrix:
   include:
-  - name: "Python 3.5"
+  - name: "Python: 3.5"
     os: osx
     language: generic
     env: PYTHON=3.5.6
-  - name: "Python 3.6"
+  - name: "Python: 3.6"
     os: osx
     language: generic
     env: PYTHON=3.6.8
-  - name: "Python 3.7"
+  - name: "Python: 3.7"
     os: osx
     language: generic
     env: PYTHON=3.7.2
