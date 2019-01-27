@@ -195,6 +195,7 @@ def test_alloc2(runner):
     '''test_alloc2: fast allocation/deallocation'''
     runner.parameters.executable = path.join(
         tests_location(), 'alloc2_test')
+    runner.parameters.time_limit = 5.0
     runner.run()
     assert runner.results.status == Status.OK
     precise_measure = runner.results.comment.find('not precise') < 0
