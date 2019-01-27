@@ -498,7 +498,16 @@ void ProcessRunner::handleChild() {
       "unable to redirect stderr into \"" + parameters_.stderrRedir + "\"");
 
   if (parameters_.clearEnv) {
+#ifdef HAVE_CLEARENV
+    trySyscall(clearenv(), "could not clear environment");
+#else
+    // From Linux manpages:
+    //
+    // "On systems where clearenv() is unavailable, the assignment
+    //     environ = NULL;
+    // will probably do."
     environ = nullptr;
+#endif //HAVE_CLEARENV
   }
   for (const auto &iter : parameters_.env) {
     const std::string &key = iter.first;

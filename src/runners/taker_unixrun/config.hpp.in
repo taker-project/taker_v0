@@ -26,5 +26,6 @@
 
 // check for system calls
 #cmakedefine HAVE_PIPE2
+#cmakedefine HAVE_CLEARENV
 
 #endif // CONFIG_H

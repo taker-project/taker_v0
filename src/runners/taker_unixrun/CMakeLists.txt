@@ -12,6 +12,7 @@ find_package(JsonCpp 1 EXACT REQUIRED)
 
 include(CheckFunctionExists)
 check_function_exists(pipe2 HAVE_PIPE2)
+check_function_exists(clearenv HAVE_CLEARENV)
 
 configure_file(${PROJECT_SOURCE_DIR}/config.hpp.in ${PROJECT_BINARY_DIR}/config.hpp)
 
