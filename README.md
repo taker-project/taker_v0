@@ -1,4 +1,5 @@
-# Taker-v0
+# Taker-v0 [![Build Status](https://travis-ci.com/taker-project/taker_v0.svg?branch=master)](https://travis-ci.com/taker-project/taker_v0)
+
 First version of Taker problem preparation system.
 
 ## What is it?
