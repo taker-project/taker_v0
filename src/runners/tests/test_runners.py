@@ -114,8 +114,8 @@ def test_sleepy(runner):
     runner.parameters.idle_limit = 0.7
     runner.run()
     assert runner.results.status == Status.OK
-    assert abs(runner.results.clock_time - 0.55) < 0.05
-    assert runner.results.time < 0.05
+    assert abs(runner.results.clock_time - 0.55) < 0.1
+    assert runner.results.time < 0.02
 
 
 def test_worky(runner):
@@ -127,7 +127,7 @@ def test_worky(runner):
     runner.parameters.time_limit = 0.7
     runner.run()
     assert runner.results.status == Status.OK
-    assert abs(runner.results.time - 0.55) < 0.05
+    assert abs(runner.results.time - 0.55) < 0.02
 
 
 def test_memory(runner):
