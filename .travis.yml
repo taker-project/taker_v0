@@ -1,6 +1,8 @@
+os:
+- linux
+- osx
 dist: xenial
-os: osx
-language: python
+
 addons:
   apt:
     packages:
@@ -12,11 +14,14 @@ addons:
     packages:
       - jsoncpp
     update: true
+
+language: python
 python:
-  - "3.5"
-  - "3.6"
-  - "3.7"
+- "3.5"
+- "3.6"
+- "3.7"
+
 install:
-  - make venv
+- make venv
 script:
-  - make test
+- make test
