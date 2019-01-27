@@ -144,8 +144,8 @@ def test_memory(runner):
     runner.parameters.memory_limit = 256.0
     runner.run()
     assert runner.results.status == Status.OK
-    assert runner.results.memory >= 59.0
-    assert runner.results.memory <= 69.0
+    assert runner.results.memory >= 60.0
+    assert runner.results.memory <= 75.0
 
 
 def test_vector(runner):
@@ -161,8 +161,8 @@ def test_vector(runner):
     runner.parameters.memory_limit = 128.0
     runner.run()
     assert runner.results.status == Status.OK
-    assert runner.results.memory >= 59.0
-    assert runner.results.memory <= 69.0
+    assert runner.results.memory >= 60.0
+    assert runner.results.memory <= 75.0
 
 
 def test_vector_pushback(runner):
@@ -185,8 +185,8 @@ def test_alloc1(runner):
     runner.parameters.executable = path.join(
         tests_location(), 'alloc1_test')
     runner.run()
-    assert runner.results.memory >= 59.0
-    assert runner.results.memory <= 69.0
+    assert runner.results.memory >= 60.0
+    assert runner.results.memory <= 75.0
 
 
 def test_alloc2(runner):
@@ -194,8 +194,8 @@ def test_alloc2(runner):
     runner.parameters.executable = path.join(
         tests_location(), 'alloc2_test')
     runner.run()
-    assert runner.results.memory >= 19.0
-    assert runner.results.memory <= 29.0
+    assert runner.results.memory >= 20.0
+    assert runner.results.memory <= 35.0
 
 
 def test_env(runner):
