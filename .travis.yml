@@ -13,7 +13,6 @@ addons:
     - jsoncpp
     - pyenv
     - pyenv-virtualenv
-    update: true
 
 language: python
 python:
