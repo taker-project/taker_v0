@@ -22,7 +22,8 @@ venv: .make_targets/venv
 	python3 -m venv venv
 	touch .make_targets/venv
 	sh -c '. ./pyenv.sh && pip install -U pip setuptools \
-		&& pip install pytest pytest-pycodestyle pytest-mock pylint'
+		&& pip install pytest pytest-pycodestyle pytest-mock pytest-cov \
+		&& pip install pylint'
 
 clean_runners:
 	+cd src/runners && $(MAKE) clean

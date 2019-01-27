@@ -19,7 +19,5 @@ if [ -n "${COVERAGE}" ]; then
   done
 fi
 
-echo "${COV_OPTIONS}"
-
 # shellcheck disable=SC2086
 pytest "${PYCODESTYLE_OPTION}" ${COV_OPTIONS} src/*/
