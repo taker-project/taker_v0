@@ -1,4 +1,6 @@
-. pyenv.sh
+#!/bin/sh
+
+. ./pyenv.sh
 
 if pytest --help | grep -- --codestyle >/dev/null; then
   PYCODESTYLE_OPTION=--codestyle

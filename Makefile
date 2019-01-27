@@ -44,13 +44,13 @@ test_prepare:
 	cd src/runners && $(MAKE) test_prepare
 
 test: venv build test_prepare
-	bash -c 'scripts/test.sh'
+	scripts/test.sh
 
 autopep8: venv
-	bash -c 'scripts/autopep8.sh'
+	scripts/autopep8.sh
 
 pep8: venv
-	bash -c 'scripts/pep8.sh'
+	scripts/pep8.sh
 
 lint: venv
-	bash -c 'scripts/lint.sh'
+	scripts/lint.sh
