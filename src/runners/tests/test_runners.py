@@ -208,27 +208,27 @@ def test_env(runner):
         tests_location(), 'env_test')
     runner.capture_stdout = True
     runner.run()
-    assert runner.status == Status.OK
+    assert runner.results.status == Status.OK
     assert runner.stdout == 'none\n'
     runner.parameters.env['HELLO'] = '42'
     runner.run()
-    assert runner.status == Status.OK
+    assert runner.results.status == Status.OK
     assert runner.stdout == 'env=42\n'
     os.environ['HELLO'] = 'world'
     runner.run()
-    assert runner.status == Status.OK
+    assert runner.results.status == Status.OK
     assert runner.stdout == 'env=42\n'
     runner.parameters.env.pop('HELLO')
     runner.run()
-    assert runner.status == Status.OK
+    assert runner.results.status == Status.OK
     assert runner.stdout == 'env=world\n'
     runner.parameters.clear_env = True
     runner.run()
-    assert runner.status == Status.OK
+    assert runner.results.status == Status.OK
     assert runner.stdout == 'none\n'
     runner.parameters.env['HELLO'] = '42'
     runner.run()
-    assert runner.status == Status.OK
+    assert runner.results.status == Status.OK
     assert runner.stdout == 'env=42\n'
     os.environ.pop('HELLO')
 
