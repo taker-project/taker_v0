@@ -227,6 +227,10 @@ def test_env(runner):
     runner.run()
     assert runner.results.status == Status.OK
     assert runner.stdout == 'none\n'
+    runner.parameters.env['unrelated'] = '42'
+    runner.run()
+    assert runner.results.status == Status.OK
+    assert runner.stdout == 'none\n'
     runner.parameters.env['HELLO'] = '42'
     runner.run()
     assert runner.results.status == Status.OK

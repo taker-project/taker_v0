@@ -499,7 +499,7 @@ void ProcessRunner::handleChild() {
 
   if (parameters_.clearEnv) {
 #ifdef HAVE_CLEARENV
-    trySyscall(clearenv(), "could not clear environment");
+    trySyscall(clearenv() == 0, "could not clear environment");
 #else
     // From Linux manpages:
     //
