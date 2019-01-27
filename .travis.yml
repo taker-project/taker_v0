@@ -1,0 +1,14 @@
+dist: xenial
+language: python
+python:
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "3.7"
+before-install:
+  - sudo apt-get update
+  - sudo apt-get install g++ cmake libjsoncpp-dev
+install:
+  - make venv
+script:
+  - make test
