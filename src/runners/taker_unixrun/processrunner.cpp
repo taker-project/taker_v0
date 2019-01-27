@@ -228,10 +228,11 @@ void ProcessRunner::doExecute() {
 #ifdef HAVE_PIPE2
   if (pipe2(pipe_, O_CLOEXEC) != 0) {
 #else
-  if (pipe(pipe_) != 0 ||
-      fcntl(pipe_[0], F_SETFD, FD_CLOEXEC) != 0 ||
+  // empty comments prevent clang-format from removing line breaks
+  if (pipe(pipe_) != 0 ||                           //
+      fcntl(pipe_[0], F_SETFD, FD_CLOEXEC) != 0 ||  //
       fcntl(pipe_[1], F_SETFD, FD_CLOEXEC) != 0) {
-#endif // HAVE_PIPE2
+#endif
     throw RunnerError(getFullErrorMessage("unable to create pipe", errno));
   }
   pid_ = fork();
@@ -501,13 +502,12 @@ void ProcessRunner::handleChild() {
 #ifdef HAVE_CLEARENV
     trySyscall(clearenv() == 0, "could not clear environment");
 #else
-    // From Linux manpages:
-    //
-    // "On systems where clearenv() is unavailable, the assignment
-    //     environ = NULL;
-    // will probably do."
-    environ = nullptr;
-#endif //HAVE_CLEARENV
+    // I didn't expect clearing the environment is a difficult task :(
+    // For example, environ = nullptr doesn't work on macOS. I implemented the
+    // solution found here:
+    // https://lists.freebsd.org/pipermail/freebsd-stable/2008-June/043136.html
+    environ = static_cast<char **>(calloc(1, sizeof(*environ)));
+#endif
   }
   for (const auto &iter : parameters_.env) {
     const std::string &key = iter.first;
