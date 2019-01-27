@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018  Alexander Kernozhitsky <sh200105@mail.ru>
+ * Copyright (C) 2018-2019  Alexander Kernozhitsky <sh200105@mail.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include "config.hpp"
 #include "utils.hpp"
 
 #ifndef _GNU_SOURCE
@@ -191,8 +192,8 @@ Json::Value ProcessRunner::runnerInfoJson() const {
   res["description"] =
       "A simple runner for UNIX-like systems (like GNU/Linux or FreeBSD)";
   res["author"] = "Alexander Kernozhitsky";
-  res["version"] = "0.1";
-  res["version-number"] = 1;
+  res["version"] = TAKER_UNIXRUN_VERSION;
+  res["version-number"] = TAKER_UNIXRUN_VERSION_NUMBER;
   res["license"] = "GPL-3+";
   res["features"] = Json::Value(Json::arrayValue);
   return res;
@@ -224,7 +225,13 @@ void ProcessRunner::doExecute() {
   parameters_.validate();
   results_ = RunResults();
   results_.status = RunStatus::RUNNING;
+#ifdef HAVE_PIPE2
   if (pipe2(pipe_, O_CLOEXEC) != 0) {
+#else
+  if (pipe(pipe_) != 0 ||
+      fcntl(pipe_[0], F_SETFD, FD_CLOEXEC) != 0 ||
+      fcntl(pipe_[1], F_SETFD, FD_CLOEXEC) != 0) {
+#endif // HAVE_PIPE2
     throw RunnerError(getFullErrorMessage("unable to create pipe", errno));
   }
   pid_ = fork();
