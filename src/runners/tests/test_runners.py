@@ -186,7 +186,7 @@ def test_alloc1(runner):
         tests_location(), 'alloc1_test')
     runner.run()
     assert runner.results.status == Status.OK
-    precise_measure = runner.comment.find('not precise') < 0
+    precise_measure = runner.results.comment.find('not precise') < 0
     assert runner.results.memory >= 60.0
     assert runner.results.memory <= (75.0 if precise_measure else 85.0)
 
@@ -197,7 +197,7 @@ def test_alloc2(runner):
         tests_location(), 'alloc2_test')
     runner.run()
     assert runner.results.status == Status.OK
-    precise_measure = runner.comment.find('not precise') < 0
+    precise_measure = runner.results.comment.find('not precise') < 0
     assert runner.results.memory >= (20.0 if precise_measure else 15.0)
     assert runner.results.memory <= 35.0
 
@@ -211,19 +211,19 @@ def test_env(runner):
     assert runner.stdout == 'none\n'
     runner.parameters.env['HELLO'] = '42'
     runner.run()
-    assert runner.stdout == '42\n'
+    assert runner.stdout == 'env=42\n'
     os.environ['HELLO'] = 'world'
     runner.run()
-    assert runner.stdout == '42\n'
+    assert runner.stdout == 'env=42\n'
     runner.parameters.env.pop('HELLO')
     runner.run()
-    assert runner.stdout == 'world\n'
+    assert runner.stdout == 'env=world\n'
     runner.parameters.clear_env = True
     runner.run()
     assert runner.stdout == 'none\n'
     runner.parameters.env['HELLO'] = '42'
     runner.run()
-    assert runner.stdout == '42\n'
+    assert runner.stdout == 'env=42\n'
     os.environ.pop('HELLO')
 
 

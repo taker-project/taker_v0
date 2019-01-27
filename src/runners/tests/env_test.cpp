@@ -1,10 +1,12 @@
 #include <cstdlib>
 #include <iostream>
+#include <string>
 
 using namespace std;
 
 int main() {
-  auto ptr = getenv("HELLO");
-  std::cout << (ptr == nullptr ? "none" : ptr) << std::endl;
+  char *env = getenv("HELLO");
+  std::cout << (env == nullptr ? string("none") : string("env=") + env)
+            << std::endl;
   return 0;
 }
