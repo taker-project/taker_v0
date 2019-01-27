@@ -506,7 +506,8 @@ void ProcessRunner::handleChild() {
     // For example, environ = nullptr doesn't work on macOS. I implemented the
     // solution found here:
     // https://lists.freebsd.org/pipermail/freebsd-stable/2008-June/043136.html
-    environ = static_cast<char **>(calloc(1, sizeof(*environ)));
+    environ = new char *[1];
+    environ[0] = nullptr;
 #endif
   }
   for (const auto &iter : parameters_.env) {
