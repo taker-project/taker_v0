@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018  Alexander Kernozhitsky <sh200105@mail.ru>
+ * Copyright (C) 2018-2019  Alexander Kernozhitsky <sh200105@mail.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,6 +82,13 @@ std::string getFullErrorMessage(const std::string &message, int errcode = 0);
 
 bool redirectDescriptor(int fd, std::string fileName, int flags,
                         mode_t mode = 0644);
+
+// rusage.ru_maxrss in bytes on in kbytes?
+#if defined(__APPLE__)
+const int maxRssBytes = 1;
+#else
+const int maxRssBytes = 1024;
+#endif
 
 }  // namespace UnixRunner
 

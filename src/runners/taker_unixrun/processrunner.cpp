@@ -442,7 +442,7 @@ void ProcessRunner::updateResultsOnTerminate(const struct rusage &resources,
     // FIXME : if the memory usage wasn't updated, maybe use smth better than
     // maxrss?
     results_.comment = "memory measurement is not precise!";
-    results_.memory = resources.ru_maxrss / 1024.0;
+    results_.memory = resources.ru_maxrss / 1048576.0 * maxRssBytes;
   }
 }
 
