@@ -37,6 +37,7 @@ class Config:
             if filename.is_file():
                 parser.add_file(filename)
             elif filename == user_config and default_config:
-                with open(str(filename), 'w', encoding='utf8') as file:
-                    file.write(default_config)
+                config_typini = Typini()
+                config_typini.load(default_config)
+                config_typini.save_to_file(filename)
         self.__sections = parser.dump()

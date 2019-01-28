@@ -71,14 +71,20 @@ ok = true
     manager = ConfigManager(paths)
     manager.add_default('test', '''
 [common]
-value = 42
-default = true
+value=42
+default=true
 ''')
     assert 'test' not in manager
     test_conf = manager['test']
     assert manager['test'] is test_conf
     assert (user1_conf / 'test.conf.d').is_dir()
     assert 'test' in manager
+
+    with (user1_conf / 'test.conf').open('r', encoding='utf8') as file:
+        assert file.read() == '''
+[common]
+value: int = 42
+default: bool = true'''
 
     with pytest.raises(KeyError):
         manager.add_default('test', '')
