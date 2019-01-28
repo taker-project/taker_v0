@@ -146,7 +146,7 @@ def test_memory(runner):
     runner.run()
     assert runner.results.status == Status.OK
     assert runner.results.memory >= 60.0
-    assert runner.results.memory <= 75.0
+    assert runner.results.memory <= 80.0
 
 
 def test_vector(runner):
@@ -164,14 +164,14 @@ def test_vector(runner):
     runner.run()
     assert runner.results.status == Status.OK
     assert runner.results.memory >= 60.0
-    assert runner.results.memory <= 75.0
+    assert runner.results.memory <= 80.0
 
 
 def test_vector_pushback(runner):
     '''test_vector_pushback: memory tests with push_back() into vector'''
     runner.parameters.executable = path.join(
         tests_location(), 'vector_pushback_test')
-    runner.parameters.time_limit = 10.0
+    runner.parameters.time_limit = 15.0
     runner.parameters.memory_limit = 36.0
     runner.run()
     assert runner.results.status == Status.MEMORY_LIMIT
@@ -196,7 +196,7 @@ def test_alloc2(runner):
     '''test_alloc2: fast allocation/deallocation'''
     runner.parameters.executable = path.join(
         tests_location(), 'alloc2_test')
-    runner.parameters.time_limit = 10.0
+    runner.parameters.time_limit = 20.0
     runner.run()
     assert runner.results.status == Status.OK
     assert runner.results.memory >= 18.0
