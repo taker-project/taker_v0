@@ -133,7 +133,8 @@ def test_worky(runner):
 def test_memory(runner):
     '''test_memory: check for MEMORY_LIMIT'''
     runner.parameters.executable = path.join(tests_location(), 'memory_test')
-    # on taker_unixrun, this test fail with RUNTIME_ERROR
+    runner.parameters.time_limit = 10.0
+    # on taker_unixrun, this test fails with RUNTIME_ERROR
     # FIXME : better detect MEMORY_LIMIT and RUNTIME_ERROR for unixrun!
     # runner.parameters.memory_limit = 20.0
     # runner.run()
@@ -152,6 +153,7 @@ def test_vector(runner):
     '''test_vector: another memory test, now with vectors
     memory allocations and deallocations are very fast here'''
     runner.parameters.executable = path.join(tests_location(), 'vector_test')
+    runner.parameters.time_limit = 10.0
     # runner.parameters.memory_limit = 20.0
     # runner.run()
     # assert runner.results.status == Status.MEMORY_LIMIT
@@ -169,13 +171,12 @@ def test_vector_pushback(runner):
     '''test_vector_pushback: memory tests with push_back() into vector'''
     runner.parameters.executable = path.join(
         tests_location(), 'vector_pushback_test')
+    runner.parameters.time_limit = 10.0
     runner.parameters.memory_limit = 36.0
     runner.run()
     assert runner.results.status == Status.MEMORY_LIMIT
     runner.parameters.memory_limit = 150.0
-    runner.parameters.time_limit = 6.0
     runner.run()
-    runner.parameters.time_limit = 2.0
     assert runner.results.status == Status.OK
     assert runner.results.memory >= 59.0
 
@@ -184,22 +185,21 @@ def test_alloc1(runner):
     '''test_alloc1: fast allocation/deallocation'''
     runner.parameters.executable = path.join(
         tests_location(), 'alloc1_test')
+    runner.parameters.time_limit = 10.0
     runner.run()
     assert runner.results.status == Status.OK
-    precise_measure = runner.results.comment.find('not precise') < 0
     assert runner.results.memory >= 60.0
-    assert runner.results.memory <= (75.0 if precise_measure else 85.0)
+    assert runner.results.memory <= 85.0
 
 
 def test_alloc2(runner):
     '''test_alloc2: fast allocation/deallocation'''
     runner.parameters.executable = path.join(
         tests_location(), 'alloc2_test')
-    runner.parameters.time_limit = 5.0
+    runner.parameters.time_limit = 10.0
     runner.run()
     assert runner.results.status == Status.OK
-    precise_measure = runner.results.comment.find('not precise') < 0
-    assert runner.results.memory >= (20.0 if precise_measure else 15.0)
+    assert runner.results.memory >= 18.0
     assert runner.results.memory <= 35.0
 
 
