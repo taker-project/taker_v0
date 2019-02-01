@@ -28,18 +28,19 @@ matrix:
   - name: "Python: 3.5"
     os: osx
     language: generic
-    env: PYTHON=3.5.6 COVERAGE=1
+    env: PYTHON=3.5.5 COVERAGE=1
   - name: "Python: 3.6"
     os: osx
     language: generic
-    env: PYTHON=3.6.8 COVERAGE=1
+    env: PYTHON=3.6.5 COVERAGE=1
   - name: "Python: 3.7"
     os: osx
     language: generic
-    env: PYTHON=3.7.2 COVERAGE=1
+    env: PYTHON=3.7-dev COVERAGE=1
 
 before_install: |
   if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+    # pyenv install --list
     pyenv install $PYTHON
     export PYENV_VERSION=$PYTHON
     export PATH="/Users/travis/.pyenv/shims:${PATH}"

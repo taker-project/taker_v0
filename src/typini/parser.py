@@ -434,10 +434,10 @@ class NodeList:
         return '\n'.join([node.save() for node in self.get_nodes()])
 
     def load_from_file(self, file_name):
-        self.load(open(file_name, 'r', encoding='utf8').read())
+        self.load(open(str(file_name), 'r', encoding='utf8').read())
 
     def save_to_file(self, file_name):
-        open(file_name, 'w', encoding='utf8').write(self.dump())
+        open(str(file_name), 'w', encoding='utf8').write(self.dump())
 
     def __init__(self):
         self.binder = TypeBinder()
