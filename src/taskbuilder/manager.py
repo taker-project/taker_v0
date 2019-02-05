@@ -1,5 +1,5 @@
 import os
-from os import fspath
+from compat import fspath
 import subprocess
 from .repository import TaskRepository, get_repository
 from .makefiles import Makefile
