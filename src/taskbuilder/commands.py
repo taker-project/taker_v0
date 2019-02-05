@@ -15,9 +15,9 @@ from os import path
 from pathlib import Path
 import shlex
 import shutil
-from compat import fspath
 from copy import copy, deepcopy
 from enum import Enum, unique
+from compat import fspath
 from taskbuilder import utils
 
 # TODO : Enable using windows cmd as a shell

@@ -1,6 +1,6 @@
 import os
-from compat import fspath
 import subprocess
+from compat import fspath
 from .repository import TaskRepository, get_repository
 from .makefiles import Makefile
 from .config import config
