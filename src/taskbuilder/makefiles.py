@@ -1,5 +1,6 @@
 from enum import Enum, unique
 from pathlib import Path
+from compat import fspath
 from .commands import Executable, GlobalCmd, ShellCmd, File, Command
 from .commands import MakeDirCommand, EchoCommand, TouchCommand
 from .repository import INTERNAL_PATH
@@ -69,19 +70,19 @@ class RuleBase:
 
     def _do_add_command(self, command):
         for the_file in command.get_output_files():
-            the_file = str(the_file)
+            the_file = fspath(the_file)
             if the_file not in self.files:
                 self.output_files.add(the_file)
                 self.files.add(the_file)
 
         for the_file in command.get_input_files():
-            the_file = str(the_file)
+            the_file = fspath(the_file)
             if the_file not in self.files:
                 self.input_files.add(the_file)
                 self.files.add(the_file)
 
         for the_file in command.get_all_files():
-            the_file = str(the_file)
+            the_file = fspath(the_file)
             self.files.add(the_file)
 
     def add_command(self, cmdtype, *args, **kwargs):
@@ -90,6 +91,8 @@ class RuleBase:
         self.commands += [command]
 
     def add_depend(self, depend):
+        if isinstance(depend, RuleBase):
+            depend = depend.name
         if depend not in self.input_files:
             self.depends.add(depend)
 
@@ -149,7 +152,7 @@ class DynamicRule(RuleBase):
                  options=DEFAULT_OPTIONS):
         super().__init__(makefile, target_name, description, options)
         self.target_file = self.target_path() / target_name
-        self.makefile.alias(self.name, str(self.target_file))
+        self.makefile.alias(self.name, fspath(self.target_file))
 
     def _do_dump(self):
         result = super()._do_dump()
@@ -208,7 +211,7 @@ class Makefile(MakefileBase):
         return '\n'.join([self.get_initial_comment()] +
                          [rule.dump() for rule in self.rules])
 
-    def save_makefile(self):
+    def save(self):
         self.repo.open('Makefile', 'w').write(self.dump())
 
     def __init__(self, repo):
@@ -217,4 +220,6 @@ class Makefile(MakefileBase):
         self.default_rule = self.add_phony_rule('default')
         self.help_rule = self.add_phony_rule('help')
         self.__init_help_rule()
+        self.all_rule = self.add_phony_rule('all',
+                                            description='Builds everything')
         self.add_rule_description('help', 'Prints this help')

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import appdirs
-from .config import Config
+from .configs import Config
 
 
 class ConfigPaths:
@@ -48,6 +48,9 @@ class ConfigPaths:
 
 
 class ConfigManager:
+    def __contains__(self, config_name):
+        return config_name in self.__configs
+
     def __getitem__(self, config_name):
         if config_name in self.__configs:
             return self.__configs[config_name]
@@ -64,9 +67,17 @@ class ConfigManager:
             raise KeyError(config_name)
         self.__defaults[config_name] = value
 
+    def replace(self, other_manager):
+        self.__paths = other_manager.__paths
+        self.__configs = other_manager.__configs
+        self.__defaults = other_manager.__defaults
+
     def __init__(self, paths=None):
         if paths is None:
             paths = ConfigPaths()
         self.__paths = paths
         self.__configs = {}
         self.__defaults = {}
+
+
+manager = ConfigManager()

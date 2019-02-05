@@ -292,22 +292,32 @@ def test_section():
         section.append_node(node)
 
     section.clear()
+
+    comm_node = EmptyNode(binder_container)
+    comm_node.comment = ' 42'
+    section.append_node(comm_node)
+
     var_node = VariableNode(binder_container)
     var_node.reset('a', 'int', 1)
     var_node.comment = ' Hello'
     section.append_node(var_node)
-    assert section.dump() == '[head]\na: int = 1 # Hello'
+
+    assert section.dump() == '[head]\n# 42\na: int = 1 # Hello'
     with pytest.raises(ParseError):
         section.append_node(SectionNode(binder_container, '42'))
     section.reset('A', 'string', '2')
-    assert section.dump() == '[head]\nA: string = \'2\' # Hello'
+    assert section.dump() == '[head]\n# 42\nA: string = \'2\' # Hello'
     section.reset('b', 'int', 3)
     section.reset('a', 'int', 3)
     section.append_node(EmptyNode(binder_container, ' 42'))
-    assert section.dump() == '[head]\na: int = 3 # Hello\nb: int = 3\n# 42'
+    assert section.dump() == '''[head]
+# 42
+a: int = 3 # Hello
+b: int = 3
+# 42'''
     section.reset('c', 'int', 42)
     assert (section.dump() ==
-            '[head]\na: int = 3 # Hello\nb: int = 3\nc: int = 42\n# 42')
+            '[head]\n# 42\na: int = 3 # Hello\nb: int = 3\nc: int = 42\n# 42')
 
 
 def test_full():
@@ -334,7 +344,7 @@ def test_full():
     assert (parser.dump() ==
             '[section2]\nc: string\nd: int = 2\n[section]\nd: string')
 
-    parser.load('#comment\n\n\n\n[section]\na:int\n[section2]\n[section3]\n')
+    parser.load('#comment\n\n\n\n[section]\na:int\n#\n\n[sect2]\n[sect3]\n')
 
     parser.clear()
     parser.ensure_section('hello')
@@ -381,11 +391,12 @@ def test_full():
 
 def test_rename():
     parser = Typini()
-    parser.load('[small]\nbigA=1\nSMALLb=2\nBIGC=3\n[BIG]\nq=1')
+    parser.load('[small]\nbigA=1\nSMALLb=2\nBIGC=3\n# comment\n[BIG]\nq=1')
     assert parser.dump() == '''[small]
 bigA: int = 1
 SMALLb: int = 2
 BIGC: int = 3
+# comment
 [BIG]
 q: int = 1'''
 
@@ -410,6 +421,7 @@ q: int = 1'''
 bigA: int = 1
 SMALLb: int = 2
 BIGC: int = 3
+# comment
 [big]
 q: int = 1'''
 
@@ -418,6 +430,7 @@ q: int = 1'''
 bigA: int = 1
 SMALLb: int = 2
 BIGC: int = 3
+# comment
 [VeryBig]
 q: int = 1'''
 
@@ -444,6 +457,7 @@ q: int = 1'''
 BIGA: int = 1
 SMALLb: int = 2
 BIGC: int = 3
+# comment
 [VeryBig]
 q: int = 1'''
 
@@ -452,6 +466,7 @@ q: int = 1'''
 BIGA: int = 1
 smallest_b: int = 2
 BIGC: int = 3
+# comment
 [VeryBig]
 q: int = 1'''
 

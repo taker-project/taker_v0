@@ -6,10 +6,14 @@ default:
 
 help:
 	@echo 'Available commands:'
+	@echo '                 all: Builds everything'
 	@echo '                help: Prints this help'
 	@echo '              descr1: rule 1 with description'
 	@echo '              descr2: rule 2 with description'
 .PHONY: help
+
+all:
+.PHONY: all
 
 descr1: .taker/make_targets/descr2
 	@echo here

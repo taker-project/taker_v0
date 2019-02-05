@@ -1,7 +1,13 @@
 from pathlib import Path
 import pytest
-from configs.config import *
-from configs.manager import *
+from pytest_fixtures import config_manager
+from configs.configs import *
+from configs.managers import *
+
+
+def test_global_manager(config_manager):
+    manager.add_default('my', '[q]\nw=2')
+    assert manager['my']['q']['w'] == 2
 
 
 def test_config_manager(tmpdir):
@@ -65,12 +71,20 @@ ok = true
     manager = ConfigManager(paths)
     manager.add_default('test', '''
 [common]
-value = 42
-default = true
+value=42
+default=true
 ''')
+    assert 'test' not in manager
     test_conf = manager['test']
     assert manager['test'] is test_conf
     assert (user1_conf / 'test.conf.d').is_dir()
+    assert 'test' in manager
+
+    with (user1_conf / 'test.conf').open('r', encoding='utf8') as file:
+        assert file.read() == '''
+[common]
+value: int = 42
+default: bool = true'''
 
     with pytest.raises(KeyError):
         manager.add_default('test', '')
