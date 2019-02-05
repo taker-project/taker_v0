@@ -1,4 +1,4 @@
-from pytest_fixtures import task_manager
+from pytest_fixtures import task_manager, config_manager
 from taskbuilder import TaskManager, EchoCommand, InputFile, OutputFile
 
 

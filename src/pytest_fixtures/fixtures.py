@@ -21,7 +21,7 @@ def config_manager(tmpdir):
 
 
 @pytest.fixture(scope='function')
-def task_manager(tmpdir):
+def task_manager(tmpdir, config_manager):
     tmpdir = str(tmpdir)
     task_dir = Path(tmpdir) / 'task'
     task_dir.mkdir()
