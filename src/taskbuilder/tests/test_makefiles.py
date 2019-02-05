@@ -73,10 +73,10 @@ def test_dynamic_rule2(makefile):
                         stdout_redir='file4.txt')
     rule.add_command(MakeDirCommand, path.join('hello', 'world'))
 
-    rule2 = makefile.add_file_rule('file3.txt')
-    rule2.add_depend('rule2')
+    filerule = makefile.add_file_rule('file3.txt')
+    filerule.add_depend(rule)
 
-    assert (rule.dump() + '\n' + rule2.dump() ==
+    assert (rule.dump() + '\n' + filerule.dump() ==
             load_answer_file('dyn_rule2.make'))
 
 

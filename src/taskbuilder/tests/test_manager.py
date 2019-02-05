@@ -30,7 +30,7 @@ def test_manager(task_manager):
                                    InputFile('file3.txt')],
                              stdout_redir=OutputFile('file4.txt'))
 
-    makefile.all_rule.add_depend('file4.txt')
+    makefile.all_rule.add_depend(file4_rule)
     task_manager.build()
     assert ((repo.open('file4.txt', 'r').read()) ==
             'then something happened...\nwe learned to make...\n')

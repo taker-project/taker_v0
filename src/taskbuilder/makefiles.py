@@ -90,6 +90,8 @@ class RuleBase:
         self.commands += [command]
 
     def add_depend(self, depend):
+        if isinstance(depend, RuleBase):
+            depend = depend.name
         if depend not in self.input_files:
             self.depends.add(depend)
 
