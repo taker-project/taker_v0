@@ -21,6 +21,13 @@ INTERNAL_PATH = Path(INTERNAL_DIR)
 
 
 class TaskRepository:
+    @staticmethod
+    def check_task_dir(directory):
+        return (Path(directory) / INTERNAL_DIR).is_dir()
+
+    def is_task_dir(self):
+        return TaskRepository.check_task_dir(self.directory)
+
     def init_task(self):
         self.mkdir(INTERNAL_PATH)
 
@@ -54,10 +61,10 @@ class TaskRepository:
 def find_task_dir(start_dir=None):
     if start_dir is None:
         start_dir = Path.cwd()
-    if (start_dir / INTERNAL_DIR).is_dir():
+    if TaskRepository.check_task_dir(start_dir):
         return start_dir
     for cur_dir in utils.abspath(start_dir).parents:
-        if (cur_dir / INTERNAL_DIR).is_dir():
+        if TaskRepository.check_task_dir(cur_dir):
             return cur_dir
     raise FileNotFoundError('not in task directory')
 

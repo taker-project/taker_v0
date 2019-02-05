@@ -169,7 +169,7 @@ class Command(AbstractCommand):
         for the_file in self.args:
             self.__normalize_file(the_file)
 
-    def __init__(self, repo, executable, work_dir=None, flags=None, args=[],
+    def __init__(self, repo, executable, args=[], work_dir=None, flags=None,
                  stdin_redir=None, stdout_redir=None, stderr_redir=None):
         super().__init__(repo, work_dir, flags)
         self.executable = copy(executable)

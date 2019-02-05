@@ -108,5 +108,5 @@ def test_makefile(makefile):
 
     assert makefile.dump() == load_answer_file('all.make')
 
-    makefile.save_makefile()
+    makefile.save()
     assert makefile.repo.open('Makefile', 'r').read() == makefile.dump()

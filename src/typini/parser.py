@@ -454,6 +454,8 @@ class TypiniSection:
             key = key.lower()
         for i in range(len(self.__nodes)):
             node = self.__nodes[i]
+            if not isinstance(node, VariableNode):
+                continue
             node_key = node.key
             if not case_sensitive:
                 node_key = node_key.lower()

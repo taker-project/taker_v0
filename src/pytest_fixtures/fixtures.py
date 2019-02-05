@@ -2,7 +2,7 @@ from pathlib import Path
 from copy import deepcopy
 import pytest
 import configs
-from taskbuilder.repository import TaskRepository
+from taskbuilder.manager import TaskManager
 
 
 @pytest.fixture(scope='function')
@@ -21,8 +21,8 @@ def config_manager(tmpdir):
 
 
 @pytest.fixture(scope='function')
-def repo(tmpdir):
+def task_manager(tmpdir):
     tmpdir = str(tmpdir)
     task_dir = Path(tmpdir) / 'task'
     task_dir.mkdir()
-    return TaskRepository(task_dir)
+    return TaskManager(task_dir=task_dir)

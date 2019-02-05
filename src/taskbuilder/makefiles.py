@@ -208,7 +208,7 @@ class Makefile(MakefileBase):
         return '\n'.join([self.get_initial_comment()] +
                          [rule.dump() for rule in self.rules])
 
-    def save_makefile(self):
+    def save(self):
         self.repo.open('Makefile', 'w').write(self.dump())
 
     def __init__(self, repo):
@@ -217,4 +217,6 @@ class Makefile(MakefileBase):
         self.default_rule = self.add_phony_rule('default')
         self.help_rule = self.add_phony_rule('help')
         self.__init_help_rule()
+        self.all_rule = self.add_phony_rule('all',
+                                            description='Builds everything')
         self.add_rule_description('help', 'Prints this help')
