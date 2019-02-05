@@ -15,6 +15,7 @@ from os import path
 from pathlib import Path
 import shlex
 import shutil
+from compat import fspath
 from copy import copy, deepcopy
 from enum import Enum, unique
 from taskbuilder import utils
@@ -43,7 +44,10 @@ class File:
         return not self == other
 
     def __str__(self):
-        return str(self.filename)
+        return self.__fspath__()
+
+    def __fspath__(self):
+        return fspath(self.filename)
 
     def __hash__(self):
         return hash(type(self)) ^ hash(self.filename)
@@ -86,7 +90,7 @@ class OutputFile(File):
 
 class Executable(File):
     def command_name(self, repo, work_dir):
-        result = str(self.relative_to(repo, work_dir))
+        result = fspath(self.relative_to(repo, work_dir))
         if path.basename(result) == result:
             result = path.join(path.curdir, result)
         return result
@@ -97,10 +101,10 @@ class GlobalCmd(Executable):
         return self.filename
 
     def command_name(self, repo, work_dir):
-        return str(self.filename)
+        return fspath(self.filename)
 
     def normalize(self, repo):
-        new_filename = shutil.which(str(self.filename))
+        new_filename = shutil.which(fspath(self.filename))
         if new_filename is None:
             raise FileNotFoundError('command {} not found'
                                     .format(new_filename))
@@ -126,11 +130,11 @@ class AbstractCommand:
         raise NotImplementedError()
 
     def shell_str(self):
-        if str(self.work_dir) == path.curdir:
+        if fspath(self.work_dir) == path.curdir:
             return '{}{}'.format(command_flags_to_str(self.flags),
                                  self._shell_str_internal())
         return '{}cd {} && {}'.format(command_flags_to_str(self.flags),
-                                      shlex.quote(str(self.work_dir)),
+                                      shlex.quote(fspath(self.work_dir)),
                                       self._shell_str_internal())
 
     def __init__(self, repo, work_dir=None, flags=None):
@@ -158,7 +162,7 @@ class Command(AbstractCommand):
         if isinstance(arg, str):
             return arg
         if isinstance(arg, File):
-            return str(arg.relative_to(self.repo, self.work_dir))
+            return fspath(arg.relative_to(self.repo, self.work_dir))
         raise TypeError('arg has invalid type (str or File expected)')
 
     def __normalize_files(self):

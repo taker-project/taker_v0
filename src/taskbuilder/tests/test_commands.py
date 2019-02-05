@@ -1,5 +1,6 @@
 from os import path
 import shutil
+from compat import fspath
 from taskbuilder.commands import *
 from taskbuilder.repository import TaskRepository
 
@@ -13,8 +14,9 @@ def test_command_flags():
 def test_files():
     infile = InputFile('q.txt')
     outfile = OutputFile('w.txt')
+    assert fspath(infile) == 'q.txt'
+    assert fspath(outfile) == 'w.txt'
     assert str(infile) == 'q.txt'
-    assert str(outfile) == 'w.txt'
     assert InputFile('q.txt') == InputFile('q.txt')
     assert not InputFile('q.txt') != InputFile('q.txt')
     assert InputFile('q.txt') != InputFile('w.txt')

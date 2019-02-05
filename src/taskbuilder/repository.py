@@ -12,6 +12,7 @@ format.
 '''
 import os
 from pathlib import Path
+from compat import fspath
 from taskbuilder import utils
 
 # TODO : Make the buildsystem work on Windows
@@ -47,7 +48,7 @@ class TaskRepository:
         self.abspath(location).mkdir(*args, **kwargs)
 
     def to_task_dir(self):
-        os.chdir(str(self.directory))
+        os.chdir(fspath(self.directory))
 
     def open(self, filename, *args, encoding='utf8', **kwargs):
         return self.abspath(filename).open(*args, encoding=encoding, **kwargs)

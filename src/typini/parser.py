@@ -1,4 +1,5 @@
 import itertools
+from compat import fspath
 from .names import is_char_valid, is_var_name_valid
 from .parseutils import *
 
@@ -434,10 +435,10 @@ class NodeList:
         return '\n'.join([node.save() for node in self.get_nodes()])
 
     def load_from_file(self, file_name):
-        self.load(open(str(file_name), 'r', encoding='utf8').read())
+        self.load(open(fspath(file_name), 'r', encoding='utf8').read())
 
     def save_to_file(self, file_name):
-        open(str(file_name), 'w', encoding='utf8').write(self.dump())
+        open(fspath(file_name), 'w', encoding='utf8').write(self.dump())
 
     def __init__(self):
         self.binder = TypeBinder()

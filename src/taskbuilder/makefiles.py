@@ -1,5 +1,6 @@
 from enum import Enum, unique
 from pathlib import Path
+from compat import fspath
 from .commands import Executable, GlobalCmd, ShellCmd, File, Command
 from .commands import MakeDirCommand, EchoCommand, TouchCommand
 from .repository import INTERNAL_PATH
@@ -69,19 +70,19 @@ class RuleBase:
 
     def _do_add_command(self, command):
         for the_file in command.get_output_files():
-            the_file = str(the_file)
+            the_file = fspath(the_file)
             if the_file not in self.files:
                 self.output_files.add(the_file)
                 self.files.add(the_file)
 
         for the_file in command.get_input_files():
-            the_file = str(the_file)
+            the_file = fspath(the_file)
             if the_file not in self.files:
                 self.input_files.add(the_file)
                 self.files.add(the_file)
 
         for the_file in command.get_all_files():
-            the_file = str(the_file)
+            the_file = fspath(the_file)
             self.files.add(the_file)
 
     def add_command(self, cmdtype, *args, **kwargs):
@@ -151,7 +152,7 @@ class DynamicRule(RuleBase):
                  options=DEFAULT_OPTIONS):
         super().__init__(makefile, target_name, description, options)
         self.target_file = self.target_path() / target_name
-        self.makefile.alias(self.name, str(self.target_file))
+        self.makefile.alias(self.name, fspath(self.target_file))
 
     def _do_dump(self):
         result = super()._do_dump()
