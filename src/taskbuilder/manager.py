@@ -1,4 +1,5 @@
 import os
+from os import fspath
 import subprocess
 from .repository import TaskRepository, get_repository
 from .makefiles import Makefile
@@ -30,4 +31,4 @@ class TaskManager:
         args = ['make', '-j', str(jobs)]
         if target is not None:
             args += [target]
-        subprocess.check_call(args, cwd=self.repo.directory)
+        subprocess.check_call(args, cwd=fspath(self.repo.directory))
