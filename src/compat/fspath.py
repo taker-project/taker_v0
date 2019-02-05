@@ -8,7 +8,8 @@ def fspath(path):
         return os.fspath(path)
     if isinstance(path, str):
         return path
-    elif isinstance(path, pathlib.Path):
+    if isinstance(path, pathlib.Path):
         return str(path)
-    else:
-        raise TypeError('str or Path expected')
+    if hasattr(path, '__fspath__'):
+        return path.__fspath__()
+    raise TypeError('str or PathLike expected')
