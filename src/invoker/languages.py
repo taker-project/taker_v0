@@ -1,6 +1,8 @@
+import os
 from os import path
 import shutil
 from .config import config
+from .utils import is_valid_ext, default_exe_ext
 from compat import fspath
 
 
@@ -18,7 +20,7 @@ class Language:
         return self._lang_section().get('run-args')
 
     def get_extensions(self):
-        return [self.name.partition('.')[0]]
+        return ['.' + self.name.partition('.')[0]]
 
     def _finalize_arglist(self, args):
         # get full path of the executable
@@ -63,11 +65,20 @@ class Language:
     def __lt__(self, other):
         return self.priority > other.priority
 
-    def __init__(self, name, priority=0):
+    def __init__(self, name, priority=0, exe_ext=None):
         self.name = name
+
         self.priority = self._lang_section().get('priority')
         if self.priority is None:
             self.priority = priority
+
+        self.exe_ext = self._lang_section().get('exe-ext')
+        if exe_ext is None:
+            exe_ext = default_exe_ext()
+        if self.exe_ext is None:
+            self.exe_ext = exe_ext
+        if not is_valid_ext(exe_ext):
+            raise ValueError('{} is an invalid extension'.format(exe_ext))
 
 
 class PredefinedLanguage(Language):
@@ -83,8 +94,9 @@ class PredefinedLanguage(Language):
             return res
         return self.__run_args_template
 
-    def __init__(self, name, priority=None, compile_args=None, run_args=None):
-        super().__init__(name, priority)
+    def __init__(self, name, priority=0, exe_ext=None, compile_args=None,
+                 run_args=None):
+        super().__init__(name, priority, exe_ext)
         self.__compile_args_template = compile_args
         self.__run_args_template = run_args
 
@@ -148,11 +160,13 @@ class LanguageManagerBase:
         self.add_language(PredefinedLanguage(
             'py.py2',
             priority=1000,
+            exe_ext='.py',
             run_args=['python2', '{exe}']
         ))
         self.add_language(PredefinedLanguage(
             'py.py3',
             priority=1100,
+            exe_ext='.py',
             run_args=['python3', '{exe}']
         ))
         # TODO : add more languages!

@@ -12,6 +12,7 @@ memory-limit: float = 512.0
 # compile-args = ['g++', '{src}', '-o', '{exe}', '-O2', '-I{lib}']
 # run-args = ['{exe}']
 # priority = 0
+# exe-ext = '.myexe'
 
 # To disable the existing one, use
 # [lang/c++.gcc]
