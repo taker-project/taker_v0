@@ -9,8 +9,8 @@ from invoker.config import CONFIG_NAME
 def test_languages(tmpdir, config_manager):
     tmpdir = Path(str(tmpdir))
 
-    open(config_manager.user_config(CONFIG_NAME), 'w',
-         encoding='utf8').write('''
+    config_manager.user_config(CONFIG_NAME).open(
+        'w', encoding='utf8').write('''
 [lang/sh.sh]
 run-args = ['sh', '{exe}']
 priority = 42
