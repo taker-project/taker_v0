@@ -480,6 +480,13 @@ class TypiniSection:
     def __contains__(self, item):
         return self.exists(item)
 
+    def get_value(self, key, default=None, case_sensitive=True):
+        index = self.__get_node_index(key, case_sensitive)
+        if index < 0:
+            return default
+        value = self.__nodes[index].value.value
+        return default if value is None else value
+
     def reset(self, key, typename, value, can_overwrite=True):
         index = self.__get_node_index(key, False)
         cur_node = (self.__nodes[index]
