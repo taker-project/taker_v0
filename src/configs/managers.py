@@ -54,7 +54,7 @@ class ConfigManager:
     def __getitem__(self, config_name):
         if config_name in self.__configs:
             return self.__configs[config_name]
-        paths = self.paths
+        paths = self.__paths
         paths.init_user(config_name)
         config = Config(paths.filenames(config_name),
                         paths.user_config(config_name),
@@ -67,15 +67,18 @@ class ConfigManager:
             raise KeyError(config_name)
         self.__defaults[config_name] = value
 
+    def user_config(self, config_name):
+        return self.__paths.user_config(config_name)
+
     def replace(self, other_manager):
-        self.paths = other_manager.paths
+        self.__paths = other_manager.__paths
         self.__configs = other_manager.__configs
         self.__defaults = other_manager.__defaults
 
     def __init__(self, paths=None):
         if paths is None:
             paths = ConfigPaths()
-        self.paths = paths
+        self.__paths = paths
         self.__configs = {}
         self.__defaults = {}
 
