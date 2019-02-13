@@ -57,7 +57,7 @@ class Language:
         args_template = self._run_args_template()
         if not args_template:
             args_template = ['{exe}']
-        mapping = {'exe': fspath(exe_file.resolve())}
+        mapping = {'exe': fspath(exe_file)}
         res = [arg.format_map(mapping) for arg in args_template]
         self._finalize_arglist(res)
         return res + custom_args
