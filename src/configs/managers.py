@@ -68,6 +68,7 @@ class ConfigManager:
         self.__defaults[config_name] = value
 
     def user_config(self, config_name):
+        self.__paths.init_user(config_name)
         return self.__paths.user_config(config_name)
 
     def replace(self, other_manager):

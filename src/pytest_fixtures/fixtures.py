@@ -8,7 +8,6 @@ from taskbuilder.manager import TaskManager
 @pytest.fixture(scope='function')
 def config_manager(tmpdir):
     tmpdir = Path(str(tmpdir))
-    print(configs.manager)
     old_manager = deepcopy(configs.manager)
     try:
         paths = configs.ConfigPaths()

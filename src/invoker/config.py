@@ -2,9 +2,9 @@ from configs import manager
 
 DEFAULT_CONFIG = '''[compile]
 # Compilation time (in seconds)
-time-limit: double = 30.0
+time-limit: float = 30.0
 # Compilation memory limits (in MBytes)
-memory-limit: double = 512.0
+memory-limit: float = 512.0
 
 # You can define your own languages here:
 # Example:

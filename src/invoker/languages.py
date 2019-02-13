@@ -12,28 +12,28 @@ class Language:
         return config()[self._lang_section_name()]
 
     def _compile_args_template(self):
-        return self._lang_section()['compile-args']
+        return self._lang_section().get('compile-args')
 
     def _run_args_template(self):
-        return self._lang_section()['run-args']
+        return self._lang_section().get('run-args')
 
     def get_extensions(self):
-        return self.name.split('.')[0]
+        return [self.name.partition('.')[0]]
 
     def _finalize_arglist(self, args):
         # get full path of the executable
-        if not path.isabs(args[0]):
-            first_arg = shutil.which(args[0])
-            if first_arg is None:
-                raise FileNotFoundError('cannot find executable "{}"'
-                                        .format(args[0]))
-            args[0] = first_arg
+        first_arg = shutil.which(args[0])
+        if first_arg is None:
+            raise FileNotFoundError('cannot find executable "{}"'
+                                    .format(args[0]))
+        args[0] = first_arg
 
-    def compile_args(self, src_file, exe_file, library_dirs):
+    def compile_args(self, src_file, exe_file, library_dirs=[]):
         src_file = src_file.absolute()
         exe_file = exe_file.absolute()
         args_template = self._compile_args_template()
-        assert(len(args_template) >= 1)
+        if not args_template:
+            return None
         res = []
         # FIXME : support {curly braces} inside the templates
         mapping = {
@@ -43,98 +43,116 @@ class Language:
         for arg in args_template:
             if arg.find('{lib}') >= 0:
                 for lib in library_dirs:
-                    mapping['lib'] = lib
+                    mapping['lib'] = fspath(lib.absolute())
                     res += [arg.format_map(mapping)]
                 continue
-            res += arg.format_map(mapping)
+            res += [arg.format_map(mapping)]
         self._finalize_arglist(res)
         return res
 
-    def run_args(self, exe_file, custom_args):
+    def run_args(self, exe_file, custom_args=[]):
+        exe_file = exe_file.absolute()
         args_template = self._run_args_template()
         if not args_template:
             args_template = ['{exe}']
         mapping = {'exe': fspath(exe_file.resolve())}
-        res = [args_template.format_map(mapping) for arg in args_template]
-
-        # get full path of the executable
-        first_arg = shutil.which(res[0])
-        if first_arg is not None:
-            res[0] = first_arg
+        res = [arg.format_map(mapping) for arg in args_template]
         self._finalize_arglist(res)
         return res + custom_args
 
     def __lt__(self, other):
         return self.priority > other.priority
 
-    def __init__(self, name, priority):
+    def __init__(self, name, priority=0):
         self.name = name
-        self.priority = priority
+        self.priority = self._lang_section().get('priority')
+        if self.priority is None:
+            self.priority = priority
 
 
 class PredefinedLanguage(Language):
     def _compile_args_template(self):
+        res = super()._compile_args_template()
+        if res is not None:
+            return res
         return self.__compile_args_template
 
     def _run_args_template(self):
+        res = super()._run_args_template()
+        if res is not None:
+            return res
         return self.__run_args_template
 
-    def __init__(self, name, priority, compile_args, run_args):
-        super().__init__(self, name, priority)
+    def __init__(self, name, priority=None, compile_args=None, run_args=None):
+        super().__init__(name, priority)
         self.__compile_args_template = compile_args
         self.__run_args_template = run_args
 
 
-class ConfigLanguage(Language):
-    def _compile_args_template(self):
-        return self.__compile_args_template
-
-    def _run_args_template(self):
-        return self.__run_args_template
-
-    def __init__(self, section):
-        assert section.key.startswith('lang/')
-        prior = section.get_value('priority', 0)
-        super().__init__(self, section.key.partition('/')[2])
-        self.__compile_args_template = section.get_value('compile-args')
-        self.__run_args_template = section.get_value('run-args')
-
-
 class LanguageManagerBase:
+    def try_add_language(self, language):
+        if language.name in self:
+            return False
+        self.add_language(language)
+        return True
+
     def add_language(self, language):
         name = language.name
+        extensions = language.get_extensions()
         assert name not in self._languages
         self._languages[name] = language
-        self._extensions.setdefault(name, [])
-        self._extensions[name] += [language]
+        for ext in extensions:
+            self._extensions.setdefault(ext, [])
+            self._extensions[ext] += [language]
+
+    def get_lang(self, name):
+        return self._languages[name]
+
+    def get_ext(self, ext):
+        return sorted(self._extensions.get(ext, []))
+
+    def __getitem__(self, name):
+        return self.get_lang(name)
+
+    def __contains__(self, name):
+        return name in self._languages
 
     def _predefine(self):
         self.add_language(PredefinedLanguage(
             'c.gcc',
-            compile_args=['gcc', '{src}', '-o', '{exe}', '-O2', '-I{lib}']))
+            priority=1000,
+            compile_args=['gcc', '{src}', '-o', '{exe}', '-O2', '-I{lib}']
+        ))
         self.add_language(PredefinedLanguage(
             'cpp.g++',
-            compile_args=['g++', '{src}', '-o', '{exe}', '-O2', '-I{lib}']))
+            priority=1000,
+            compile_args=['g++', '{src}', '-o', '{exe}', '-O2', '-I{lib}']
+        ))
         self.add_language(PredefinedLanguage(
             'cpp.g++11',
+            priority=1100,
             compile_args=['g++', '{src}', '-o', '{exe}', '-O2', '--std=c++11',
-                          '-I{lib}']))
+                          '-I{lib}']
+        ))
         self.add_language(PredefinedLanguage(
             'cpp.g++14',
+            priority=1200,
             compile_args=['g++', '{src}', '-o', '{exe}', '-O2', '--std=c++14',
-                          '-I{lib}']))
+                          '-I{lib}']
+        ))
         self.add_language(PredefinedLanguage(
             'pas.fpc',
+            priority=1000,
             compile_args=['fpc', '{src}', '-o{exe}', '-Fi{lib}', '-FU{lib}']
         ))
         self.add_language(PredefinedLanguage(
             'py.py2',
-            compile_args=['cp', '{src}', '{exe}'],
+            priority=1000,
             run_args=['python2', '{exe}']
         ))
         self.add_language(PredefinedLanguage(
             'py.py3',
-            compile_args=['cp', '{src}', '{exe}'],
+            priority=1100,
             run_args=['python3', '{exe}']
         ))
         # TODO : add more languages!
@@ -144,8 +162,9 @@ class LanguageManagerBase:
         self._extensions.clear()
         self._predefine()
         for section in config():
-            if section.key.startswith('lang/'):
-                self.add_language(ConfigLanguage(section))
+            if section[0].startswith('lang/'):
+                name = section[0].partition('/')[2]
+                self.try_add_language(Language(name))
 
     def __init__(self):
         self._languages = {}
