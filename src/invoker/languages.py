@@ -110,11 +110,12 @@ class LanguageManagerBase:
         return True
 
     def add_language(self, language):
+        name = language.name
+        if name in self._languages:
+            raise KeyError(name)
         if not language.is_active:
             return
-        name = language.name
         extensions = language.get_extensions()
-        assert name not in self._languages
         self._languages[name] = language
         for ext in extensions:
             self._extensions.setdefault(ext, [])
