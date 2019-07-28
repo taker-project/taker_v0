@@ -5,16 +5,41 @@ import os
 import shutil
 import tempfile
 from copy import copy
-from namedlist import namedtuple, namedlist
+from collections import namedtuple
 
 # TODO : the module architecture is not flexible enough, rewrite it!
-# TODO : migrate away from namedlist (?)
 
-Parameters = namedlist('Parameters',
-                       ['time_limit', 'idle_limit', 'memory_limit',
-                        'executable', 'clear_env', 'env', 'args',
-                        'working_dir', 'stdin_redir', 'stdout_redir',
-                        'stderr_redir', 'isolate_dir', 'isolate_policy'])
+
+class Parameters:
+    def __defaults(self):
+        return {
+            'time_limit': 2.0,
+            'idle_limit': None,
+            'memory_limit': 256.0,
+            'executable': '',
+            'clear_env': False,
+            'env': {},
+            'args': [],
+            'working_dir': '',
+            'stdin_redir': '',
+            'stdout_redir': '',
+            'stderr_redir': '',
+            'isolate_dir': None,
+            'isolate_policy': None
+        }
+
+    def _asdict(self):
+        return {x: self.__dict__[x] for x in self.__keys}
+
+    def __init__(self, **kwargs):
+        defaults = self.__defaults()
+        self.__keys = self.__defaults().keys()
+        for item in kwargs:
+            if item not in defaults:
+                raise KeyError(item)
+        self.__dict__.update(defaults)
+        self.__dict__.update(kwargs)
+
 
 Results = namedtuple('Results',
                      ['time', 'clock_time', 'memory', 'exitcode', 'signal',
@@ -155,13 +180,9 @@ class Runner:
 
     def __init__(self, runner_path):
         # TODO : runner must capture stdout instead of creating temp files (?)
-        # FIXME : add .exe extension for Windows executables (here and in tests)
+        # FIXME : add .exe extension for Windows executables (here + in tests)
         self.runner_path = runner_path
-        self.parameters = Parameters(
-            time_limit=2.0, idle_limit=None, memory_limit=256.0,
-            executable='', clear_env=False, env={}, args=[],
-            working_dir='', stdin_redir='', stdout_redir='',
-            stderr_redir='', isolate_dir=None, isolate_policy=None)
+        self.parameters = Parameters()
         self.results = None
         self.pass_stdin = False
         self.capture_stdout = False
