@@ -155,7 +155,7 @@ class Runner:
 
     def __init__(self, runner_path):
         # TODO : runner must capture stdout instead of creating temp files (?)
-        # FIXME : add .exe extension for Windows executables (here on in tests)
+        # FIXME : add .exe extension for Windows executables (here and in tests)
         self.runner_path = runner_path
         self.parameters = Parameters(
             time_limit=2.0, idle_limit=None, memory_limit=256.0,

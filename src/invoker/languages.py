@@ -38,6 +38,8 @@ class Language:
             return None
         res = []
         # FIXME : support {curly braces} inside the templates
+        # currently arguments like '{a{lib}b}' will be expanded
+        # with library locations, at it were just with '{lib}'
         mapping = {
             'src': fspath(src_file),
             'exe': fspath(exe_file),
