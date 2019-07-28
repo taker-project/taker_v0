@@ -21,12 +21,14 @@ exe-ext = '.sh'
 compile-args = ['g++', '{src}', '-o', '{exe}', '-Ofast']
 priority = 1150
 exe-ext = '.42.exe'
+[lang/cpp.g++14]
+active = false
 ''')
 
     lang_manager = LanguageManagerBase()
 
     assert ([str(lang.name) for lang in lang_manager.get_ext('.cpp')] ==
-            ['cpp.g++14', 'cpp.g++', 'cpp.g++11'])
+            ['cpp.g++17', 'cpp.g++', 'cpp.g++11'])
     assert lang_manager.get_ext('.bad_ext') == []
     assert lang_manager['py.py2'].name == 'py.py2'
     assert lang_manager['py.py3'].name == 'py.py3'

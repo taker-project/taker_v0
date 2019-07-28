@@ -19,7 +19,7 @@ memory-limit: float = 512.0
 # active = false
 '''
 
-CONFIG_NAME = 'taskbuilder'
+CONFIG_NAME = 'invoker'
 
 
 def config():

@@ -67,6 +67,7 @@ class Language:
 
     def __init__(self, name, priority=0, exe_ext=None):
         self.name = name
+        self.is_active = self._lang_section().get('active', True)
 
         self.priority = self._lang_section().get('priority')
         if self.priority is None:
@@ -109,6 +110,8 @@ class LanguageManagerBase:
         return True
 
     def add_language(self, language):
+        if not language.is_active:
+            return
         name = language.name
         extensions = language.get_extensions()
         assert name not in self._languages
@@ -150,6 +153,12 @@ class LanguageManagerBase:
             'cpp.g++14',
             priority=1200,
             compile_args=['g++', '{src}', '-o', '{exe}', '-O2', '--std=c++14',
+                          '-I{lib}']
+        ))
+        self.add_language(PredefinedLanguage(
+            'cpp.g++17',
+            priority=1300,
+            compile_args=['g++', '{src}', '-o', '{exe}', '-O2', '--std=c++17',
                           '-I{lib}']
         ))
         self.add_language(PredefinedLanguage(
