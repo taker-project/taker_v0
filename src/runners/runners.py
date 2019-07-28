@@ -6,6 +6,7 @@ import shutil
 import tempfile
 from copy import copy
 from collections import namedtuple
+from .config import config
 
 # TODO : the module architecture is not flexible enough, rewrite it!
 
@@ -178,9 +179,16 @@ class Runner:
             if create_temp_dir:
                 shutil.rmtree(temp_dir)
 
-    def __init__(self, runner_path):
+    def __init__(self, runner_path=None):
         # TODO : runner must capture stdout instead of creating temp files (?)
         # FIXME : add .exe extension for Windows executables (here + in tests)
+        if runner_path is None:
+            runner_path = config()['path']['executable']
+        if runner_path is None:
+            # FIXME: add better runner detection
+            runner_path = shutil.which('taker_unixrun')
+        if runner_path is None:
+            raise RunnerError('runner executable not found')
         self.runner_path = runner_path
         self.parameters = Parameters()
         self.results = None
