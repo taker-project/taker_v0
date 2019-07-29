@@ -10,20 +10,31 @@ from invoker.config import CONFIG_NAME
 def test_languages(tmpdir, config_manager):
     tmpdir = Path(str(tmpdir))
 
-    config_manager.user_config(CONFIG_NAME).open(
-        'w', encoding='utf8').write('''
+    config = '''
 [lang/sh.sh]
 run-args = ['sh', '{exe}']
 priority = 42
 exe-ext = '.sh'
 [lang/cpp.g++]
 # Overwrite default g++
-compile-args = ['g++', '{src}', '-o', '{exe}', '-Ofast']
+compile-args = ['<cpp-compiler>', '{src}', '-o', '{exe}', '-Ofast']
 priority = 1150
 exe-ext = '.42.exe'
 [lang/cpp.g++14]
 active = false
-''')
+'''
+
+    c_compiler = shutil.which('gcc')
+    if not c_compiler:
+        c_compiler = shutil.which('clang')
+    cpp_compiler = shutil.which('g++')
+    if not cpp_compiler:
+        cpp_compiler = shutil.which('clang++')
+
+    config = config.replace('<cpp-compiler>', cpp_compiler)
+
+    config_manager.user_config(CONFIG_NAME).open(
+        'w', encoding='utf8').write(config)
 
     lang_manager = LanguageManagerBase()
 
@@ -41,9 +52,6 @@ active = false
         Language('q.q', exe_ext='iNeedDot')
 
     lang = lang_manager['c.gcc']
-    c_compiler = shutil.which('gcc')
-    if not c_compiler:
-        c_compiler = shutil.which('clang')
     compile_arg_exp = [c_compiler, fspath(Path.cwd() / 'file.cpp'),
                        '-o', fspath(Path.cwd() / 'file.exe'), '-O2',
                        '-I' + fspath(Path.cwd() / 'libs'),
@@ -60,9 +68,6 @@ active = false
     assert lang.exe_ext == default_exe_ext()
 
     lang = lang_manager['cpp.g++']
-    cpp_compiler = shutil.which('g++')
-    if not cpp_compiler:
-        cpp_compiler = shutil.which('clang++')
     compile_arg_exp = [cpp_compiler, fspath(Path.cwd() / 'file.cpp'),
                        '-o', fspath(Path.cwd() / 'file.exe'), '-Ofast']
     compile_arg_found = lang.compile_args(Path('file.cpp'), Path('file.exe'))
