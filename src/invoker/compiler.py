@@ -95,4 +95,4 @@ def detect_language(repo, lang_list, src_file, library_dirs=None):
                 err = e
     if err is not None:
         raise err
-    return None
+    raise CompileError('unable to detect language: none available')

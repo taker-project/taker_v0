@@ -23,8 +23,12 @@ def test_detect_language(config_manager, task_manager):
         tests / 'detect_lang.cpp').name == 'cpp.g++11'
     assert language_manager.detect_language(
         tests / 'code.cpp').name == 'cpp.g++17'
+    assert language_manager.detect_language(
+        tests / 'code.py').name == 'py.py3'
     with pytest.raises(CompileError):
         language_manager.detect_language(tests / 'compile_error.cpp')
+    with pytest.raises(CompileError):
+        language_manager.detect_language(tests / 'code_unknown.red')
 
 
 def test_compiler(config_manager, task_manager, tmpdir):
