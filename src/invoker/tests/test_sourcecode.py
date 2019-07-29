@@ -30,7 +30,9 @@ def test_source_code(tmpdir, config_manager, task_manager):
     tmpdir = Path(str(tmpdir))
     (tmpdir / 'src').mkdir()
     src_cpp1 = tmpdir / 'src' / 'aplusb.cpp'
+    src_py1 = tmpdir / 'src' / 'code.py'
     shutil.copy(fspath(tests_location() / 'aplusb.cpp'), fspath(src_cpp1))
+    shutil.copy(fspath(tests_location() / 'code.py'), fspath(src_py1))
 
     lang1 = language_manager.get_lang('cpp.g++14')
     lang2 = language_manager.get_lang('pas.fpc')
@@ -45,3 +47,8 @@ def test_source_code(tmpdir, config_manager, task_manager):
     src2 = language_manager.create_source(src_cpp1, language=lang2)
     with pytest.raises(CompileError):
         src2.compile()
+
+    src3 = language_manager.create_source(src_py1)
+    src3.compile()
+    src3.run(EmptyRunProfile(repo))
+    assert src3.runner.stdout == 'hello world\n'
