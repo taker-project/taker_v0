@@ -32,7 +32,7 @@ def test_detect_language(config_manager, task_manager):
 
 
 def test_compiler(config_manager, task_manager, tmpdir):
-    tmpdir = Path(tmpdir)
+    tmpdir = Path(str(tmpdir))
     repo = task_manager.repo
 
     language_manager = LanguageManager(repo)
