@@ -6,6 +6,7 @@ import shutil
 from tempfile import mkdtemp
 from pathlib import Path
 from runners import Status
+from compat import fspath
 
 
 class CompileError(Exception):
@@ -28,7 +29,7 @@ class Compiler:
                     .format(e.strerror))
             return
         temp_dir = Path(
-            mkdtemp('compilebox', '', self.repo.internal_dir(True)))
+            mkdtemp('compilebox', '', fspath(self.repo.internal_dir(True))))
         try:
             src = temp_dir / os.path.basename(self.src_file)
             exe = temp_dir / os.path.basename(self.exe_file)
