@@ -1,9 +1,22 @@
 from configs import manager
 
-DEFAULT_CONFIG = '''[compile]
+DEFAULT_CONFIG = '''[compiler]
 # Compilation time (in seconds)
 time-limit: float = 30.0
 # Compilation memory limits (in MBytes)
+memory-limit: float = 512.0
+
+# You can set time/memory limit for other executables here
+[checker]
+time-limit: float = 10.0
+memory-limit: float = 512.0
+
+[validator]
+time-limit: float = 10.0
+memory-limit: float = 512.0
+
+[generator]
+time-limit: float = 10.0
 memory-limit: float = 512.0
 
 # You can define your own languages here:
