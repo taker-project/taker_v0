@@ -123,7 +123,7 @@ class ProfiledRunner:
 
     @property
     def parameters(self):
-        return self.parameters
+        return self.runner.parameters
 
     @parameters.setter
     def parameters(self, value):

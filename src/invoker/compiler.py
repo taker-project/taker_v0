@@ -21,7 +21,7 @@ class Compiler:
             if os.path.samefile(self.src_file, self.exe_file):
                 return
             try:
-                shutil.copy(self.src_file, self.dst_file)
+                shutil.copy(self.src_file, self.exe_file)
             except OSError as e:
                 raise CompileError(
                     'could not copy file due to OS error: {}'
@@ -69,10 +69,10 @@ class Compiler:
         """
         self.repo = repo
         self.language = language
-        self.src_file = os.path.abspath(src_file)
+        self.src_file = src_file.absolute()
         if exe_file is None:
-            exe_file = os.path.splitext(src_file)[0] + language.exe_ext
-        self.exe_file = os.path.abspath(exe_file)
+            exe_file = src_file.with_suffix(language.exe_ext)
+        self.exe_file = exe_file.absolute()
         if library_dirs is None:
             library_dirs = []
         self.library_dirs = library_dirs
@@ -93,5 +93,5 @@ def detect_language(repo, lang_list, src_file, library_dirs=None):
             if err is None:
                 err = e
     if err is not None:
-        raise e
+        raise err
     return None

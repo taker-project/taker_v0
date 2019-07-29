@@ -7,6 +7,8 @@ import tempfile
 from copy import copy
 from collections import namedtuple
 from .config import config
+from compat import fspath
+from pathlib import Path
 
 # TODO : the module architecture is not flexible enough, rewrite it!
 
@@ -84,6 +86,11 @@ def dict_keys_replace(src_dict, src_char, dst_char):
 def parameters_to_json(parameters):
     param_dict = parameters._asdict()
     param_dict = dict_keys_replace(param_dict, '_', '-')
+    # convert paths to strings
+    for key in param_dict:
+        if isinstance(param_dict[key], Path):
+            param_dict[key] = fspath(param_dict[key])
+    # set default values (if unset)
     if parameters.idle_limit is None:
         param_dict['idle-limit'] = 3.5 * parameters.time_limit
     if parameters.isolate_dir is None:
@@ -91,6 +98,7 @@ def parameters_to_json(parameters):
     if parameters.isolate_policy is None:
         param_dict['isolate-policy'] = IsolatePolicy.NORMAL
     param_dict['isolate-policy'] = param_dict['isolate-policy'].value
+    # dump as JSON
     return json.dumps(param_dict)
 
 
