@@ -87,7 +87,7 @@ __PROFILES = {}
 def register_profile(profile_class):
     if profile_class in __PROFILES:
         raise KeyError(profile_class)
-    __PROFILES[profile_class] = profile_class.name()
+    __PROFILES[profile_class.name()] = profile_class
 
 
 def create_profile(name, repository, **kwargs):

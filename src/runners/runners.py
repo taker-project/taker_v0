@@ -186,7 +186,7 @@ class Runner:
         # TODO : runner must capture stdout instead of creating temp files (?)
         # FIXME : add .exe extension for Windows executables (here + in tests)
         if runner_path is None:
-            runner_path = config()['path']['executable']
+            runner_path = config()['path'].get('executable')
         if runner_path is None:
             # FIXME: add better runner detection
             runner_path = shutil.which('taker_unixrun')
