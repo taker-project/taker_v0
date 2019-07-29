@@ -10,6 +10,4 @@ CONFIG_NAME = 'taskbuilder'
 
 
 def config():
-    if CONFIG_NAME not in manager:
-        manager.add_default(CONFIG_NAME, DEFAULT_CONFIG)
-    return manager[CONFIG_NAME]
+    return manager.request(CONFIG_NAME, DEFAULT_CONFIG)
