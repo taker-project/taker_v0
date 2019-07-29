@@ -149,6 +149,9 @@ class Runner:
 
     def run(self):
         old_parameters = copy(self.parameters)
+        self.results = None
+        self.stdout = ''
+        self.stderr = ''
         create_temp_dir = (self.pass_stdin or self.capture_stdout
                            or self.capture_stderr)
         if create_temp_dir:
