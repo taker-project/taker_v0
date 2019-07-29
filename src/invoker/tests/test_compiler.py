@@ -31,7 +31,7 @@ def test_detect_language(config_manager, task_manager):
         language_manager.detect_language(tests / 'code_unknown.red')
 
 
-def test_compiler(config_manager, task_manager, tmpdir):
+def test_compiler(tmpdir, config_manager, task_manager):
     tmpdir = Path(str(tmpdir))
     repo = task_manager.repo
 
@@ -42,11 +42,12 @@ def test_compiler(config_manager, task_manager, tmpdir):
     src_dir = tmpdir / 'src'
     src_dir.mkdir()
 
-    for fname in ['code.cpp', 'compile_error.cpp', 'code.py']:
+    for fname in ['code.cpp', 'compile_error.cpp', 'code_libs.cpp', 'code.py']:
         shutil.copy(tests_location() / fname, src_dir / fname)
 
     src_cpp1 = src_dir / 'code.cpp'
     src_cpp2 = src_dir / 'compile_error.cpp'
+    src_cpp3 = src_dir / 'code_libs.cpp'
     src_py1 = src_dir / 'code.py'
 
     exe_cpp1 = src_dir / ('1-code' + default_exe_ext())
@@ -64,6 +65,14 @@ def test_compiler(config_manager, task_manager, tmpdir):
     runner.capture_stderr = True
 
     compiler = Compiler(repo, lang_cpp, src_cpp1)
+    compiler.compile()
+    runner.parameters.executable = compiler.exe_file
+    runner.run()
+    assert runner.results.status == Status.OK
+    assert runner.stdout == 'hello world\n'
+
+    compiler = Compiler(repo, lang_cpp, src_cpp3,
+                        library_dirs=[tests_location()])
     compiler.compile()
     runner.parameters.executable = compiler.exe_file
     runner.run()
