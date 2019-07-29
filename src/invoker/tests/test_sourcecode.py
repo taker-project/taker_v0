@@ -34,8 +34,8 @@ def test_source_code(tmpdir, config_manager, task_manager):
     shutil.copy(fspath(tests_location() / 'aplusb.cpp'), fspath(src_cpp1))
     shutil.copy(fspath(tests_location() / 'code.py'), fspath(src_py1))
 
-    lang1 = language_manager.get_lang('cpp.g++14')
-    lang2 = language_manager.get_lang('pas.fpc')
+    lang1 = language_manager.get_lang('cpp.g++11')
+    lang2 = language_manager.get_lang('cpp.g++14')
     src1 = language_manager.create_source(src_cpp1, language=lang1)
     src1.compile()
     src1.runner.stdin = '2 3'
