@@ -1,4 +1,4 @@
-import shutil
+from shutil import which
 from compat import fspath
 from .config import config
 from .utils import is_valid_ext, default_exe_ext
@@ -22,7 +22,7 @@ class Language:
 
     def _finalize_arglist(self, args):
         # get full path of the executable
-        first_arg = shutil.which(args[0])
+        first_arg = which(args[0])
         if first_arg is None:
             raise FileNotFoundError('cannot find executable "{}"'
                                     .format(args[0]))
@@ -134,33 +134,42 @@ class LanguageManagerBase:
         return name in self._languages
 
     def _predefine(self):
+        # use clang if gcc is unavailable
+        c_compiler = 'gcc'
+        if (which(c_compiler) is None) and (which('clang') is not None):
+            c_compiler = 'clang'
+        cpp_compiler = 'g++'
+        if (which(cpp_compiler) is None) and (which('clang++') is not None):
+            cpp_compiler = 'clang++'
+
         self.add_language(PredefinedLanguage(
             'c.gcc',
             priority=1000,
-            compile_args=['gcc', '{src}', '-o', '{exe}', '-O2', '-I{lib}']
+            compile_args=[c_compiler, '{src}', '-o', '{exe}', '-O2', '-I{lib}']
         ))
         self.add_language(PredefinedLanguage(
             'cpp.g++',
             priority=1000,
-            compile_args=['g++', '{src}', '-o', '{exe}', '-O2', '-I{lib}']
+            compile_args=[cpp_compiler, '{src}', '-o', '{exe}', '-O2',
+                          '-I{lib}']
         ))
         self.add_language(PredefinedLanguage(
             'cpp.g++11',
             priority=1100,
-            compile_args=['g++', '{src}', '-o', '{exe}', '-O2', '--std=c++11',
-                          '-I{lib}']
+            compile_args=[cpp_compiler, '{src}', '-o', '{exe}', '-O2',
+                          '--std=c++11', '-I{lib}']
         ))
         self.add_language(PredefinedLanguage(
             'cpp.g++14',
             priority=1200,
-            compile_args=['g++', '{src}', '-o', '{exe}', '-O2', '--std=c++14',
-                          '-I{lib}']
+            compile_args=[cpp_compiler, '{src}', '-o', '{exe}', '-O2',
+                          '--std=c++14', '-I{lib}']
         ))
         self.add_language(PredefinedLanguage(
             'cpp.g++17',
             priority=1300,
-            compile_args=['g++', '{src}', '-o', '{exe}', '-O2', '--std=c++17',
-                          '-I{lib}']
+            compile_args=[cpp_compiler, '{src}', '-o', '{exe}', '-O2',
+                          '--std=c++17', '-I{lib}']
         ))
         self.add_language(PredefinedLanguage(
             'pas.fpc',
