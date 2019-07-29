@@ -98,6 +98,20 @@ def test_basic(runner):
     assert runner.stdout == 'hello world\n'
 
 
+def test_workdir(runner):
+    work_dir = os.getcwd()
+    try:
+        os.chdir(tests_location())
+        runner.capture_stdout = True
+        runner.parameters.executable = 'basic_test'
+        runner.parameters.working_dir = os.path.dirname(runner.runner_path)
+        runner.run()
+        assert runner.results.status == Status.OK
+        assert runner.stdout == 'hello world\n'
+    finally:
+        os.chdir(work_dir)
+
+
 def test_invalid(runner):
     '''test_invalid: check for RUN_FAIL for non-existing executables'''
     runner.parameters.executable = path.join(tests_location(), 'invalid_test')

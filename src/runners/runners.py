@@ -5,16 +5,44 @@ import os
 import shutil
 import tempfile
 from copy import copy
-from namedlist import namedtuple, namedlist
+from collections import namedtuple
+from .config import config
+from compat import fspath
+from pathlib import Path
 
 # TODO : the module architecture is not flexible enough, rewrite it!
-# TODO : migrate away from namedlist (?)
 
-Parameters = namedlist('Parameters',
-                       ['time_limit', 'idle_limit', 'memory_limit',
-                        'executable', 'clear_env', 'env', 'args',
-                        'working_dir', 'stdin_redir', 'stdout_redir',
-                        'stderr_redir', 'isolate_dir', 'isolate_policy'])
+
+class Parameters:
+    def __defaults(self):
+        return {
+            'time_limit': 2.0,
+            'idle_limit': None,
+            'memory_limit': 256.0,
+            'executable': '',
+            'clear_env': False,
+            'env': {},
+            'args': [],
+            'working_dir': '',
+            'stdin_redir': '',
+            'stdout_redir': '',
+            'stderr_redir': '',
+            'isolate_dir': None,
+            'isolate_policy': None
+        }
+
+    def _asdict(self):
+        return {x: self.__dict__[x] for x in self.__keys}
+
+    def __init__(self, **kwargs):
+        defaults = self.__defaults()
+        self.__keys = self.__defaults().keys()
+        for item in kwargs:
+            if item not in defaults:
+                raise KeyError(item)
+        self.__dict__.update(defaults)
+        self.__dict__.update(kwargs)
+
 
 Results = namedtuple('Results',
                      ['time', 'clock_time', 'memory', 'exitcode', 'signal',
@@ -58,6 +86,11 @@ def dict_keys_replace(src_dict, src_char, dst_char):
 def parameters_to_json(parameters):
     param_dict = parameters._asdict()
     param_dict = dict_keys_replace(param_dict, '_', '-')
+    # convert paths to strings
+    for key in param_dict:
+        if isinstance(param_dict[key], Path):
+            param_dict[key] = fspath(param_dict[key])
+    # set default values (if unset)
     if parameters.idle_limit is None:
         param_dict['idle-limit'] = 3.5 * parameters.time_limit
     if parameters.isolate_dir is None:
@@ -65,6 +98,7 @@ def parameters_to_json(parameters):
     if parameters.isolate_policy is None:
         param_dict['isolate-policy'] = IsolatePolicy.NORMAL
     param_dict['isolate-policy'] = param_dict['isolate-policy'].value
+    # dump as JSON
     return json.dumps(param_dict)
 
 
@@ -123,6 +157,9 @@ class Runner:
 
     def run(self):
         old_parameters = copy(self.parameters)
+        self.results = None
+        self.stdout = ''
+        self.stderr = ''
         create_temp_dir = (self.pass_stdin or self.capture_stdout
                            or self.capture_stderr)
         if create_temp_dir:
@@ -153,15 +190,18 @@ class Runner:
             if create_temp_dir:
                 shutil.rmtree(temp_dir)
 
-    def __init__(self, runner_path):
+    def __init__(self, runner_path=None):
         # TODO : runner must capture stdout instead of creating temp files (?)
-        # FIXME : add .exe extension for Windows executables (here on in tests)
+        # FIXME : add .exe extension for Windows executables (here + in tests)
+        if runner_path is None:
+            runner_path = config()['path'].get('executable')
+        if runner_path is None:
+            # FIXME: add better runner detection
+            runner_path = shutil.which('taker_unixrun')
+        if runner_path is None:
+            raise RunnerError('runner executable not found')
         self.runner_path = runner_path
-        self.parameters = Parameters(
-            time_limit=2.0, idle_limit=None, memory_limit=256.0,
-            executable='', clear_env=False, env={}, args=[],
-            working_dir='', stdin_redir='', stdout_redir='',
-            stderr_redir='', isolate_dir=None, isolate_policy=None)
+        self.parameters = Parameters()
         self.results = None
         self.pass_stdin = False
         self.capture_stdout = False

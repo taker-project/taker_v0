@@ -62,10 +62,19 @@ class ConfigManager:
         self.__configs[config_name] = config
         return config
 
+    def request(self, config_name, default_value):
+        if config_name not in self.__configs:
+            self.add_default(config_name, default_value)
+        return self.__getitem__(config_name)
+
     def add_default(self, config_name, value):
         if config_name in self.__defaults:
             raise KeyError(config_name)
         self.__defaults[config_name] = value
+
+    def user_config(self, config_name):
+        self.__paths.init_user(config_name)
+        return self.__paths.user_config(config_name)
 
     def replace(self, other_manager):
         self.__paths = other_manager.__paths

@@ -27,14 +27,17 @@ matrix:
   include:
   - name: "Python: 3.5"
     os: osx
+    osx_image: xcode11
     language: generic
     env: PYTHON=3.5.5 COVERAGE=1
   - name: "Python: 3.6"
     os: osx
+    osx_image: xcode11
     language: generic
     env: PYTHON=3.6.5 COVERAGE=1
   - name: "Python: 3.7"
     os: osx
+    osx_image: xcode11
     language: generic
     env: PYTHON=3.7-dev COVERAGE=1
 

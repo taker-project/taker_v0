@@ -319,6 +319,11 @@ b: int = 3
     assert (section.dump() ==
             '[head]\n# 42\na: int = 3 # Hello\nb: int = 3\nc: int = 42\n# 42')
 
+    section.reset('d', 'int', None)
+    assert section.get_value('d', 'no val') == 'no val'
+    assert section.get_value('e', 'no val') == 'no val'
+    assert section.get_value('a', 'no val') == 3
+
 
 def test_full():
     parser = Typini()

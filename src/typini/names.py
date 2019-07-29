@@ -6,7 +6,7 @@ def is_char_valid(char):
         return True
     if '0' <= char and char <= '9':
         return True
-    if char in ('-', '_', '.', '/'):
+    if char in ('+', '-', '_', '.', '/'):
         return True
     return False
 
