@@ -1,12 +1,11 @@
-from invoker.config import CONFIG_NAME
+from os import path
+import shutil
+from pathlib import Path
+import pytest
 from runners import Runner, Status
 from pytest_fixtures import task_manager, config_manager
 from invoker.compiler import Compiler, CompileError
 from invoker.manager import LanguageManager
-from os import path
-import pytest
-import shutil
-from pathlib import Path
 from invoker.utils import default_exe_ext
 
 

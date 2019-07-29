@@ -1,12 +1,10 @@
-from .profiled_runner import ProfiledRunner, CompilerRunProfile
-from .languages import Language
-from taskbuilder import TaskRepository
 import os
 import shutil
 from tempfile import mkdtemp
 from pathlib import Path
 from runners import Status
 from compat import fspath
+from .profiled_runner import ProfiledRunner, CompilerRunProfile
 
 
 class CompileError(Exception):
@@ -23,10 +21,10 @@ class Compiler:
                 return
             try:
                 shutil.copy(fspath(self.src_file), fspath(self.exe_file))
-            except OSError as e:
+            except OSError as exc:
                 raise CompileError(
                     'could not copy file due to OS error: {}'
-                    .format(e.strerror))
+                    .format(exc.strerror))
             return
         temp_dir = Path(
             mkdtemp('compilebox', '', fspath(self.repo.internal_dir(True))))
@@ -47,9 +45,9 @@ class Compiler:
                                    self.compiler_output)
             if self.save_exe:
                 shutil.copy(fspath(exe), fspath(self.exe_file))
-        except OSError as e:
+        except OSError as exc:
             raise CompileError(
-                'could not copy file due to OS error: {}'.format(e.strerror))
+                'could not copy file due to OS error: {}'.format(exc.strerror))
         finally:
             shutil.rmtree(temp_dir)
 
@@ -90,9 +88,9 @@ def detect_language(repo, lang_list, src_file, library_dirs=None):
         try:
             compiler.compile()
             return lang
-        except CompileError as e:
+        except CompileError as exc:
             if err is None:
-                err = e
+                err = exc
     if err is not None:
         raise err
     raise CompileError('unable to detect language: none available')

@@ -1,9 +1,7 @@
-import os
-from os import path
 import shutil
+from compat import fspath
 from .config import config
 from .utils import is_valid_ext, default_exe_ext
-from compat import fspath
 
 
 class Language:

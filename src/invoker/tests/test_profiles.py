@@ -1,8 +1,8 @@
+import pytest
 from invoker.profiled_runner import *
 from invoker.config import CONFIG_NAME
 from runners import Runner
 from pytest_fixtures import task_manager, config_manager
-import pytest
 
 
 class CustomRunProfile(ConfigRunProfile):

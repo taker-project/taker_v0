@@ -1,8 +1,5 @@
-from .languages import Language
 from .profiled_runner import ProfiledRunner
 from .compiler import Compiler
-import os
-from os.path import splitext
 
 
 class SourceCode:
@@ -17,7 +14,7 @@ class SourceCode:
                  library_dirs=None):
         self.manager = manager
         if language is None:
-            language = self.manager.get_ext(splitext(src_file)[1])[0]
+            language = self.manager.get_ext(src_file.suffix)[0]
         self.compiler = Compiler(
             repo, language, src_file, exe_file, library_dirs)
         self.runner = ProfiledRunner()

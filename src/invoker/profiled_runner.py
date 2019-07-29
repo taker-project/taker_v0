@@ -1,7 +1,7 @@
-from runners import Runner, IsolatePolicy
-from .config import config
 import os
 import shutil
+from runners import Runner, IsolatePolicy
+from .config import config
 
 # now the isolation is bound to the task directory
 # these rules can be too broad

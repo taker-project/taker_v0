@@ -1,7 +1,6 @@
-from .languages import Language, LanguageManagerBase
+from .languages import LanguageManagerBase
 from .sourcecode import SourceCode
 from . import compiler
-from os.path import splitext
 
 
 class LanguageManager(LanguageManagerBase):
