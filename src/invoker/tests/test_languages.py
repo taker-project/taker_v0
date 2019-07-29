@@ -41,7 +41,10 @@ active = false
         Language('q.q', exe_ext='iNeedDot')
 
     lang = lang_manager['c.gcc']
-    compile_arg_exp = [shutil.which('gcc'), fspath(Path.cwd() / 'file.cpp'),
+    c_compiler = shutil.which('gcc')
+    if not c_compiler:
+        c_compiler = shutil.which('clang')
+    compile_arg_exp = [c_compiler, fspath(Path.cwd() / 'file.cpp'),
                        '-o', fspath(Path.cwd() / 'file.exe'), '-O2',
                        '-I' + fspath(Path.cwd() / 'libs'),
                        '-I' + fspath(Path.cwd() / 'morelibs')]
@@ -57,7 +60,10 @@ active = false
     assert lang.exe_ext == default_exe_ext()
 
     lang = lang_manager['cpp.g++']
-    compile_arg_exp = [shutil.which('g++'), fspath(Path.cwd() / 'file.cpp'),
+    cpp_compiler = shutil.which('g++')
+    if not cpp_compiler:
+        cpp_compiler = shutil.which('clang++')
+    compile_arg_exp = [cpp_compiler, fspath(Path.cwd() / 'file.cpp'),
                        '-o', fspath(Path.cwd() / 'file.exe'), '-Ofast']
     compile_arg_found = lang.compile_args(Path('file.cpp'), Path('file.exe'))
     assert compile_arg_exp == compile_arg_found
