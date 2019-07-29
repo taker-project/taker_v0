@@ -2,6 +2,7 @@ from os import path
 import shutil
 from pathlib import Path
 import pytest
+from compat import fspath
 from runners import Runner, Status
 from pytest_fixtures import task_manager, config_manager
 from invoker.compiler import Compiler, CompileError
@@ -42,7 +43,7 @@ def test_compiler(tmpdir, config_manager, task_manager):
     src_dir.mkdir()
 
     for fname in ['code.cpp', 'compile_error.cpp', 'code_libs.cpp', 'code.py']:
-        shutil.copy(tests_location() / fname, src_dir / fname)
+        shutil.copy(fspath(tests_location() / fname), fspath(src_dir / fname))
 
     src_cpp1 = src_dir / 'code.cpp'
     src_cpp2 = src_dir / 'compile_error.cpp'

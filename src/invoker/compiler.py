@@ -49,7 +49,7 @@ class Compiler:
             raise CompileError(
                 'could not copy file due to OS error: {}'.format(exc.strerror))
         finally:
-            shutil.rmtree(temp_dir)
+            shutil.rmtree(fspath(temp_dir))
 
     def __init__(self, repo, language, src_file, exe_file=None,
                  library_dirs=None, save_exe=True):
