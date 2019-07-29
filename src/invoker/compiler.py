@@ -19,10 +19,10 @@ class Compiler:
             # just copy the file
             if not self.save_exe:
                 return
-            if os.path.samefile(self.src_file, self.exe_file):
+            if os.path.samefile(fspath(self.src_file), fspath(self.exe_file)):
                 return
             try:
-                shutil.copy(self.src_file, self.exe_file)
+                shutil.copy(fspath(self.src_file), fspath(self.exe_file))
             except OSError as e:
                 raise CompileError(
                     'could not copy file due to OS error: {}'
@@ -31,9 +31,9 @@ class Compiler:
         temp_dir = Path(
             mkdtemp('compilebox', '', fspath(self.repo.internal_dir(True))))
         try:
-            src = temp_dir / os.path.basename(self.src_file)
-            exe = temp_dir / os.path.basename(self.exe_file)
-            shutil.copy(self.src_file, src)
+            src = temp_dir / self.src_file.name
+            exe = temp_dir / self.exe_file.name
+            shutil.copy(fspath(self.src_file), fspath(src))
             self.__runner.run(
                 self.language.compile_args(src, exe, self.library_dirs))
             self.compiler_output = ('stdout:\n{}\nstderr:\n{}\ntime: {}\n'
@@ -46,7 +46,7 @@ class Compiler:
                 raise CompileError('Compilation failed\n' +
                                    self.compiler_output)
             if self.save_exe:
-                shutil.copy(exe, self.exe_file)
+                shutil.copy(fspath(exe), fspath(self.exe_file))
         except OSError as e:
             raise CompileError(
                 'could not copy file due to OS error: {}'.format(e.strerror))

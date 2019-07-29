@@ -5,6 +5,7 @@ from pathlib import Path
 from pytest_fixtures import task_manager, config_manager
 import shutil
 from os import path
+from compat import shutil
 
 
 class EmptyRunProfile(AbstractRunProfile):
@@ -24,7 +25,7 @@ def test_source_code(tmpdir, config_manager, task_manager):
     tmpdir = Path(str(tmpdir))
     (tmpdir / 'src').mkdir()
     src_cpp1 = tmpdir / 'src' / 'aplusb.cpp'
-    shutil.copy(tests_location() / 'aplusb.cpp', src_cpp1)
+    shutil.copy(fspath(tests_location() / 'aplusb.cpp'), fspath(src_cpp1))
 
     lang = language_manager.get_lang('cpp.g++14')
     src1 = language_manager.create_source(src_cpp1)
