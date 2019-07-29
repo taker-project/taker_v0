@@ -7,12 +7,14 @@ addons:
     - g++
     - cmake
     - libjsoncpp-dev
+    - fp-compiler
     update: true
   homebrew:
     packages:
     - jsoncpp
     - pyenv
     - pyenv-virtualenv
+    - fpc
 
 language: python
 python:
