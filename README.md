@@ -27,7 +27,7 @@ The plan for the project development is improving by code rewriting in several i
 - v1&mdash; more production-ready version: stabilize the problem format, add more functionality, write some tests
 - v2&mdash; final version: rewrite to C++ (?), fully stabilize the format
 
-Initially, Taker will be command-line. After the initial stable release, work on GUI tools can be started.
+Initially, Taker will be command-line. After the initial stable release, work on GUI or Web tools can be started.
 
 ## When will it become 1.0?
 
@@ -36,20 +36,20 @@ I don't know.
 ## Build dependencies
 
 * `make` (not necessarily GNU Make, because Makefiles in this project tries to be POSIX-compatible)
-* `python (tested on 3.6)`, `pip`, `venv`
+* `python (works on 3.5, 3.6 and 3.7)`, `pip`, `venv`
 * `g++` (or `clang`)
 * `cmake` for runners
 * `libjsoncpp` for runners (on Debian/Ubuntu, you can use `libjsoncpp-dev` package)
 
 ## OS support
 
-Currently the project targets UNIX-like OSes and is tested on GNU/Linux, macOS and FreeBSD. Other OS support will be added later.
+Currently the project targets UNIX-like OSes and is tested on _GNU/Linux_, _macOS_ and _FreeBSD_. Other OS support will be added later.
 
-The least portable part is the process runner. For UNIXes, it is `taker_unixrun`. It mostly uses POSIX-compatible routines, but there may be some problems while porting it to some UNIX-like OS. Now it work on the following ones:
+The least portable part of Taker is the process runner. For UNIXes, it is `taker_unixrun`. It mostly uses POSIX-compatible routines, but there may be problems while porting it to some other UNIX-like OS. Now it works on the following ones:
 
 * GNU/Linux
 * FreeBSD
-* macOS (thanks to [Travis CI](https://travis-ci.org) for macOS builds :) )
+* macOS \[thanks to [Travis CI](https://travis-ci.org) for macOS builds :) \]
 
 Note that on OSes other than GNU/Linux, `taker_unixrun` uses `ru_maxrss` for `getrusage()`, which not always gives the correct value for consumed memory. So, GNU/Linux is supported best now.
 
