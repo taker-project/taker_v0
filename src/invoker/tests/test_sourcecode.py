@@ -5,7 +5,7 @@ import pytest
 from compat import fspath
 from invoker.profiled_runner import AbstractRunProfile
 from invoker.compiler import CompileError
-from pytest_fixtures import *
+from ...pytest_fixtures import *
 
 
 class EmptyRunProfile(AbstractRunProfile):

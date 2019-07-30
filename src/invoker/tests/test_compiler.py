@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from compat import fspath
 from runners import Runner, Status
-from pytest_fixtures import *
+from ...pytest_fixtures import *
 from invoker.compiler import Compiler, CompileError
 from invoker.utils import default_exe_ext
 

@@ -1,6 +1,6 @@
 from pathlib import Path
 import pytest
-from pytest_fixtures import config_manager
+from ...pytest_fixtures import config_manager
 from configs.configs import *
 from configs.managers import *
 

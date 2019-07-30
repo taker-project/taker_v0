@@ -35,8 +35,7 @@ def test_parameters_to_json():
                 'stdout-redir': 'out.txt',
                 'stderr-redir': 'err.txt',
                 'isolate-dir': 'work',
-                'isolate-policy': 'normal'
-            })
+                'isolate-policy': 'normal'})
 
 
 def test_results_from_json():

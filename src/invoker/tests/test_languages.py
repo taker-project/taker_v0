@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 from compat import fspath
-from pytest_fixtures import *
+from ...pytest_fixtures import *
 from invoker.languages import *
 from invoker.utils import *
 from invoker.config import CONFIG_NAME

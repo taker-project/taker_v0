@@ -25,6 +25,7 @@ setup(
         'Programming Language :: Python :: 3.7'
     ],
     package_dir={'': 'src'},
-    packages=find_packages('src'),
+    packages=find_packages('src', exclude=['pytest_fixtures', '*.tests',
+                                           '*.tests.*']),
     install_requires=['appdirs'],
 )
