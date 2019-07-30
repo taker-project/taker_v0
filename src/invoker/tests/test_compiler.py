@@ -4,9 +4,8 @@ from pathlib import Path
 import pytest
 from compat import fspath
 from runners import Runner, Status
-from pytest_fixtures import task_manager, config_manager
+from pytest_fixtures import *
 from invoker.compiler import Compiler, CompileError
-from invoker.manager import LanguageManager
 from invoker.utils import default_exe_ext
 
 
@@ -14,9 +13,7 @@ def tests_location():
     return Path(path.abspath(path.join('src', 'invoker', 'tests')))
 
 
-def test_detect_language(config_manager, task_manager):
-    language_manager = LanguageManager(task_manager.repo)
-
+def test_detect_language(language_manager):
     tests = tests_location()
 
     assert language_manager.detect_language(

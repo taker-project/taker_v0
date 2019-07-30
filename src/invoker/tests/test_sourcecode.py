@@ -3,10 +3,9 @@ from os import path
 from pathlib import Path
 import pytest
 from compat import fspath
-from invoker.manager import LanguageManager
 from invoker.profiled_runner import AbstractRunProfile
 from invoker.compiler import CompileError
-from pytest_fixtures import task_manager, config_manager
+from pytest_fixtures import *
 
 
 class EmptyRunProfile(AbstractRunProfile):
@@ -23,8 +22,7 @@ def tests_location():
     return Path(path.abspath(path.join('src', 'invoker', 'tests')))
 
 
-def test_source_code(tmpdir, config_manager, task_manager):
-    language_manager = LanguageManager(task_manager.repo)
+def test_source_code(tmpdir, language_manager, task_manager):
     repo = task_manager.repo
 
     tmpdir = Path(str(tmpdir))

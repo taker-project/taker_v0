@@ -3,6 +3,7 @@ from copy import deepcopy
 import pytest
 import configs
 from taskbuilder.manager import TaskManager
+from invoker import LanguageManager
 
 
 @pytest.fixture(scope='function')
@@ -25,3 +26,8 @@ def task_manager(tmpdir, config_manager):
     task_dir = Path(tmpdir) / 'task'
     task_dir.mkdir()
     return TaskManager(task_dir=task_dir)
+
+
+@pytest.fixture(scope='function')
+def language_manager(tmpdir, task_manager):
+    return LanguageManager(task_manager.repo)
