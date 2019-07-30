@@ -32,11 +32,10 @@ class Parameters:
         }
 
     def _asdict(self):
-        return {x: self.__dict__[x] for x in self.__keys}
+        return vars(self)
 
     def __init__(self, **kwargs):
         defaults = self.__defaults()
-        self.__keys = self.__defaults().keys()
         for item in kwargs:
             if item not in defaults:
                 raise KeyError(item)
