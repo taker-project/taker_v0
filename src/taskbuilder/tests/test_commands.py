@@ -23,6 +23,7 @@ def test_files():
     assert not InputFile('q.txt') == InputFile('w.txt')
     assert not File('q.txt') == InputFile('q.txt')
     assert File('q.txt') != InputFile('q.txt')
+    assert File('q.txt') == File('q.txt', prefix='t=')
 
 
 def test_commands(tmpdir):
@@ -102,6 +103,15 @@ def test_commands(tmpdir):
                       path.join(path.pardir, path.pardir, 'file3.txt'),
                       '>file4.txt',
                       '2>' + path.devnull)))
+
+    command = Command(
+        repo,
+        GlobalCmd('mkdir', prefix='exe:'),
+        args=[OutputFile('mydir', prefix='output=')]
+    )
+    assert set(command.get_output_files()) == {OutputFile('mydir')}
+    assert command.shell_str() == ' '.join(('exe:' + shutil.which('mkdir'),
+                                            'output=mydir'))
 
 
 def test_echo(tmpdir):
