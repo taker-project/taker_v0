@@ -1,10 +1,10 @@
-from compat import fspath
-from cli import *
-import cli.consoleapp
 import shutil
-import pytest
 import sys
 from unittest import mock
+import pytest
+from compat import fspath
+from cli import *
+from cli import consoleapp
 
 
 class MySubcommand(Subcommand):
@@ -40,7 +40,7 @@ def test_app():
 
         def callback(value):
             nonlocal got_value
-            got_value = 42
+            got_value = value
             return 3
 
         with mock.patch('sys.exit'):

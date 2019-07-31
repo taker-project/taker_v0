@@ -25,9 +25,9 @@ class Subcommand:
     def run(self, args):
         return 0
 
-    def __init__(self, name, help='', aliases=None):
+    def __init__(self, name, help_str='', aliases=None):
         self.name = name
-        self.help = help
+        self.help = help_str
         self.aliases = aliases if aliases else []
         self.__parser = None
 
@@ -48,8 +48,7 @@ class ConsoleApp:
 
     def __init__(self, name):
         def no_cmd(args):
-            print('{}: no command specified'.format(name))
-            sys.exit(1)
+            self.parser.error('no command specified')
 
         self.name = name
         self.parser = ArgumentParser(prog=name)
@@ -67,8 +66,8 @@ def app():
     return __APP
 
 
-def register_app(app):
+def register_app(application):
     global __APP
     if __APP is not None:
         raise RuntimeError('app is already initialised')
-    __APP = app
+    __APP = application
