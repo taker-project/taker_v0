@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018  Alexander Kernozhitsky <sh200105@mail.ru>
+ * Copyright (C) 2018-2019  Alexander Kernozhitsky <sh200105@mail.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 #include "utils.hpp"
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -31,6 +32,32 @@
 #endif
 
 namespace UnixRunner {
+
+OSError::OSError(const std::string &comment) : std::runtime_error(comment) {}
+
+DirectoryChanger::DirectoryChanger(const std::string &dirName)
+    : oldDirName_(nullptr) {
+  if (dirName.empty()) {
+    return;
+  }
+  oldDirName_ = new char[PATH_MAX + 2];
+  if (getcwd(oldDirName_, PATH_MAX + 1) == nullptr) {
+    throw OSError(
+        getFullErrorMessage("unable to get working directory", errno));
+  }
+  if (chdir(dirName.c_str())) {
+    throw OSError(getFullErrorMessage(
+        "unable to change directory to + \"" + dirName + "\"", errno));
+  }
+}
+
+DirectoryChanger::~DirectoryChanger() {
+  if (oldDirName_ == nullptr) {
+    return;
+  }
+  chdir(oldDirName_);  // we are in destructor, so ignore all the errors here
+  delete[] oldDirName_;
+}
 
 FileDescriptorOwner::FileDescriptorOwner(int fd) : fd_(fd) {}
 

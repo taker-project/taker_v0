@@ -97,18 +97,14 @@ def test_basic(runner):
     assert runner.stdout == 'hello world\n'
 
 
-def test_workdir(runner):
-    work_dir = os.getcwd()
-    try:
-        os.chdir(tests_location())
-        runner.capture_stdout = True
-        runner.parameters.executable = 'basic_test'
-        runner.parameters.working_dir = os.path.dirname(runner.runner_path)
-        runner.run()
-        assert runner.results.status == Status.OK
-        assert runner.stdout == 'hello world\n'
-    finally:
-        os.chdir(work_dir)
+def test_workdir(monkeypatch, runner):
+    runner.capture_stdout = True
+    runner.parameters.executable = 'basic_test'
+    runner.parameters.working_dir = tests_location()
+    monkeypatch.chdir(os.path.dirname(fspath(runner.runner_path)))
+    runner.run()
+    assert runner.results.status == Status.OK
+    assert runner.stdout == 'hello world\n'
 
 
 def test_invalid(runner):

@@ -21,6 +21,7 @@
 #include <sys/time.h>
 #include <chrono>
 #include <cstring>
+#include <stdexcept>
 #include <string>
 
 namespace UnixRunner {
@@ -30,11 +31,29 @@ inline void zeroMem(T &value) {
   memset(&value, 0, sizeof(value));
 }
 
+class OSError : public std::runtime_error {
+ public:
+  OSError(const std::string &comment);
+};
+
+class DirectoryChanger {
+ public:
+  DirectoryChanger(const std::string &dirName);
+  DirectoryChanger(const DirectoryChanger &) = delete;
+  DirectoryChanger &operator=(const DirectoryChanger &) = delete;
+  ~DirectoryChanger();
+
+ private:
+  char *oldDirName_;
+};
+
 class FileDescriptorOwner {
  public:
   int getFileDescriptor() const;
 
   FileDescriptorOwner(int fd);
+  FileDescriptorOwner(const FileDescriptorOwner &) = delete;
+  FileDescriptorOwner &operator=(const FileDescriptorOwner &) = delete;
   ~FileDescriptorOwner();
 
  private:
