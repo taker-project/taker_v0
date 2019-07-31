@@ -30,4 +30,4 @@ def task_manager(tmpdir, config_manager):
 
 @pytest.fixture(scope='function')
 def language_manager(tmpdir, task_manager):
-    return LanguageManager(task_manager.repo)
+    return LanguageManager(task_manager)

@@ -24,7 +24,7 @@ class CompileSubcommand(Subcommand):
         # TODO: create global manager to initialize everything
         # in one command (?)
         self.task_manager = TaskManager()
-        self.language_manager = LanguageManager(self.task_manager.repo)
+        self.language_manager = LanguageManager(self.task_manager)
 
         language = None
         if args.lang is not None:
