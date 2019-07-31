@@ -20,7 +20,7 @@ def test_repo(tmpdir, monkeypatch):
 
     del repo
 
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(TaskDirNotFoundError):
         find_task_dir()
 
     new_dir = task_dir / 'parent' / 'subparent'

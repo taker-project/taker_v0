@@ -21,6 +21,11 @@ class CompileSubcommand(Subcommand):
                             help='Library to use with the source')
 
     def run(self, args):
+        # TODO: create global manager to initialize everything
+        # in one command (?)
+        self.task_manager = TaskManager()
+        self.language_manager = LanguageManager(self.task_manager.repo)
+
         language = None
         if args.lang is not None:
             language = self.language_manager.get_lang(args.lang)
@@ -38,7 +43,3 @@ class CompileSubcommand(Subcommand):
 
     def __init__(self):
         super().__init__('compile', 'Compile a source file')
-        # FIXME: create TaskManager instance globally!
-        # FIXME: do not crash if not in task directory
-        self.task_manager = TaskManager()
-        self.language_manager = LanguageManager(self.task_manager.repo)

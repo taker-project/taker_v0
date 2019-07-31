@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 import sys
+from colorama import Fore, Style
 
 
 class SubcommandError(Exception):
@@ -45,6 +46,10 @@ class ConsoleApp:
         raise RuntimeError('program must finish after calling appropriate '
                            'command, but that didn\'t happen. Seems to be '
                            'a bug :(')
+
+    def error(self, message):
+        print(Fore.RED + Style.BRIGHT + 'error: ' + Style.RESET_ALL + message,
+              file=sys.stderr)
 
     def __init__(self, name):
         def no_cmd(args):

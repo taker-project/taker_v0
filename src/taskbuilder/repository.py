@@ -21,6 +21,10 @@ INTERNAL_DIR = '.taker'
 INTERNAL_PATH = Path(INTERNAL_DIR)
 
 
+class TaskDirNotFoundError(Exception):
+    pass
+
+
 class TaskRepository:
     @staticmethod
     def check_task_dir(directory):
@@ -70,7 +74,7 @@ def find_task_dir(start_dir=None):
     for cur_dir in utils.abspath(start_dir).parents:
         if TaskRepository.check_task_dir(cur_dir):
             return cur_dir
-    raise FileNotFoundError('not in task directory')
+    raise TaskDirNotFoundError('not in task directory')
 
 
 def get_repository(start_dir=None):
