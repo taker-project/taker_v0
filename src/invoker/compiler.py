@@ -41,11 +41,12 @@ class Compiler:
             self.__runner.run(
                 self.language.compile_args(src, exe, self.library_dirs))
             self.compiler_output = ('stdout:\n{}\nstderr:\n{}\ntime: {}\n'
-                                    'memory: {}\nstatus: {}\n')
+                                    'memory: {}\nexitcode: {}\nstatus: {}\n')
             self.compiler_output = self.compiler_output.format(
                 self.__runner.stdout, self.__runner.stderr,
                 self.__runner.results.time, self.__runner.results.memory,
-                self.__runner.results.status)
+                self.__runner.results.exitcode,
+                repr(self.__runner.results.status))
             if self.__runner.results.status != Status.OK:
                 self._raise_error()
             if self.save_exe:

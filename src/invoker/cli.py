@@ -31,7 +31,8 @@ class CompileSubcommand(Subcommand):
             print(f'{Fore.GREEN}{Style.BRIGHT}ok{Style.RESET_ALL}')
             print(source.compiler.compiler_output)
         except CompileError as exc:
-            print(f'{Fore.RED}{Style.BRIGHT}compilation error{Style.RESET_ALL}')
+            print(f'{Fore.RED}{Style.BRIGHT}compilation error'
+                  f'{Style.RESET_ALL}')
             print(source.compiler.compiler_output)
         return 0
 

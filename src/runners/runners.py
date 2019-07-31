@@ -4,6 +4,7 @@ import subprocess
 import os
 import shutil
 import tempfile
+from colorama import Fore, Style
 from copy import copy
 from collections import namedtuple
 from .config import config
@@ -64,6 +65,21 @@ class Status(Enum):
     RUNTIME_ERROR = 'runtime-error'
     SECURITY_ERROR = 'security-error'
     RUN_FAIL = 'run-fail'
+
+    def __repr__(self):
+        return STATUS_COLORS[self] + Style.BRIGHT + \
+               self.value + Style.RESET_ALL
+
+
+STATUS_COLORS = {
+    Status.OK: Fore.GREEN,
+    Status.TIME_LIMIT: Fore.BLUE,
+    Status.IDLE_LIMIT: Fore.BLUE,
+    Status.MEMORY_LIMIT: Fore.CYAN,
+    Status.RUNTIME_ERROR: Fore.MAGENTA,
+    Status.SECURITY_ERROR: '',
+    Status.RUN_FAIL: ''
+}
 
 
 class IsolatePolicy(Enum):
