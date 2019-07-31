@@ -50,6 +50,7 @@ class ConsoleApp:
     def error(self, message):
         print(Fore.RED + Style.BRIGHT + 'error: ' + Style.RESET_ALL + message,
               file=sys.stderr)
+        sys.exit(1)
 
     def __init__(self, name):
         def no_cmd(args):

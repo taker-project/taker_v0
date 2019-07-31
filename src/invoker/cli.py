@@ -39,7 +39,10 @@ class CompileSubcommand(Subcommand):
             print(Fore.RED + Style.BRIGHT + 'compilation error' +
                   Style.RESET_ALL)
             print(source.compiler.compiler_output)
+            return 1
         return 0
 
     def __init__(self):
         super().__init__('compile', 'Compile a source file')
+
+# TODO: add "run" subcommand!!!

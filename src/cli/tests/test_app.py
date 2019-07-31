@@ -35,6 +35,8 @@ def test_app():
 
         exe = app_exe()
         assert fspath(exe) == shutil.which('take')
+        with pytest.raises(RuntimeError):
+            app_exe('taker2')
 
         got_value = 0
 
