@@ -43,9 +43,7 @@ class ConsoleApp:
     def run(self, args=None):
         p_args = self.parser.parse_args(args)
         p_args.func(p_args)
-        raise RuntimeError('program must finish after calling appropriate '
-                           'command, but that didn\'t happen. Seems to be '
-                           'a bug :(')
+        assert False, 'we must never reach this line'
 
     def error(self, message):
         print(Fore.RED + Style.BRIGHT + 'error: ' + Style.RESET_ALL + message,

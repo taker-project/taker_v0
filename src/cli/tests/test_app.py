@@ -1,6 +1,5 @@
 import shutil
 import sys
-from unittest import mock
 import pytest
 from compat import fspath
 from cli import *
@@ -43,14 +42,12 @@ def test_app():
         def callback(value):
             nonlocal got_value
             got_value = value
-            return 3
+            return 142
 
-        with mock.patch('sys.exit'):
-            my_app.add_subcommand(MySubcommand(callback))
-            with pytest.raises(RuntimeError) as exc:
-                my_app.run(['cmd', '42'])
-            assert exc.value.args[0].startswith('program must finish after ')
-            sys.exit.assert_called_once_with(3)
-            assert got_value == 42
+        my_app.add_subcommand(MySubcommand(callback))
+        with pytest.raises(SystemExit) as exc:
+            my_app.run(['cmd', '42'])
+        assert exc.value.code == 142
+        assert got_value == 42
     finally:
         consoleapp.__APP = old_app
