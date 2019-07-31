@@ -28,4 +28,9 @@ setup(
     packages=find_packages('src', exclude=['pytest_fixtures', '*.tests',
                                            '*.tests.*']),
     install_requires=['appdirs'],
+    entry_points={
+        'console_scripts': [
+            'take = taker:main'
+        ]
+    }
 )
