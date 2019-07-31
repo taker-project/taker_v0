@@ -47,11 +47,15 @@ class ConsoleApp:
                            'a bug :(')
 
     def __init__(self, name):
+        def no_cmd(args):
+            print('{}: no command specified'.format(name))
+            sys.exit(1)
+
         self.name = name
         self.parser = ArgumentParser(prog=name)
         self.subparsers = self.parser.add_subparsers(metavar='',
-                                                     required=True,
                                                      title='subcommands')
+        self.parser.set_defaults(func=no_cmd)
 
 
 __APP = None
