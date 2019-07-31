@@ -13,8 +13,13 @@ class SourceCode:
         self.runner.run(self.language.run_args(self.exe_file, custom_args))
 
     def add_compile_rule(self):
-        if self.src_file.resolve() == self.exe_file.resolve():
-            return None
+        try:
+            if self.src_file.resolve() == self.exe_file.resolve():
+                return None
+        except FileNotFoundError:
+            # the files cannot be equal if one of them doesn't exist :)
+            # if we don't catch FileNotFoundError, it will fail tests on Py3.5
+            pass
         makefile = self.task_manager.makefile
         rule = makefile.add_file_rule(self.exe_file)
         args = ['compile', OutputFile(self.exe_file, prefix='--exe='),
