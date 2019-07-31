@@ -185,8 +185,10 @@ class ArrayValue(VariableValue):
         return self.item_value.type_name() + '[]'
 
     def is_valid(self):
-        if super().is_valid():
+        if self.value is None:
             return True
+        if not super().is_valid():
+            return False
         for item in self.value:
             self.item_value.value = item
             if not self.item_value.is_valid():
