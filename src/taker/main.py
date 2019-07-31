@@ -1,4 +1,6 @@
+import colorama
 from cli import ConsoleApp, app, register_app
+from invoker import CompileSubcommand
 
 
 class TakerApp(ConsoleApp):
@@ -12,4 +14,6 @@ register_app(TakerApp())
 
 
 def main():
+    colorama.init()
+    app().add_subcommand(CompileSubcommand())
     app().run()

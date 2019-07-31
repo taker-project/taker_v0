@@ -12,6 +12,17 @@ class CompileError(Exception):
 
 
 class Compiler:
+    def _raise_error(self):
+        raise CompileError('Compilation failed:\n' + self.compiler_output)
+
+    def __copyfile(self, src, dst):
+        try:
+            shutil.copy(fspath(src), fspath(dst))
+        except OSError as exc:
+            msg = 'could not copy file \"{}\" due to OS error: {}'
+            self.compiler_output = msg.format(fspath(src), exc.strerror)
+            self._raise_error()
+
     def compile(self):
         if not self.language.compile_args(self.src_file, self.exe_file):
             # just copy the file
@@ -19,19 +30,14 @@ class Compiler:
                 return
             if os.path.samefile(fspath(self.src_file), fspath(self.exe_file)):
                 return
-            try:
-                shutil.copy(fspath(self.src_file), fspath(self.exe_file))
-            except OSError as exc:
-                raise CompileError(
-                    'could not copy file due to OS error: {}'
-                    .format(exc.strerror))
+            self.__copyfile(self.src_file, self.exe_file)
             return
         temp_dir = Path(
             mkdtemp('compilebox', '', fspath(self.repo.internal_dir(True))))
         try:
             src = temp_dir / self.src_file.name
             exe = temp_dir / self.exe_file.name
-            shutil.copy(fspath(self.src_file), fspath(src))
+            self.__copyfile(self.src_file, src)
             self.__runner.run(
                 self.language.compile_args(src, exe, self.library_dirs))
             self.compiler_output = ('stdout:\n{}\nstderr:\n{}\ntime: {}\n'
@@ -41,13 +47,9 @@ class Compiler:
                 self.__runner.results.time, self.__runner.results.memory,
                 self.__runner.results.status)
             if self.__runner.results.status != Status.OK:
-                raise CompileError('Compilation failed\n' +
-                                   self.compiler_output)
+                self._raise_error()
             if self.save_exe:
-                shutil.copy(fspath(exe), fspath(self.exe_file))
-        except OSError as exc:
-            raise CompileError(
-                'could not copy file due to OS error: {}'.format(exc.strerror))
+                self.__copyfile(exe, self.exe_file)
         finally:
             shutil.rmtree(fspath(temp_dir))
 

@@ -45,7 +45,7 @@ active = false
     assert lang_manager['py.py3'].name == 'py.py3'
     assert lang_manager['py.py3'].exe_ext == '.py'
 
-    with pytest.raises(KeyError):
+    with pytest.raises(LanguageError):
         lang_manager['bad_ext.bad_lang']
 
     with pytest.raises(ValueError):
