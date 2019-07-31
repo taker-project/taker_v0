@@ -39,7 +39,7 @@ matrix:
     os: osx
     osx_image: xcode11
     language: generic
-    env: PYTHON=3.7-dev COVERAGE=1
+    env: PYTHON=3.7.3 COVERAGE=1
 
 before_install: |
   if [ "$TRAVIS_OS_NAME" == "osx" ]; then
