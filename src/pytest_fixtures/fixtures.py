@@ -1,9 +1,12 @@
 from pathlib import Path
 from copy import deepcopy
+from unittest import mock
+import shutil
 import pytest
 import configs
 from taskbuilder.manager import TaskManager
 from invoker import LanguageManager
+import cli
 
 
 @pytest.fixture(scope='function')
@@ -31,3 +34,12 @@ def task_manager(tmpdir, config_manager):
 @pytest.fixture(scope='function')
 def language_manager(tmpdir, task_manager):
     return LanguageManager(task_manager)
+
+
+@pytest.fixture(scope='function')
+def taker_app():
+    def mock_app_exe(name=None):
+        return Path(shutil.which('take'))
+
+    with mock.patch('cli.app_exe', new_callable=mock_app_exe):
+        yield 'take'

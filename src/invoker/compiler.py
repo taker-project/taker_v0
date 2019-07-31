@@ -18,6 +18,8 @@ class Compiler:
     def __copyfile(self, src, dst):
         try:
             shutil.copy(fspath(src), fspath(dst))
+        except shutil.SameFileError as exc:
+            pass
         except OSError as exc:
             msg = 'could not copy file \"{}\" due to OS error: {}'
             self.compiler_output = msg.format(fspath(src), exc.strerror)
@@ -27,8 +29,6 @@ class Compiler:
         if not self.language.compile_args(self.src_file, self.exe_file):
             # just copy the file
             if not self.save_exe:
-                return
-            if os.path.samefile(fspath(self.src_file), fspath(self.exe_file)):
                 return
             self.__copyfile(self.src_file, self.exe_file)
             return

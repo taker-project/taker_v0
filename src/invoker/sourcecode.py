@@ -1,3 +1,5 @@
+from cli import app_exe
+from taskbuilder import InputFile, OutputFile, File
 from .profiled_runner import ProfiledRunner
 from .compiler import Compiler
 
@@ -10,6 +12,18 @@ class SourceCode:
         self.runner.profile = profile
         self.runner.run(self.language.run_args(self.exe_file, custom_args))
 
+    def add_compile_rule(self):
+        if self.src_file.resolve() == self.exe_file.resolve():
+            return
+        makefile = self.task_manager.makefile
+        rule = makefile.add_file_rule(self.exe_file)
+        args = [OutputFile(self.exe_file, prefix='--output='),
+                '--lang=' + self.language.name]
+        for dir in self.library_dirs:
+            args.append(File(dir, prefix='--lib='))
+        args += ['--', InputFile(self.src_file)]
+        rule.add_global_cmd(app_exe(), args)
+
     def __init__(self, manager, src_file, exe_file=None, language=None,
                  library_dirs=None):
         self.manager = manager
@@ -19,7 +33,7 @@ class SourceCode:
         self.compiler = Compiler(
             manager.repo, language, src_file, exe_file, library_dirs)
         self.runner = ProfiledRunner()
-        self.src_file = self.compiler.src_file
-        self.exe_file = self.compiler.exe_file
+        self.src_file = self.compiler.src_file.absolute()
+        self.exe_file = self.compiler.exe_file.absolute()
         self.language = language
         self.library_dirs = self.compiler.library_dirs

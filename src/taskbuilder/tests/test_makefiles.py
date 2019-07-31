@@ -32,6 +32,8 @@ def test_file_rule1(makefile):
                                          InputFile('file3.txt'),
                                          InputFile('file4.txt')])
     rule.add_command(EchoCommand, 'ok')
+    assert rule.get_depends() == {'file2.txt', 'file3.txt', 'file4.txt'}
+    assert rule.get_targets() == {'file1.txt'}
     assert rule.dump() == load_answer_file('file_rule1.make')
 
 
@@ -49,6 +51,8 @@ def test_file_rule2(makefile):
         rule.dump()
     rule.options = {RuleOptions.RULE_IGNORE}
 
+    assert rule.get_depends() == {'a.txt'}
+    assert rule.get_targets() == {'file2.txt', 'b.txt', 'c.txt', 'file3.txt'}
     assert rule.dump() == load_answer_file('file_rule2.make')
 
 
