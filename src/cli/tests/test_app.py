@@ -20,7 +20,7 @@ class MySubcommand(Subcommand):
 
 
 def test_mock_app_exe(taker_app):
-    assert taker_app == 'take'
+    assert taker_app == app_exe()
     assert fspath(app_exe()) == shutil.which('take')
 
 

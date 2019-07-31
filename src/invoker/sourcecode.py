@@ -14,15 +14,16 @@ class SourceCode:
 
     def add_compile_rule(self):
         if self.src_file.resolve() == self.exe_file.resolve():
-            return
+            return None
         makefile = self.task_manager.makefile
         rule = makefile.add_file_rule(self.exe_file)
-        args = [OutputFile(self.exe_file, prefix='--output='),
+        args = ['compile', OutputFile(self.exe_file, prefix='--exe='),
                 '--lang=' + self.language.name]
         for dir in self.library_dirs:
             args.append(File(dir, prefix='--lib='))
         args += ['--', InputFile(self.src_file)]
         rule.add_global_cmd(app_exe(), args)
+        return rule
 
     def __init__(self, manager, src_file, exe_file=None, language=None,
                  library_dirs=None):

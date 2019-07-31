@@ -94,6 +94,7 @@ def test_makefile(makefile):
     descr1 = makefile.add_phony_rule('descr1',
                                      description='rule 1 with description')
     descr1.add_depend('descr2')
+    descr1.add_depend(None)
     descr1.add_command(EchoCommand, 'here')
 
     descr2 = makefile.add_dynamic_rule('descr2',

@@ -11,6 +11,8 @@ class LanguageManager(LanguageManagerBase):
 
     def create_source(self, src_file, exe_file=None, language=None,
                       library_dirs=None):
+        if isinstance(language, str):
+            language = self.get_lang(language)
         return SourceCode(self, src_file, exe_file, language, library_dirs)
 
     def __init__(self, task_manager):

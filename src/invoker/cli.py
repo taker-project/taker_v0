@@ -26,11 +26,8 @@ class CompileSubcommand(Subcommand):
         self.task_manager = TaskManager()
         self.language_manager = LanguageManager(self.task_manager)
 
-        language = None
-        if args.lang is not None:
-            language = self.language_manager.get_lang(args.lang)
         source = self.language_manager.create_source(
-            args.src, args.exe, language, args.lib)
+            args.src, args.exe, args.lang, args.lib)
         try:
             source.compile()
             print(Fore.GREEN + Style.BRIGHT + 'ok' + Style.RESET_ALL)

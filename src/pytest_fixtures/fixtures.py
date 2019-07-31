@@ -42,4 +42,4 @@ def taker_app():
         return Path(shutil.which('take'))
 
     with mock.patch('cli.app_exe', new_callable=mock_app_exe):
-        yield 'take'
+        yield mock_app_exe()
