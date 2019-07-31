@@ -40,8 +40,9 @@ class Compiler:
             self.__copyfile(self.src_file, src)
             self.__runner.run(
                 self.language.compile_args(src, exe, self.library_dirs))
-            self.compiler_output = ('stdout:\n{}\nstderr:\n{}\ntime: {}\n'
-                                    'memory: {}\nexitcode: {}\nstatus: {}\n')
+            self.compiler_output = ('stdout:\n{}\nstderr:\n{}\ntime: {} sec\n'
+                                    'memory: {} MiB\nexitcode: {}\n'
+                                    'status: {}\n')
             self.compiler_output = self.compiler_output.format(
                 self.__runner.stdout, self.__runner.stderr,
                 self.__runner.results.time, self.__runner.results.memory,
