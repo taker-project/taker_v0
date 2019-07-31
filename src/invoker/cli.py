@@ -16,7 +16,7 @@ class CompileSubcommand(Subcommand):
                             help='Output executable')
         parser.add_argument('-l', '--lang', type=str,
                             help='Programming language in use '
-                                 '(default: autodetect)')
+                                 '(default: choose by extension)')
         parser.add_argument('-L', '--lib', type=Path, action='append',
                             help='Library to use with the source')
 
