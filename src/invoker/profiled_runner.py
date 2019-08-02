@@ -57,6 +57,7 @@ class CheckerRunProfile(ConfigRunProfile):
 
     def update_runner(self, runner):
         super().update_runner(runner)
+        runner.capture_stdout = True
         runner.capture_stderr = True
 
 
@@ -68,6 +69,7 @@ class ValidatorRunProfile(ConfigRunProfile):
     def update_runner(self, runner):
         super().update_runner(runner)
         runner.parameters.isolate_policy = IsolatePolicy.STRICT
+        runner.capture_stdout = True
         runner.capture_stderr = True
 
 
@@ -79,6 +81,7 @@ class GeneratorRunProfile(ConfigRunProfile):
     def update_runner(self, runner):
         super().update_runner(runner)
         runner.parameters.isolate_policy = IsolatePolicy.STRICT
+        runner.capture_stderr = True
 
 
 __PROFILES = {}
@@ -120,6 +123,9 @@ class ProfiledRunner:
     @stdin.setter
     def stdin(self, value):
         self.__runner.stdin = value
+
+    def all_output(self):
+        return self.stdout + self.stderr
 
     def run(self, cmdline):
         executable = shutil.which(cmdline[0])
