@@ -103,41 +103,33 @@ register_profile(GeneratorRunProfile)
 class ProfiledRunner:
     @property
     def results(self):
-        return self.runner.results
+        return self.__runner.results
 
     @property
     def stdout(self):
-        return self.runner.stdout
+        return self.__runner.stdout
 
     @property
     def stderr(self):
-        return self.runner.stderr
+        return self.__runner.stderr
 
     @property
     def stdin(self):
-        return self.runner.stdin
+        return self.__runner.stdin
 
     @stdin.setter
     def stdin(self, value):
-        self.runner.stdin = value
-
-    @property
-    def parameters(self):
-        return self.runner.parameters
-
-    @parameters.setter
-    def parameters(self, value):
-        self.runner.parameters = value
+        self.__runner.stdin = value
 
     def run(self, cmdline):
         executable = shutil.which(cmdline[0])
         if not os.path.exists(executable):
             raise FileNotFoundError(executable)
-        self.parameters.executable = executable
-        self.parameters.args = cmdline[1:]
-        self.profile.update_runner(self.runner)
-        self.runner.run()
+        self.__runner.parameters.executable = executable
+        self.__runner.parameters.args = cmdline[1:]
+        self.profile.update_runner(self.__runner)
+        self.__runner.run()
 
     def __init__(self, profile=None, runner_path=None):
         self.profile = profile
-        self.runner = Runner(runner_path)
+        self.__runner = Runner(runner_path)
