@@ -1,4 +1,5 @@
 import pytest
+from compat import fspath
 from invoker.profiled_runner import *
 from invoker.config import CONFIG_NAME
 from runners import Runner
@@ -91,3 +92,8 @@ memory-limit = 500.0
     assert in_runner.capture_stderr
     assert in_runner.stdin == 'some input'
     assert in_runner.stdin == profiled_runner.stdin
+    assert in_runner.parameters.working_dir == taker_app.parent
+
+    profiled_runner.run([taker_app], task_manager.task_dir)
+    assert run_count == 2
+    assert in_runner.parameters.working_dir == task_manager.task_dir

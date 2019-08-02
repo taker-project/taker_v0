@@ -8,9 +8,10 @@ class SourceCode:
     def compile(self):
         self.compiler.compile()
 
-    def run(self, profile, custom_args=[]):
+    def run(self, profile, custom_args=[], working_dir=None):
         self.runner.profile = profile
-        self.runner.run(self.language.run_args(self.exe_file, custom_args))
+        self.runner.run(self.language.run_args(self.exe_file, custom_args),
+                        working_dir)
 
     def add_compile_rule(self):
         try:

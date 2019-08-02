@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 from runners import Runner, IsolatePolicy
 from .config import config
 
@@ -34,8 +35,8 @@ class ConfigRunProfile(AbstractRunProfile):
         runner.parameters.memory_limit = self._config_section()['memory-limit']
         runner.parameters.isolate_dir = self.repository.directory
         runner.parameters.isolate_policy = IsolatePolicy.NORMAL
-        runner.parameters.working_dir = os.path.dirname(
-            runner.parameters.executable)
+        runner.parameters.working_dir = Path(os.path.dirname(
+            runner.parameters.executable))
 
 
 class CompilerRunProfile(ConfigRunProfile):
@@ -127,13 +128,15 @@ class ProfiledRunner:
     def all_output(self):
         return self.stdout + self.stderr
 
-    def run(self, cmdline):
-        executable = shutil.which(cmdline[0])
+    def run(self, cmdline, working_dir=None):
+        executable = os.path.abspath(cmdline[0])
         if not os.path.exists(executable):
             raise FileNotFoundError(executable)
         self.__runner.parameters.executable = executable
         self.__runner.parameters.args = cmdline[1:]
         self.profile.update_runner(self.__runner)
+        if working_dir is not None:
+            self.__runner.parameters.working_dir = working_dir
         self.__runner.run()
 
     def __init__(self, profile=None, runner_path=None):
