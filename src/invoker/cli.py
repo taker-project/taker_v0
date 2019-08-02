@@ -7,7 +7,6 @@ from taskbuilder import TaskManager
 from invoker import LanguageManager
 from runners import Status
 from .compiler import CompileError
-from .sourcecode import SourceCode
 from .profiled_runner import ProfiledRunner, list_profiles, create_profile
 
 
@@ -27,10 +26,10 @@ class CompileSubcommand(Subcommand):
     def run(self, args):
         # TODO: create global manager to initialize everything
         # in one command (?)
-        self.task_manager = TaskManager()
-        self.language_manager = LanguageManager(self.task_manager)
+        task_manager = TaskManager()
+        language_manager = LanguageManager(task_manager)
 
-        source = self.language_manager.create_source(
+        source = language_manager.create_source(
             args.src, args.exe, args.lang, args.lib)
         try:
             source.compile()
@@ -70,18 +69,17 @@ class RunSubcommand(Subcommand):
                             help='Arguments to pass to the program')
 
     def run(self, args):
-        self.task_manager = TaskManager()
-        self.language_manager = LanguageManager(self.task_manager)
+        task_manager = TaskManager()
+        language_manager = LanguageManager(task_manager)
 
-        profile = create_profile(args.profile, self.task_manager.repo)
+        profile = create_profile(args.profile, task_manager.repo)
         runner = ProfiledRunner(profile)
 
         cmdline = []
         if args.lang is None:
             cmdline = [fspath(args.exe.absolute())] + args.args
-            pass
         else:
-            lang = self.language_manager.get_lang(args.lang)
+            lang = language_manager.get_lang(args.lang)
             cmdline = lang.run_args(args.exe, args.args)
 
         if args.input is not None:

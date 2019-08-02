@@ -31,17 +31,19 @@ class SourceCode:
         rule.add_global_cmd(app_exe(), args)
         return rule
 
-    def add_run_command(self, rule, profile, custom_args=[], input='',
+    def add_run_command(self, rule, profile, custom_args=None, stdin='',
                         quiet=False, working_dir=None):
         if not isinstance(profile, str):
             profile = profile.name()
         args = ['run', '--lang=' + self.language.name, '--profile=' + profile]
         if working_dir is not None:
             args.append(File(working_dir.absolute(), prefix='--work-dir='))
-        if input:
-            args.append('--input=' + input)
+        if stdin:
+            args.append('--input=' + stdin)
         if quiet:
             args.append('-q')
+        if custom_args is None:
+            custom_args = []
         args += ['--', InputFile(self.exe_file)] + custom_args
         rule.add_global_cmd(app_exe(), args)
 

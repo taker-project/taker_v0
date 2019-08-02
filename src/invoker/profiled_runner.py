@@ -1,5 +1,4 @@
 import os
-import shutil
 from pathlib import Path
 from runners import Runner, IsolatePolicy, Status
 from .config import config

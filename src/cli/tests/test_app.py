@@ -1,5 +1,4 @@
 import shutil
-import sys
 import pytest
 from compat import fspath
 from cli import *

@@ -1,5 +1,4 @@
 import shutil
-from os import path
 from pathlib import Path
 import pytest
 from compat import fspath
@@ -81,10 +80,11 @@ def test_make_rules(tmpdir, language_manager, task_manager, taker_app):
 
     rule5 = task_manager.makefile.add_phony_rule('genout')
     src4.add_run_command(rule5, CompilerRunProfile(repo), ['arg1', 'arg2'])
-    src4.add_run_command(rule5, 'generator', quiet=True, input="see '42'!",
+    src4.add_run_command(rule5, 'generator', quiet=True, stdin="see '42'!",
                          working_dir=tmpdir)
 
     assert rule3 is None
+    assert rule4 is not None
     task_manager.makefile.all_rule.add_depend(rule1)
     task_manager.makefile.all_rule.add_depend(rule2)
     task_manager.makefile.all_rule.add_depend(rule3)
