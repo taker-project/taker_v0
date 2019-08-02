@@ -123,7 +123,7 @@ def test_sleepy(runner):
     runner.parameters.idle_limit = 0.7
     runner.run()
     assert runner.results.status == Status.OK
-    assert abs(runner.results.clock_time - 0.55) < 0.1
+    assert abs(runner.results.clock_time - 0.55) < 0.12
     assert runner.results.time < 0.02
 
 
