@@ -45,6 +45,8 @@ def test_compiler(tmpdir, task_manager, language_manager):
     src_cpp2 = src_dir / 'compile_error.cpp'
     src_cpp3 = src_dir / 'code_libs.cpp'
     src_py1 = src_dir / 'code.py'
+    src_bad1 = src_dir / 'bad_code.py'
+    src_bad2 = src_dir / 'bad_code2.py'
 
     exe_cpp1 = src_dir / ('1-code' + default_exe_ext())
     exe_py1 = src_dir / ('1-code' + default_exe_ext())
@@ -54,6 +56,9 @@ def test_compiler(tmpdir, task_manager, language_manager):
         compiler.compile()
     with pytest.raises(CompileError):
         compiler = Compiler(repo, lang_cpp, src_py1)
+        compiler.compile()
+    with pytest.raises(CompileError):
+        compiler = Compiler(repo, lang_py, src_bad1, src_bad2)
         compiler.compile()
 
     runner = Runner()
