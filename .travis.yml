@@ -5,6 +5,7 @@ cache:
   directories:
     - $HOME/Library/Caches/Homebrew
     - /usr/local/Homebrew
+    - /Users/travis/.pyenv/
 
 before_cache:
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then brew cleanup; fi
