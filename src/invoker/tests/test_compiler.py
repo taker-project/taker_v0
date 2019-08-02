@@ -1,16 +1,12 @@
-from os import path
 import shutil
 from pathlib import Path
 import pytest
 from compat import fspath
 from runners import Runner, Status
-from ...pytest_fixtures import *
 from invoker.compiler import Compiler, CompileError
 from invoker.utils import default_exe_ext
-
-
-def tests_location():
-    return Path(path.abspath(path.join('src', 'invoker', 'tests')))
+from .test_common import tests_location
+from ...pytest_fixtures import *
 
 
 def test_detect_language(language_manager):
@@ -28,11 +24,10 @@ def test_detect_language(language_manager):
         language_manager.detect_language(tests / 'code_unknown.red')
 
 
-def test_compiler(tmpdir, config_manager, task_manager):
+def test_compiler(tmpdir, task_manager, language_manager):
     tmpdir = Path(str(tmpdir))
     repo = task_manager.repo
 
-    language_manager = LanguageManager(repo)
     lang_cpp = language_manager.get_lang('cpp.g++14')
     lang_py = language_manager.get_lang('py.py3')
 
@@ -46,6 +41,8 @@ def test_compiler(tmpdir, config_manager, task_manager):
     src_cpp2 = src_dir / 'compile_error.cpp'
     src_cpp3 = src_dir / 'code_libs.cpp'
     src_py1 = src_dir / 'code.py'
+    src_bad1 = src_dir / 'bad_code.py'
+    src_bad2 = src_dir / 'bad_code2.py'
 
     exe_cpp1 = src_dir / ('1-code' + default_exe_ext())
     exe_py1 = src_dir / ('1-code' + default_exe_ext())
@@ -55,6 +52,9 @@ def test_compiler(tmpdir, config_manager, task_manager):
         compiler.compile()
     with pytest.raises(CompileError):
         compiler = Compiler(repo, lang_cpp, src_py1)
+        compiler.compile()
+    with pytest.raises(CompileError):
+        compiler = Compiler(repo, lang_py, src_bad1, src_bad2)
         compiler.compile()
 
     runner = Runner()

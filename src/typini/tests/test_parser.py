@@ -142,6 +142,11 @@ def test_array():
     char_array.value = ['"', "'"]
     assert char_array.save() == '[c\'"\', c"\'"]'
 
+    char_array.value[0] = 42
+    assert not char_array.is_valid()
+    char_array.value = None
+    assert char_array.is_valid()
+
 
 def test_type_binder():
     binder = TypeBinder()

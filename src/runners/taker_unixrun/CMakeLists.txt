@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(taker_unixrun VERSION 0.1)
+project(taker_unixrun VERSION 0.1.1)
 
 set(taker_unixrun_VERSION_NUMBER 1)
 

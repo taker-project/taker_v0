@@ -1,8 +1,8 @@
 from pathlib import Path
 import pytest
-from ...pytest_fixtures import config_manager
 from configs.configs import *
 from configs.managers import *
+from ...pytest_fixtures import config_manager
 
 
 def test_global_manager(config_manager):

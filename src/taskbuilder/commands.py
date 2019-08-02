@@ -52,8 +52,9 @@ class File:
     def __hash__(self):
         return hash(type(self)) ^ hash(self.filename)
 
-    def __init__(self, filename):
+    def __init__(self, filename, prefix=''):
         self.filename = Path(filename)
+        self.prefix = prefix
 
     def absolute(self, repo):
         return repo.abspath(self.filename)
@@ -76,8 +77,8 @@ class AbsoluteFile(File):
 
 
 class NullFile(AbsoluteFile):
-    def __init__(self):
-        super().__init__(path.devnull)
+    def __init__(self, prefix=''):
+        super().__init__(path.devnull, prefix)
 
 
 class InputFile(File):
@@ -155,14 +156,15 @@ class Command(AbstractCommand):
 
     def __executable_to_shell(self, exe):
         if isinstance(exe, Executable):
-            return exe.command_name(self.repo, self.work_dir)
+            return exe.prefix + exe.command_name(self.repo, self.work_dir)
         raise TypeError('exe has invalid type (Executable expected)')
 
     def __arg_to_shell(self, arg):
         if isinstance(arg, str):
             return arg
         if isinstance(arg, File):
-            return fspath(arg.relative_to(self.repo, self.work_dir))
+            return arg.prefix + fspath(arg.relative_to(self.repo,
+                                                       self.work_dir))
         raise TypeError('arg has invalid type (str or File expected)')
 
     def __normalize_files(self):

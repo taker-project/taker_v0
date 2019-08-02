@@ -18,7 +18,6 @@
 #include "processrunner.hpp"
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <signal.h>
 #include <sys/resource.h>
 #include <sys/types.h>
@@ -88,11 +87,14 @@ RunnerValidateError::RunnerValidateError(const std::string &comment)
   if (!(cond)) throw RunnerValidateError("assertion failed: " #cond);
 
 void ProcessRunner::Parameters::validate() {
+  VALIDATE_ASSERT(workingDir.empty() || directoryIsGood(workingDir));
+
+  DirectoryChanger changer(workingDir);
+
   VALIDATE_ASSERT(timeLimit > 0);
   VALIDATE_ASSERT(idleLimit > 0);
   VALIDATE_ASSERT(memoryLimit > 0);
   VALIDATE_ASSERT(fileIsExecutable(executable));
-  VALIDATE_ASSERT(workingDir.empty() || directoryIsGood(workingDir));
   VALIDATE_ASSERT(stdinRedir.empty() || fileIsReadable(stdinRedir));
 }
 
@@ -483,6 +485,11 @@ void ProcessRunner::handleChild() {
   trySyscall(updateLimit(RLIMIT_STACK, memLimitBytes * 2),
              "could not set memory limit");
 
+  if (!parameters_.workingDir.empty()) {
+    trySyscall(chdir(parameters_.workingDir.c_str()) == 0,
+               "could not change directory");
+  }
+
   trySyscall(
       redirectDescriptor(STDIN_FILENO, parameters_.stdinRedir, O_RDONLY),
       "unable to redirect stdin into \"" + parameters_.stdinRedir + "\"");
@@ -514,23 +521,14 @@ void ProcessRunner::handleChild() {
                "could not set environment \"" + key + "\"");
   }
 
-  char fullExeName[PATH_MAX + 1];
-  trySyscall(realpath(parameters_.executable.c_str(), fullExeName) != nullptr,
-             "unable to get real path of the executable");
-
   size_t argc = parameters_.args.size() + 1;
   char **argv = new char *[argc + 1];
-  argv[0] = strdup(fullExeName);
+  argv[0] = strdup(parameters_.executable.c_str());
   for (size_t i = 0; i + 1 < argc; ++i) {
     const std::string &argument = parameters_.args[i];
     argv[i + 1] = strdup(argument.c_str());
   }
   argv[argc] = nullptr;
-
-  if (!parameters_.workingDir.empty()) {
-    trySyscall(chdir(parameters_.workingDir.c_str()) == 0,
-               "could not change directory");
-  }
 
   trySyscall(execv(argv[0], argv) == 0,
              "failed to run \"" + parameters_.executable + "\"");

@@ -1,8 +1,9 @@
 import pytest
+from compat import fspath
 from invoker.profiled_runner import *
 from invoker.config import CONFIG_NAME
 from runners import Runner
-from ...pytest_fixtures import task_manager, config_manager
+from ...pytest_fixtures import *
 
 
 class CustomRunProfile(ConfigRunProfile):
@@ -11,7 +12,7 @@ class CustomRunProfile(ConfigRunProfile):
         return 'custom'
 
 
-def test_profiles(config_manager, task_manager):
+def test_profiles(config_manager, task_manager, monkeypatch, taker_app):
     config_manager.user_config(CONFIG_NAME).open(
         'w', encoding='utf8').write('''
 [compiler]
@@ -71,3 +72,32 @@ memory-limit = 500.0
     custom_profile.update_runner(runner)
     assert runner.parameters.time_limit == 15.0
     assert runner.parameters.memory_limit == 500.0
+
+    run_count = 0
+
+    def run(self):
+        nonlocal run_count
+        run_count += 1
+
+    monkeypatch.setattr(Runner, 'run', run)
+    profiled_runner = ProfiledRunner(generator_profile)
+    profiled_runner.stdin = 'some input'
+    in_runner = profiled_runner._ProfiledRunner__runner
+    profiled_runner.run([fspath(taker_app)])
+    assert run_count == 1
+    assert in_runner.parameters.time_limit == 12.0
+    assert in_runner.parameters.memory_limit == 400.0
+    assert not in_runner.pass_stdin
+    assert not in_runner.capture_stdout
+    assert in_runner.capture_stderr
+    assert in_runner.stdin == 'some input'
+    assert in_runner.stdin == profiled_runner.stdin
+    assert in_runner.parameters.working_dir == taker_app.parent
+
+    profiled_runner.run([fspath(taker_app)], task_manager.task_dir)
+    assert run_count == 2
+    assert in_runner.parameters.working_dir == task_manager.task_dir
+
+    profiles = set(list_profiles())
+    assert 'compiler' in profiles
+    assert 'validator' in profiles

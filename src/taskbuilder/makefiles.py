@@ -91,6 +91,8 @@ class RuleBase:
         self.commands += [command]
 
     def add_depend(self, depend):
+        if depend is None:
+            return
         if isinstance(depend, RuleBase):
             depend = depend.name
         if depend not in self.input_files:
@@ -108,10 +110,10 @@ class RuleBase:
     def get_targets(self):
         if RuleOptions.FORCE_SINGLE_TARGET in self.options:
             return {self.name}
-        return {self.name} | self.output_files
+        return {self.name} | set(map(fspath, self.output_files))
 
     def get_depends(self):
-        return self.input_files | self.depends
+        return set(map(fspath, self.input_files | self.depends))
 
     def _unaliased_name(self):
         return self.makefile.unalias(self.name)
@@ -144,7 +146,8 @@ class RuleBase:
 
 class FileRule(RuleBase):
     def __init__(self, makefile, filename, options=DEFAULT_OPTIONS):
-        super().__init__(makefile, filename, options=options)
+        super().__init__(makefile, fspath(makefile.repo.relpath(filename)),
+                         options=options)
 
 
 class DynamicRule(RuleBase):

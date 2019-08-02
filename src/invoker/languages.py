@@ -4,6 +4,10 @@ from .config import config
 from .utils import is_valid_ext, default_exe_ext
 
 
+class LanguageError(Exception):
+    pass
+
+
 class Language:
     def _lang_section_name(self):
         return 'lang/' + self.name
@@ -122,7 +126,16 @@ class LanguageManagerBase:
             self._extensions[ext] += [language]
 
     def get_lang(self, name):
+        if name not in self._languages:
+            raise LanguageError('unknown language {}'.format(name))
         return self._languages[name]
+
+    def get_best_lang(self, ext):
+        langs = self.get_ext(ext)
+        if not langs:
+            raise LanguageError('cannot match language to extension "{}"'
+                                .format(ext))
+        return langs[0]
 
     def get_ext(self, ext):
         return sorted(self._extensions.get(ext, []))

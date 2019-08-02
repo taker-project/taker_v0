@@ -1,6 +1,18 @@
 os: linux
 dist: xenial
 
+cache:
+  directories:
+    - $HOME/Library/Caches/Homebrew
+    - /usr/local/Homebrew
+    - /Users/travis/.pyenv/
+
+before_cache:
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then brew cleanup; fi
+# Credit https://discourse.brew.sh/t/best-practice-for-homebrew-on-travis-brew-update-is-5min-to-build-time/5215/9
+# Cache only .git files under "/usr/local/Homebrew" so "brew update" does not take 5min every build
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then find /usr/local/Homebrew \! -regex ".+\.git.+" -delete; fi
+
 addons:
   apt:
     packages:
@@ -30,21 +42,24 @@ matrix:
     osx_image: xcode11
     language: generic
     env: PYTHON=3.5.5 COVERAGE=1
+    update: true
   - name: "Python: 3.6"
     os: osx
     osx_image: xcode11
     language: generic
     env: PYTHON=3.6.5 COVERAGE=1
+    update: true
   - name: "Python: 3.7"
     os: osx
     osx_image: xcode11
     language: generic
-    env: PYTHON=3.7-dev COVERAGE=1
+    env: PYTHON=3.7.3 COVERAGE=1
+    update: true
 
 before_install: |
   if [ "$TRAVIS_OS_NAME" == "osx" ]; then
     # pyenv install --list
-    pyenv install $PYTHON
+    pyenv install --skip-existing $PYTHON
     export PYENV_VERSION=$PYTHON
     export PATH="/Users/travis/.pyenv/shims:${PATH}"
     python --version
