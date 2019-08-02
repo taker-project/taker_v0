@@ -5,6 +5,7 @@ import pytest
 from compat import fspath
 from invoker.profiled_runner import AbstractRunProfile, CompilerRunProfile
 from invoker.compiler import CompileError
+from .test_common import tests_location
 from ...pytest_fixtures import *
 
 
@@ -16,10 +17,6 @@ class EmptyRunProfile(AbstractRunProfile):
     def update_runner(self, runner):
         runner.pass_stdin = True
         runner.capture_stdout = True
-
-
-def tests_location():
-    return Path(path.abspath(path.join('src', 'invoker', 'tests')))
 
 
 def test_source_code(tmpdir, language_manager, task_manager):

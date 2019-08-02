@@ -4,13 +4,10 @@ from pathlib import Path
 import pytest
 from compat import fspath
 from runners import Runner, Status
-from ...pytest_fixtures import *
 from invoker.compiler import Compiler, CompileError
 from invoker.utils import default_exe_ext
-
-
-def tests_location():
-    return Path(path.abspath(path.join('src', 'invoker', 'tests')))
+from .test_common import tests_location
+from ...pytest_fixtures import *
 
 
 def test_detect_language(language_manager):
