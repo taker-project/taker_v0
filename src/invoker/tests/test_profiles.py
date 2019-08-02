@@ -97,3 +97,7 @@ memory-limit = 500.0
     profiled_runner.run([taker_app], task_manager.task_dir)
     assert run_count == 2
     assert in_runner.parameters.working_dir == task_manager.task_dir
+
+    profiles = set(list_profiles())
+    assert 'compiler' in profiles
+    assert 'validator' in profiles

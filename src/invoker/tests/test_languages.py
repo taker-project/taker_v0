@@ -1,10 +1,11 @@
 import shutil
 from pathlib import Path
+import pytest
 from compat import fspath
-from ...pytest_fixtures import *
 from invoker.languages import *
 from invoker.utils import *
 from invoker.config import CONFIG_NAME
+from ...pytest_fixtures import *
 
 
 def test_languages(tmpdir, config_manager):
@@ -79,3 +80,7 @@ active = false
     run_arg_exp = [shutil.which('sh'), fspath(Path.cwd() / 'file.sh')]
     assert lang.run_args(Path('file.sh')) == run_arg_exp
     assert lang.exe_ext == '.sh'
+
+    assert lang_manager.get_best_lang('.py').name == 'py.py3'
+    with pytest.raises(LanguageError):
+        lang_manager.get_best_lang('.red')

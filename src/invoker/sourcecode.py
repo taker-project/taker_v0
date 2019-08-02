@@ -36,7 +36,7 @@ class SourceCode:
         self.manager = manager
         self.task_manager = manager.task_manager
         if language is None:
-            language = self.manager.get_ext(src_file.suffix)[0]
+            language = self.manager.get_best_lang(src_file.suffix)
         self.compiler = Compiler(
             manager.repo, language, src_file, exe_file, library_dirs)
         self.runner = ProfiledRunner()

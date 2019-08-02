@@ -8,12 +8,15 @@ from .profiled_runner import ProfiledRunner, CompilerRunProfile
 
 
 class CompileError(Exception):
-    pass
+    def __init__(self, msg, exitcode=1):
+        super().__init__(msg)
+        self.exitcode = exitcode
 
 
 class Compiler:
-    def _raise_error(self):
-        raise CompileError('Compilation failed:\n' + self.compiler_output)
+    def _raise_error(self, exitcode=1):
+        raise CompileError('Compilation failed:\n' + self.compiler_output,
+                           exitcode)
 
     def __copyfile(self, src, dst):
         try:
@@ -40,16 +43,9 @@ class Compiler:
             self.__copyfile(self.src_file, src)
             self.__runner.run(
                 self.language.compile_args(src, exe, self.library_dirs))
-            self.compiler_output = ('stdout:\n{}\nstderr:\n{}\ntime: {} sec\n'
-                                    'memory: {} MiB\nexitcode: {}\n'
-                                    'status: {}\n')
-            self.compiler_output = self.compiler_output.format(
-                self.__runner.stdout, self.__runner.stderr,
-                self.__runner.results.time, self.__runner.results.memory,
-                self.__runner.results.exitcode,
-                repr(self.__runner.results.status))
+            self.compiler_output = self.__runner.format_results()
             if self.__runner.results.status != Status.OK:
-                self._raise_error()
+                self._raise_error(self.__runner.get_cli_exitcode())
             if self.save_exe:
                 self.__copyfile(exe, self.exe_file)
         finally:

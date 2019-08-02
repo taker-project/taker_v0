@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from runners import Runner, IsolatePolicy
+from runners import Runner, IsolatePolicy, Status
 from .config import config
 
 # now the isolation is bound to the task directory
@@ -98,6 +98,10 @@ def create_profile(name, repository, **kwargs):
     return __PROFILES[name](repository, **kwargs)
 
 
+def list_profiles():
+    return __PROFILES.keys()
+
+
 register_profile(CompilerRunProfile)
 register_profile(CheckerRunProfile)
 register_profile(ValidatorRunProfile)
@@ -138,6 +142,31 @@ class ProfiledRunner:
         if working_dir is not None:
             self.__runner.parameters.working_dir = working_dir
         self.__runner.run()
+
+    def format_results(self):
+        signal = ''
+        if self.results.signal != 0:
+            if self.results.signal_name:
+                signal = 'signal: {} ({})\n'.format(self.results.signal,
+                                                    self.results.signal_name)
+            else:
+                signal = 'signal: {}\n'.format(self.results.signal)
+        msg = ('stdout:\n{}\nstderr:\n{}\ntime: {} sec\nmemory: {} MiB\n'
+               'exitcode: {}\n{}status: {}\n')
+        msg = msg.format(self.stdout, self.stderr, self.results.time,
+                         self.results.memory, self.results.exitcode,
+                         signal, repr(self.results.status))
+        return msg
+
+    def get_cli_exitcode(self):
+        '''Returns the exitcode that will be used in CLI subcommands'''
+        if self.results.exitcode != 0:
+            return self.results.exitcode
+        if self.results.signal != 0:
+            return 128 + self.results.signal
+        if self.results.status != Status.OK:
+            return 1
+        return 0
 
     def __init__(self, profile=None, runner_path=None):
         self.profile = profile

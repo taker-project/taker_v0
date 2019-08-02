@@ -130,6 +130,13 @@ class LanguageManagerBase:
             raise LanguageError('unknown language {}'.format(name))
         return self._languages[name]
 
+    def get_best_lang(self, ext):
+        langs = self.get_ext(ext)
+        if not langs:
+            raise LanguageError('cannot match language to extension "{}"'
+                                .format(ext))
+        return langs[0]
+
     def get_ext(self, ext):
         return sorted(self._extensions.get(ext, []))
 
