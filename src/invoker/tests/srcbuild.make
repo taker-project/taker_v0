@@ -9,7 +9,7 @@ help:
 	@echo '                help: Prints this help'
 .PHONY: help
 
-all: src/aplusb src/code_libs
+all: genout src/aplusb src/code_libs
 .PHONY: all
 
 src/aplusb: src/aplusb.cpp
@@ -17,3 +17,11 @@ src/aplusb: src/aplusb.cpp
 
 src/code_libs: src/code_libs.cpp
 	{0} compile --exe=src/code_libs --lang=cpp.g++14 --lib=lib -- src/code_libs.cpp
+
+src/code_gen_out: src/code_gen_out.cpp
+	{0} compile --exe=src/code_gen_out --lang=cpp.g++17 -- src/code_gen_out.cpp
+
+genout: src/code_gen_out
+	{0} run --lang=cpp.g++17 --profile=compiler -- src/code_gen_out arg1 arg2
+	{0} run --lang=cpp.g++17 --profile=generator --work-dir=.. '--input=see '"'"'42'"'"'!' -q -- src/code_gen_out
+.PHONY: genout

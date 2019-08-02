@@ -3,7 +3,7 @@ from os import path
 from pathlib import Path
 import pytest
 from compat import fspath
-from invoker.profiled_runner import AbstractRunProfile
+from invoker.profiled_runner import AbstractRunProfile, CompilerRunProfile
 from invoker.compiler import CompileError
 from ...pytest_fixtures import *
 
@@ -62,10 +62,13 @@ def test_make_rules(tmpdir, language_manager, task_manager, taker_app):
 
     src_cpp1 = tmpdir / 'task' / 'src' / 'aplusb.cpp'
     src_cpp2 = tmpdir / 'task' / 'src' / 'code_libs.cpp'
+    src_cpp3 = tmpdir / 'task' / 'src' / 'code_gen_out.cpp'
     src_cpplib = tmpdir / 'task' / 'lib' / 'code_mylib.h'
     src_py1 = tmpdir / 'task' / 'src' / 'code.py'
     shutil.copy(fspath(tests_location() / 'aplusb.cpp'), fspath(src_cpp1))
     shutil.copy(fspath(tests_location() / 'code_libs.cpp'), fspath(src_cpp2))
+    shutil.copy(fspath(tests_location() / 'code_gen_out.cpp'),
+                fspath(src_cpp3))
     shutil.copy(fspath(tests_location() / 'code_mylib.h'), fspath(src_cpplib))
     shutil.copy(fspath(tests_location() / 'code.py'), fspath(src_py1))
 
@@ -76,11 +79,19 @@ def test_make_rules(tmpdir, language_manager, task_manager, taker_app):
     rule2 = src2.add_compile_rule()
     src3 = language_manager.create_source(src_py1)
     rule3 = src3.add_compile_rule()
+    src4 = language_manager.create_source(src_cpp3)
+    rule4 = src4.add_compile_rule()
+
+    rule5 = task_manager.makefile.add_phony_rule('genout')
+    src4.add_run_command(rule5, CompilerRunProfile(repo), ['arg1', 'arg2'])
+    src4.add_run_command(rule5, 'generator', quiet=True, input="see '42'!",
+                         working_dir=tmpdir)
 
     assert rule3 is None
     task_manager.makefile.all_rule.add_depend(rule1)
     task_manager.makefile.all_rule.add_depend(rule2)
     task_manager.makefile.all_rule.add_depend(rule3)
+    task_manager.makefile.all_rule.add_depend(rule5)
 
     make_template = (tests_location() / 'srcbuild.make').open('r').read()
     make_template = make_template.format(taker_app)
@@ -91,3 +102,5 @@ def test_make_rules(tmpdir, language_manager, task_manager, taker_app):
     assert src1.exe_file.exists()
     assert src2.exe_file.exists()
     assert src3.exe_file.exists()
+    assert (tmpdir / 'output.txt').exists()
+    assert (tmpdir / 'task' / 'src' / 'output.txt').exists()
