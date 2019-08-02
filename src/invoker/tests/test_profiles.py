@@ -83,7 +83,7 @@ memory-limit = 500.0
     profiled_runner = ProfiledRunner(generator_profile)
     profiled_runner.stdin = 'some input'
     in_runner = profiled_runner._ProfiledRunner__runner
-    profiled_runner.run([taker_app])
+    profiled_runner.run([fspath(taker_app)])
     assert run_count == 1
     assert in_runner.parameters.time_limit == 12.0
     assert in_runner.parameters.memory_limit == 400.0
@@ -94,7 +94,7 @@ memory-limit = 500.0
     assert in_runner.stdin == profiled_runner.stdin
     assert in_runner.parameters.working_dir == taker_app.parent
 
-    profiled_runner.run([taker_app], task_manager.task_dir)
+    profiled_runner.run([fspath(taker_app)], task_manager.task_dir)
     assert run_count == 2
     assert in_runner.parameters.working_dir == task_manager.task_dir
 

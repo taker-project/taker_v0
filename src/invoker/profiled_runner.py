@@ -133,6 +133,8 @@ class ProfiledRunner:
         return self.stdout + self.stderr
 
     def run(self, cmdline, working_dir=None):
+        for arg in cmdline:
+            assert isinstance(arg, str)
         executable = os.path.abspath(cmdline[0])
         if not os.path.exists(executable):
             raise FileNotFoundError(executable)
