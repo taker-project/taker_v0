@@ -153,11 +153,13 @@ class ProfiledRunner:
                                                     self.results.signal_name)
             else:
                 signal = 'signal: {}\n'.format(self.results.signal)
+        comment = self.results.comment
         msg = ('stdout:\n{}\nstderr:\n{}\ntime: {} sec\nmemory: {} MiB\n'
-               'exitcode: {}\n{}status: {}\n')
+               'exitcode: {}\n{}status: {}\n{}')
         msg = msg.format(self.stdout, self.stderr, self.results.time,
                          self.results.memory, self.results.exitcode,
-                         signal, repr(self.results.status))
+                         signal, repr(self.results.status),
+                         'comment: ' + comment + '\n' if comment else '')
         return msg
 
     def get_cli_exitcode(self):
