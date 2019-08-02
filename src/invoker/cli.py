@@ -93,7 +93,7 @@ class RunSubcommand(Subcommand):
             print(runner.stderr, end='', file=sys.stderr)
             status = runner.results.status
             if status not in {Status.OK, Status.RUNTIME_ERROR}:
-                print('Run status is ' + repr(status), file=sys.stderr)
+                print('Program exited with status ' + repr(status), file=sys.stderr)
         else:
             print(runner.format_results())
         return runner.get_cli_exitcode()
