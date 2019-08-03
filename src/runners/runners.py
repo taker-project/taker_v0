@@ -68,7 +68,7 @@ class Status(Enum):
 
     def __repr__(self):
         return STATUS_COLORS[self] + Style.BRIGHT + \
-               self.value + Style.RESET_ALL
+            self.value + Style.RESET_ALL
 
 
 STATUS_COLORS = {
