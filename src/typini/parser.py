@@ -489,6 +489,18 @@ class TypiniSection:
         value = self.__nodes[index].value.value
         return default if value is None else value
 
+    def get_typed(self, key, typename, allow_null=False, case_sensitive=True):
+        node = self.find_node(key, case_sensitive)
+        if node.value.type_name() != typename:
+            raise TypiniError('{}::{} has invalid type {} ({} expected)'
+                              .format(self.key, node.key,
+                                      node.value.type_name(), typename))
+        value = node.value.value
+        if (not allow_null) and (value is None):
+            raise TypiniError('{}::{} cannot be null'
+                              .format(self.key, node.key))
+        return value
+
     def reset(self, key, typename, value, can_overwrite=True):
         index = self.__get_node_index(key, False)
         cur_node = (self.__nodes[index]

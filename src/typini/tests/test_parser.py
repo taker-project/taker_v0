@@ -329,6 +329,20 @@ b: int = 3
     assert section.get_value('e', 'no val') == 'no val'
     assert section.get_value('a', 'no val') == 3
 
+    assert section.get_typed(
+        'D', 'int', case_sensitive=False, allow_null=True) is None
+    assert section.get_typed(
+        'C', 'int', case_sensitive=False, allow_null=True) == 42
+    assert section.get_typed('d', 'int', allow_null=True) is None
+    assert section.get_typed('c', 'int', allow_null=True) == 42
+    assert section.get_typed('c', 'int') == 42
+    with pytest.raises(KeyError):
+        section.get_typed('D', 'int', allow_null=True)
+    with pytest.raises(TypiniError):
+        section.get_typed('d', 'int')
+    with pytest.raises(TypiniError):
+        section.get_typed('d', 'str')
+
 
 def test_full():
     parser = Typini()
