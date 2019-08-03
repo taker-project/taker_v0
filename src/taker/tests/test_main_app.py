@@ -57,8 +57,8 @@ def test_no_task_dir(tmpdir, monkeypatch):
     assert res.stderr.find('you must be in task directory') >= 0
 
 
-def test_compile(task_manager, monkeypatch):
-    monkeypatch.chdir(fspath(task_manager.repo.directory))
+def test_compile(repo_manager, monkeypatch):
+    monkeypatch.chdir(fspath(repo_manager.repo.directory))
     make_source()
     make_badsource()
     res = subprocess.run(['take', 'compile', 'file.cpp'],
@@ -72,11 +72,11 @@ def test_compile(task_manager, monkeypatch):
     assert res.stdout.find('compilation error') >= 0
 
 
-def test_run(task_manager, monkeypatch):
+def test_run(repo_manager, monkeypatch):
     tests_loc = tests_location()
     badexe_loc = bad_exe_location()
 
-    monkeypatch.chdir(fspath(task_manager.repo.directory))
+    monkeypatch.chdir(fspath(repo_manager.repo.directory))
 
     shutil.copy(fspath(tests_loc / 'code_div.cpp'), '.')
     subprocess.run(['take', 'compile', 'code_div.cpp'], check=True,

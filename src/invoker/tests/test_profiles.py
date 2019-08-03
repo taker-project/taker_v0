@@ -12,7 +12,7 @@ class CustomRunProfile(ConfigRunProfile):
         return 'custom'
 
 
-def test_profiles(config_manager, task_manager, monkeypatch, taker_app):
+def test_profiles(config_manager, repo_manager, monkeypatch, taker_app):
     config_manager.user_config(CONFIG_NAME).open(
         'w', encoding='utf8').write('''
 [compiler]
@@ -37,7 +37,7 @@ memory-limit = 500.0
 ''')
 
     runner = Runner()
-    repo = task_manager.repo
+    repo = repo_manager.repo
 
     compiler_profile = create_profile('compiler', repo)
     assert type(compiler_profile) is CompilerRunProfile
@@ -94,9 +94,9 @@ memory-limit = 500.0
     assert in_runner.stdin == profiled_runner.stdin
     assert in_runner.parameters.working_dir == taker_app.parent
 
-    profiled_runner.run([fspath(taker_app)], task_manager.task_dir)
+    profiled_runner.run([fspath(taker_app)], repo_manager.task_dir)
     assert run_count == 2
-    assert in_runner.parameters.working_dir == task_manager.task_dir
+    assert in_runner.parameters.working_dir == repo_manager.task_dir
 
     profiles = set(list_profiles())
     assert 'compiler' in profiles

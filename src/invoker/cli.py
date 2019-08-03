@@ -3,7 +3,7 @@ from pathlib import Path
 from colorama import Fore, Style
 from compat import fspath
 from cli import Subcommand
-from taskbuilder import TaskManager
+from taskbuilder import RepositoryManager
 from invoker import LanguageManager
 from runners import Status
 from .compiler import CompileError
@@ -26,8 +26,8 @@ class CompileSubcommand(Subcommand):
     def run(self, args):
         # TODO: create global manager to initialize everything
         # in one command (?)
-        task_manager = TaskManager()
-        language_manager = LanguageManager(task_manager)
+        repo_manager = RepositoryManager()
+        language_manager = LanguageManager(repo_manager)
 
         source = language_manager.create_source(
             args.src, args.exe, args.lang, args.lib)
@@ -69,10 +69,10 @@ class RunSubcommand(Subcommand):
                             help='Arguments to pass to the program')
 
     def run(self, args):
-        task_manager = TaskManager()
-        language_manager = LanguageManager(task_manager)
+        repo_manager = RepositoryManager()
+        language_manager = LanguageManager(repo_manager)
 
-        profile = create_profile(args.profile, task_manager.repo)
+        profile = create_profile(args.profile, repo_manager.repo)
         runner = ProfiledRunner(profile)
 
         cmdline = []

@@ -6,7 +6,7 @@ from .makefiles import Makefile
 from .config import config
 
 
-class TaskManager:
+class RepositoryManager:
     @property
     def task_dir(self):
         return self.repo.directory

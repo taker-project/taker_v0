@@ -18,8 +18,8 @@ class EmptyRunProfile(AbstractRunProfile):
         runner.capture_stdout = True
 
 
-def test_source_code(tmpdir, language_manager, task_manager):
-    repo = task_manager.repo
+def test_source_code(tmpdir, language_manager, repo_manager):
+    repo = repo_manager.repo
 
     tmpdir = Path(str(tmpdir))
     (tmpdir / 'src').mkdir()
@@ -48,8 +48,8 @@ def test_source_code(tmpdir, language_manager, task_manager):
     assert src3.runner.stdout == 'hello world\n'
 
 
-def test_make_rules(tmpdir, language_manager, task_manager, taker_app):
-    repo = task_manager.repo
+def test_make_rules(tmpdir, language_manager, repo_manager, taker_app):
+    repo = repo_manager.repo
 
     tmpdir = Path(str(tmpdir))
     (tmpdir / 'task' / 'src').mkdir()
@@ -78,24 +78,24 @@ def test_make_rules(tmpdir, language_manager, task_manager, taker_app):
     src4 = language_manager.create_source(src_cpp3)
     rule4 = src4.add_compile_rule()
 
-    rule5 = task_manager.makefile.add_phony_rule('genout')
+    rule5 = repo_manager.makefile.add_phony_rule('genout')
     src4.add_run_command(rule5, CompilerRunProfile(repo), ['arg1', 'arg2'])
     src4.add_run_command(rule5, 'generator', quiet=True, stdin="see '42'!",
                          working_dir=tmpdir)
 
     assert rule3 is None
     assert rule4 is not None
-    task_manager.makefile.all_rule.add_depend(rule1)
-    task_manager.makefile.all_rule.add_depend(rule2)
-    task_manager.makefile.all_rule.add_depend(rule3)
-    task_manager.makefile.all_rule.add_depend(rule5)
+    repo_manager.makefile.all_rule.add_depend(rule1)
+    repo_manager.makefile.all_rule.add_depend(rule2)
+    repo_manager.makefile.all_rule.add_depend(rule3)
+    repo_manager.makefile.all_rule.add_depend(rule5)
 
     make_template = (tests_location() / 'srcbuild.make').open('r').read()
     make_template = make_template.format(taker_app)
 
-    assert task_manager.makefile.dump() == make_template
+    assert repo_manager.makefile.dump() == make_template
 
-    task_manager.build()
+    repo_manager.build()
     assert src1.exe_file.exists()
     assert src2.exe_file.exists()
     assert src3.exe_file.exists()

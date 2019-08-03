@@ -15,7 +15,7 @@ class LanguageManager(LanguageManagerBase):
             language = self.get_lang(language)
         return SourceCode(self, src_file, exe_file, language, library_dirs)
 
-    def __init__(self, task_manager):
+    def __init__(self, repo_manager):
         super().__init__()
-        self.task_manager = task_manager
-        self.repo = task_manager.repo
+        self.repo_manager = repo_manager
+        self.repo = repo_manager.repo

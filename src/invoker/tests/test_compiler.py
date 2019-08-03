@@ -24,9 +24,9 @@ def test_detect_language(language_manager):
         language_manager.detect_language(tests / 'code_unknown.red')
 
 
-def test_compiler(tmpdir, task_manager, language_manager):
+def test_compiler(tmpdir, repo_manager, language_manager):
     tmpdir = Path(str(tmpdir))
-    repo = task_manager.repo
+    repo = repo_manager.repo
 
     lang_cpp = language_manager.get_lang('cpp.g++14')
     lang_py = language_manager.get_lang('py.py3')

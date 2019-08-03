@@ -21,7 +21,7 @@ class SourceCode:
             # the files cannot be equal if one of them doesn't exist :)
             # if we don't catch FileNotFoundError, it will fail tests on Py3.5
             pass
-        makefile = self.task_manager.makefile
+        makefile = self.repo_manager.makefile
         rule = makefile.add_file_rule(self.exe_file)
         args = ['compile', OutputFile(self.exe_file, prefix='--exe='),
                 '--lang=' + self.language.name]
@@ -50,7 +50,7 @@ class SourceCode:
     def __init__(self, manager, src_file, exe_file=None, language=None,
                  library_dirs=None):
         self.manager = manager
-        self.task_manager = manager.task_manager
+        self.repo_manager = manager.repo_manager
         if language is None:
             language = self.manager.get_best_lang(src_file.suffix)
         self.compiler = Compiler(
