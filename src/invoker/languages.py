@@ -126,6 +126,8 @@ class LanguageManagerBase:
             self._extensions[ext] += [language]
 
     def get_lang(self, name):
+        if isinstance(name, Language):
+            return name
         if name not in self._languages:
             raise LanguageError('unknown language {}'.format(name))
         return self._languages[name]

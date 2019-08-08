@@ -341,7 +341,7 @@ b: int = 3
     with pytest.raises(TypiniError):
         section.get_typed('d', 'int')
     with pytest.raises(TypiniError):
-        section.get_typed('d', 'str')
+        section.get_typed('d', 'string')
 
 
 def test_full():

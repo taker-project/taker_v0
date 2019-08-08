@@ -15,7 +15,8 @@ class SourceItemError(Exception):
 
 class SourceItem:
     def __try_exe_name(self, suffix):
-        self.exe_name = os.path.splitext()[0] + suffix + self.lang.exe_ext
+        self.exe_name = (os.path.splitext(self.src_name)[0] + suffix +
+                         self.lang.exe_ext)
         if self.exe_name == self.src_name:
             return True
         return self.source_list.can_use_name(self.exe_name)
@@ -39,9 +40,9 @@ class SourceItem:
         return self.source_list.path / self.exe_name
 
     def save(self):
-        section = self.section
-        section.reset('lang', 'str', self.lang.name)
-        section.reset('exe-name', 'str', self.exe_name)
+        section = self._section
+        section.reset('lang', 'string', self.lang.name)
+        section.reset('exe-name', 'string', self.exe_name)
 
     def validate(self):
         if not is_filename_valid(self.src_name):
@@ -54,20 +55,20 @@ class SourceItem:
     def __init__(self, source_list, section: TypiniSection, lang=None):
         self.source_list = source_list
         self.lang_manager = self.source_list.lang_manager
-        self.section = section
+        self._section = section
         self.src_name = section.key
 
         if lang is not None:
-            self.lang = lang
+            self.lang = self.lang_manager.get_lang(lang)
         elif 'lang' in section:
-            lang_str = section.get_typed('lang', 'str')
+            lang_str = section.get_typed('lang', 'string')
             self.lang = self.lang_manager[lang_str]
         else:
             self.lang = self.lang_manager.detect_language(
                 self.src_path, self.__get_library_dirs())
 
         if 'exe-name' in section:
-            self.exe_name = section.get_typed('exe-name', 'str')
+            self.exe_name = section.get_typed('exe-name', 'string')
         else:
             self.__choose_exe_name()
             assert self.exe_name is not None
@@ -80,7 +81,7 @@ class SourceItem:
 class SourceList:
     @property
     def path(self):
-        return self.repo_manager.repo.abspath(self.subdir)
+        return self.repo_manager.repo.abspath(self.__subdir)
 
     def _is_system_section(self, section_name):
         return section_name[0] == '.'
@@ -89,7 +90,10 @@ class SourceList:
         return key in self.__items
 
     def __getitem__(self, key):
-        return key in self.__items
+        return self.__items[key]
+
+    def __len__(self):
+        return len(self.__items)
 
     def __add_source(self, src_name, *args, **kwargs):
         assert is_filename_valid(src_name)
@@ -101,34 +105,41 @@ class SourceList:
             item = SourceItem(self, self.config[src_name], *args, **kwargs)
         except Exception as exc:
             if section_created:
-                self.config.erase_section(section_created)
+                self.config.erase_section(src_name)
             raise exc
-        self.src_files.add(item.src_name)
-        self.exe_files.add(item.exe_name)
+        self._src_files.add(item.src_name)
+        self._exe_files.add(item.exe_name)
         self.__items[src_name] = item
         return item
 
     def can_use_name(self, name):
-        return ((name not in self.src_files) and
-                (name not in self.exe_files) and
-                (name not in self.sys_files))
+        return ((name not in self._src_files) and
+                (name not in self._exe_files) and
+                (name not in self._sys_files))
 
     def add(self, src_name, lang=None, *args, **kwargs):
+        if src_name in self.__items:
+            raise SourceItemError('"{}" already exists as a source'
+                                  .format(src_name))
         if not is_filename_valid(src_name):
             raise SourceItemError('"{}" is an invalid source name'
-                                  .format(self.src_name))
+                                  .format(src_name))
+        if not self.can_use_name(src_name):
+            raise SourceItemError('"{}" cannot be used as a source name'
+                                  .format(src_name))
         return self.__add_source(src_name, *args, **kwargs)
 
     def __is_add_candidate(self, cand):
-        if not self.can_use_name(cand):
+        if not self.can_use_name(cand.name):
             return False
         if not self.lang_manager.get_ext(cand.suffix):
             return False
         return True
 
     def list_add_candidates(self):
-        return list(filter(lambda p: self.__is_add_candidate(p),
-                           self.path.iterdir()))
+        paths = sorted(list(filter(lambda p: self.__is_add_candidate(p),
+                                   self.path.iterdir())))
+        return list(map(lambda p: p.name, paths))
 
     def __rescan_add_error(self):
         added = []
@@ -137,7 +148,7 @@ class SourceList:
                 added.append(self.add(file_name))
         except Exception as exc:
             for item in added:
-                self.remove(added)
+                self.remove(item.src_name)
             raise exc
 
     def __rescan_add_noerror(self):
@@ -146,10 +157,11 @@ class SourceList:
             try:
                 self.add(file_name)
             except Exception as exc:
-                exceptions += []
+                exceptions += [exc]
+        return exceptions
 
     def rescan_remove(self):
-        keys = self.__items.keys()
+        keys = list(self.__items.keys())
         for src_name in keys:
             if not (self.path / src_name).exists():
                 self.remove(src_name)
@@ -166,9 +178,9 @@ class SourceList:
         if src_name not in self.__items:
             raise KeyError(src_name)
         item = self.__items[src_name]
-        self.src_files.remove(item.src_name)
-        self.exe_files.remove(item.exe_name)
-        self.__items.remove(item.src_name)
+        self._src_files.remove(item.src_name)
+        self._exe_files.remove(item.exe_name)
+        self.__items.pop(item.src_name)
         self.config.erase_section(src_name)
 
     def load(self):
@@ -180,6 +192,7 @@ class SourceList:
     def save(self):
         for key in self.__items:
             self.__items[key].save()
+        self.config.save_to_file(self.config_path)
 
     def validate(self):
         for key in self.__items:
@@ -189,12 +202,14 @@ class SourceList:
                  lang_manager: LanguageManager):
         self.repo_manager = repo_manager
         self.lang_manager = lang_manager
-        self.src_files = set()
-        self.exe_files = set()
-        self.sys_files = set()
+        self._src_files = set()
+        self._exe_files = set()
+        self._sys_files = set()
         self.__items = {}
-        self.subdir = Path(subdir)
+        self.__subdir = Path(subdir)
         self.config = Typini()
-        self.config.load_from_file(self.path / SOURCE_CFG_FILE)
-        self.sys_files.add(SOURCE_CFG_FILE)
+        self.config_path = self.path / SOURCE_CFG_FILE
+        if self.config_path.exists():
+            self.config.load_from_file(self.config_path)
+        self._sys_files.add(SOURCE_CFG_FILE)
         self.load()
