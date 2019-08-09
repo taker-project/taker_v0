@@ -1,6 +1,6 @@
 from pathlib import Path
-from compat import fspath
 from unittest import mock
+from compat import fspath
 from util import LazyFile
 
 
@@ -28,16 +28,16 @@ def test_lazy_file(monkeypatch, tmpdir):
     tmpdir = Path(str(tmpdir))
 
     file_path = tmpdir / 'file.txt'
-    fi = LazyFile(fspath(file_path))
-    assert not fi.text
-    fi.text = 'hello'
-    fi.save()
+    file = LazyFile(fspath(file_path))
+    assert not file.text
+    file.text = 'hello'
+    file.save()
     assert file_path.open('r').read() == 'hello'
 
-    fi = LazyFile(fspath(file_path))
-    assert fi.text == 'hello'
-    fi.text = '42'
-    fi.save()
+    file = LazyFile(fspath(file_path))
+    assert file.text == 'hello'
+    file.text = '42'
+    file.save()
     assert file_path.open('r').read() == '42'
 
     cur_file = FakeFile('file.txt', 'hello\nworld')
@@ -52,17 +52,17 @@ def test_lazy_file(monkeypatch, tmpdir):
 
     with mock.patch.object(Path, 'open', fake_open):
         with mock.patch.object(Path, 'exists', fake_exists):
-            fi = LazyFile(Path('file.txt'))
-            assert fi.text == 'hello\nworld'
+            file = LazyFile(Path('file.txt'))
+            assert file.text == 'hello\nworld'
             cur_file.contents = '42'
-            fi.load()
-            assert fi.text == '42'
-            fi.text = '43'
-            fi.text = '42'
+            file.load()
+            assert file.text == '42'
+            file.text = '43'
+            file.text = '42'
             assert cur_file.modify_count == 0
-            fi.save()
+            file.save()
             assert cur_file.modify_count == 0
-            fi.text = '1385'
-            fi.save()
+            file.text = '1385'
+            file.save()
             assert cur_file.modify_count == 1
             assert cur_file.contents == '1385'

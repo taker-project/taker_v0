@@ -11,8 +11,7 @@ class LazyFile:
     def load(self):
         self.text = ''
         if self.filename.exists():
-            with self.filename.open('r', encoding='utf8') as f:
-                self.text = f.read()
+            self.text = self.filename.open('r', encoding='utf8').read()
         self.__digest = hashlib.sha256(self.text.encode()).digest()
 
     def __init__(self, filename):
