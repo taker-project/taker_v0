@@ -71,3 +71,4 @@ install:
 script:
 - make test
 - codecov
+- cat /home/travis/build/taker-project/taker_v0/coverage.xml
