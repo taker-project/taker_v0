@@ -6,4 +6,4 @@ coverage:
         target: 90%
     patch: off
 fixes:
-  - "*/lib/python*/site-packages/taker*/::src/"
+  - "**/lib/python*/site-packages/taker*/::src/"
