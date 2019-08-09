@@ -351,6 +351,9 @@ def test_full():
         '[section2]\n c : string\n d:int=2')
     assert len(parser) == 8
     assert parser.list_sections() == ['section', 'section2']
+    assert parser['section'].compact_repr() == '[section]\na:int=5\nb:int=6'
+    assert (parser['section2'].compact_repr() ==
+            '[section2]\nc:string=null\nd:int=2')
     assert parser['section'].list_keys() == ['a', 'b']
     assert parser['section2'].list_keys() == ['c', 'd']
     assert (parser.dump() == '[section]\na: int = 5\nb: int = 6 # comment\n'
@@ -484,6 +487,12 @@ BIGC: int = 3
 # comment
 [VeryBig]
 q: int = 1'''
+    assert parser.compact_repr() == '''[VeryBig]
+q:int=1
+[small]
+BIGA:int=1
+BIGC:int=3
+SMALLb:int=2'''
 
     section.rename('SMALLb', 'smallest_b')
     assert parser.dump() == '''[small]

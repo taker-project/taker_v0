@@ -578,6 +578,19 @@ class TypiniSection:
     def dump(self):
         return '\n'.join([node.save() for node in self.get_nodes()])
 
+    def compact_repr(self):
+        '''
+        Returns the most compact representation of the section with only
+        keys and values. If the sections are equal, it's guaranteed that
+        their compact representations are also equal.
+        '''
+        items = sorted([(node.key, node.value.type_name(), node.value.save())
+                        for node in self.get_nodes()
+                        if type(node) == VariableNode])
+        head = '[' + self.key + ']\n'
+        return head + '\n'.join([t[0] + ':' + t[1] + '=' + t[2]
+                                 for t in items])
+
     @property
     def key(self):
         return self.header.key
@@ -676,6 +689,15 @@ class Typini(NodeList):
 
     def list_sections(self):
         return [section.key for section in self.__sections]
+
+    def compact_repr(self):
+        '''
+        Returns the most compact representation of the file with only
+        keys and values. If the sections are equal, it's guaranteed that
+        their compact representations are also equal.
+        '''
+        sections = sorted([(s.key, s) for s in self.__sections])
+        return '\n'.join([s[1].compact_repr() for s in sections])
 
     def has_section(self, key, case_sensitive=True):
         return self.__get_section_index(key, case_sensitive) >= 0
