@@ -26,6 +26,6 @@ def is_filename_valid(filename):
     if filename.count('.') > 1:
         return False
     root_part = os.path.splitext(filename)
-    if root_part[0] in ('Makefile', 'Takefile', 'list'):
+    if root_part[0] in ('Makefile', 'Takefile'):
         return False
     return True

@@ -160,5 +160,19 @@ def test_samefile(overwrite_config_samefile, language_manager, srclist):
 
 
 def test_is_filename_valid():
-    # TODO: Write it!
-    pass
+    assert is_filename_valid('hello.cpp')
+    assert is_filename_valid('hello')
+    assert is_filename_valid('HeLLo')
+    assert is_filename_valid('He123LLo')
+    assert is_filename_valid('123')
+    assert is_filename_valid('+-._')
+    assert is_filename_valid('_._')
+    assert not is_filename_valid('-file.txt')
+    assert not is_filename_valid('')
+    assert not is_filename_valid('file.tar.gz')
+    assert not is_filename_valid('.file')
+    assert not is_filename_valid('$.cpp')
+    assert not is_filename_valid('my/file.txt')
+    assert not is_filename_valid('/file')
+    assert not is_filename_valid('Makefile.cpp')
+    assert not is_filename_valid('Makefile')
