@@ -1,6 +1,5 @@
 from pathlib import Path
 from taskbuilder import SectionManager
-from taskbuilder import sections
 from ...pytest_fixtures import *
 
 
@@ -80,8 +79,7 @@ field: string = null
     section_manager.update()
     assert len(list(section_manager.internal_dir(True).iterdir())) == 4
 
-    hash_filename = section_manager.internal_dir(True) / \
-        sections.encode_filename(config1, 'section2')
+    hash_filename = section_manager.target_file(config1, 'section2', True)
     old_hash = hash_filename.open().read()
 
     section_manager.update()

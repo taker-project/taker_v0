@@ -51,8 +51,7 @@ class SectionManager:
             config = Typini()
             config.load_from_file(self.repo.abspath(config_file))
         for section in self.__configs[config_file]:
-            file_path = self.internal_dir(True) / encode_filename(config_file,
-                                                                  section)
+            file_path = self.target_file(config_file, section, True)
             if (config is None) or (section not in config):
                 if file_path.exists():
                     file_path.unlink()
@@ -78,8 +77,7 @@ class SectionManager:
         self.__delete_ununsed()
 
     def depend_name(self, config_name, section):
-        return InputFile(self.internal_dir() /
-                         encode_filename(config_name, section))
+        return InputFile(self.target_file(config_name, section))
 
     def __init__(self, repo: TaskRepository):
         self.__configs = {}
