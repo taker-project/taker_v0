@@ -4,6 +4,7 @@ from compat import fspath
 from .repository import TaskRepository, get_repository
 from .makefiles import Makefile
 from .config import config
+from .sections import SectionManager
 
 
 class RepositoryManager:
@@ -18,6 +19,7 @@ class RepositoryManager:
             else:
                 repo = TaskRepository(task_dir)
         self.repo = repo
+        self.sections = SectionManager(repo)
         self.makefile = Makefile(repo)
         self.makefile.default_rule.add_depend('all')
         if not self.repo.is_task_dir():

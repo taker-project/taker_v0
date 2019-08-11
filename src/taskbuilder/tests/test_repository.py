@@ -11,7 +11,6 @@ def test_repo(tmpdir, monkeypatch):
     Path.mkdir(task_dir)
 
     repo = TaskRepository(Path(task_dir))
-    repo.init_task()
 
     assert repo.relpath(Path(path.pardir) / path.curdir) == Path(path.pardir)
     assert repo.relpath(tmpdir) == Path(path.pardir)

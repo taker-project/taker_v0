@@ -33,7 +33,6 @@ def test_commands(tmpdir):
     (task_dir / 'inner').mkdir()
 
     repo = TaskRepository(task_dir)
-    repo.init_task()
 
     command = Command(
         repo,

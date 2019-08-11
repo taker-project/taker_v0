@@ -8,7 +8,7 @@ from typini import Typini
 from compat import fspath
 from util import LazyFile
 from .repository import TaskRepository
-from .makefiles import Makefile
+from .commands import InputFile
 
 
 INTERNAL_DIR = 'sections'
@@ -77,7 +77,11 @@ class SectionManager:
             self.__update_config(config)
         self.__delete_ununsed()
 
+    def depend_name(self, config_name, section):
+        return InputFile(self.internal_dir() /
+                         encode_filename(config_name, section))
+
     def __init__(self, repo: TaskRepository):
         self.__configs = {}
         self.repo = repo
-        self.internal_dir(True).mkdir()
+        self.internal_dir(True).mkdir(exist_ok=True)

@@ -64,6 +64,8 @@ class TaskRepository:
         if directory is None:
             directory = Path.cwd()
         self.directory = utils.abspath(directory)
+        if not self.is_task_dir():
+            self.init_task()
 
 
 def find_task_dir(start_dir=None):
