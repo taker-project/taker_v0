@@ -7,6 +7,19 @@ from .config import config
 from .sections import SectionManager
 
 
+class TaskBuilderSubsystem:
+    def update(self):
+        pass
+
+    def __init__(self, manager):
+        self.manager = manager
+
+
+class SectionsSubsystem(TaskBuilderSubsystem):
+    def update(self):
+        self.manager.sections.update()
+
+
 class RepositoryManager:
     @property
     def task_dir(self):
@@ -24,9 +37,19 @@ class RepositoryManager:
         self.makefile.default_rule.add_depend('all')
         if not self.repo.is_task_dir():
             self.repo.init_task()
+        self.__subsystems = []
+        self.add_subsystem(SectionsSubsystem)
+
+    def add_subsystem(self, cls, *args, **kwargs):
+        self.__subsystems.append(cls(self, *args, **kwargs))
+
+    def update(self):
+        for subsys in self.__subsystems:
+            subsys.update()
+        self.makefile.save()
 
     def build(self, target=None):
-        self.makefile.save()
+        self.update()
         jobs = config()['make']['jobs']
         if jobs is None:
             jobs = os.cpu_count()

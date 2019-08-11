@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from invoker import LanguageManager, default_exe_ext
 from typini import Typini, TypiniSection
-from taskbuilder import RepositoryManager
+from taskbuilder import RepositoryManager, TaskBuilderSubsystem
 from .utils import is_filename_valid
 
 

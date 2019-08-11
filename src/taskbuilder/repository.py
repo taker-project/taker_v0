@@ -34,6 +34,7 @@ class TaskRepository:
         return TaskRepository.check_task_dir(self.directory)
 
     def init_task(self):
+        assert not self.is_task_dir()
         self.mkdir(INTERNAL_PATH)
 
     def internal_dir(self, absolute=False):
