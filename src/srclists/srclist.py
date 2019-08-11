@@ -52,6 +52,11 @@ class SourceItem:
         if not is_filename_valid(self.exe_name):
             raise SourceItemError('"{}" is an invalid executable name'
                                   .format(self.exe_name))
+        exe_ext = os.path.splitext(self.exe_name)[1]
+        if exe_ext != self.lang.exe_ext:
+            raise SourceItemError('"{}" has an invalid extension for this '
+                                  'language ({} expected)'
+                                  .format(self.exe_name, self.lang.exe_ext))
 
     def add_compile_rule(self):
         sections = self.source_list.repo_manager.sections
