@@ -3,3 +3,4 @@ from .commands import File, AbsoluteFile, NullFile, InputFile, OutputFile
 from .commands import CommandFlag, TouchCommand, MakeDirCommand, EchoCommand
 from .makefiles import RuleOptions, Makefile
 from .manager import RepositoryManager
+from .sections import SectionManager
