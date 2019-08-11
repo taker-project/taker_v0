@@ -1,5 +1,3 @@
-import os
-import hashlib
 from pathlib import Path
 from taskbuilder import SectionManager
 from taskbuilder import sections
