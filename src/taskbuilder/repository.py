@@ -38,7 +38,7 @@ class TaskRepository:
         self.mkdir(INTERNAL_PATH)
 
     def internal_dir(self, absolute=False):
-        return self.abspath(INTERNAL_DIR) if absolute else INTERNAL_DIR
+        return self.abspath(INTERNAL_DIR) if absolute else Path(INTERNAL_DIR)
 
     def relpath(self, cur_path):
         cur_path = Path(cur_path)

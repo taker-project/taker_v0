@@ -76,7 +76,7 @@ class SectionManager:
             self.__update_config(config)
         self.__delete_ununsed()
 
-    def depend_name(self, config_name, section):
+    def get_depend(self, config_name, section):
         return InputFile(self.target_file(config_name, section))
 
     def __init__(self, repo: TaskRepository):

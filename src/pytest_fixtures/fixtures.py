@@ -7,6 +7,7 @@ import configs
 from taskbuilder.manager import RepositoryManager
 from invoker import LanguageManager
 import cli
+import cli.consoleapp
 
 
 @pytest.fixture(scope='function')
@@ -37,9 +38,10 @@ def language_manager(tmpdir, repo_manager):
 
 
 @pytest.fixture(scope='function')
-def taker_app(monkeypatch):
-    def mock_app_exe(name=None):
-        return Path(shutil.which('take'))
-
-    monkeypatch.setattr(cli, 'app_exe', mock_app_exe)
-    return cli.app_exe()
+def taker_app():
+    old_app = cli.consoleapp.__APP
+    try:
+        cli.consoleapp.__APP = cli.ConsoleApp('take')
+        yield cli.app_exe()
+    finally:
+        cli.consoleapp.__APP = old_app

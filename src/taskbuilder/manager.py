@@ -44,7 +44,7 @@ class RepositoryManager:
         self.__subsystems.append(cls(self, *args, **kwargs))
 
     def update(self):
-        for subsys in self.__subsystems:
+        for subsys in reversed(self.__subsystems):
             subsys.update()
         self.makefile.save()
 

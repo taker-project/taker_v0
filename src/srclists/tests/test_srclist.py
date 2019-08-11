@@ -176,3 +176,11 @@ def test_is_filename_valid():
     assert not is_filename_valid('/file')
     assert not is_filename_valid('Makefile.cpp')
     assert not is_filename_valid('Makefile')
+
+
+def test_sourcelist_compile(srclist, repo_manager, taker_app):
+    '''A simple smoke test for srclist'''
+    srclist.rescan_add(True)
+    repo_manager.build()
+    assert (srclist.path / ('samename' + default_exe_ext())).is_file()
+    assert (srclist.path / ('samename_1' + default_exe_ext())).is_file()

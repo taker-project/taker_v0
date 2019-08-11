@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
+from compat import fspath
 from invoker import LanguageManager, default_exe_ext
 from typini import Typini, TypiniSection
-from taskbuilder import RepositoryManager, TaskBuilderSubsystem
+from taskbuilder import Makefile, RepositoryManager, TaskBuilderSubsystem
 from .utils import is_filename_valid
 
 
@@ -51,6 +52,15 @@ class SourceItem:
         if not is_filename_valid(self.exe_name):
             raise SourceItemError('"{}" is an invalid executable name'
                                   .format(self.exe_name))
+
+    def add_compile_rule(self):
+        sections = self.source_list.repo_manager.sections
+        section_info = (self.source_list.config_path, self.src_name)
+        sections.add_section(*section_info)
+        rule = self.code.add_compile_rule()
+        if rule is not None:
+            rule.add_depend(sections.get_depend(*section_info))
+        return rule
 
     def __init__(self, source_list, section: TypiniSection, lang=None):
         self.source_list = source_list
@@ -190,16 +200,33 @@ class SourceList:
             self.__add_source(section_name)
 
     def save(self):
+        self.validate()
         for key in self.__items:
             self.__items[key].save()
         self.config.save_to_file(self.config_path)
+
+    def add_compile_rules(self):
+        makefile = self.repo_manager.makefile
+        all_src_rule = makefile.add_phony_rule(
+            fspath(self.__subdir),
+            description='Builds all the {}.'.format(self.description))
+        for key in self.__items:
+            rule = self.__items[key].add_compile_rule()
+            if rule is not None:
+                all_src_rule.add_depend(rule)
+        makefile.all_rule.add_depend(all_src_rule)
+
+    def update(self):
+        self.save()
+        self.add_compile_rules()
 
     def validate(self):
         for key in self.__items:
             self.__items[key].validate()
 
     def __init__(self, subdir, repo_manager: RepositoryManager,
-                 lang_manager: LanguageManager):
+                 lang_manager: LanguageManager, description='some sources'):
+        self.description = description
         self.repo_manager = repo_manager
         self.lang_manager = lang_manager
         self._src_files = set()
@@ -213,3 +240,13 @@ class SourceList:
             self.config.load_from_file(self.config_path)
         self._sys_files.add(SOURCE_CFG_FILE)
         self.load()
+        self.repo_manager.add_subsystem(SourceListSubsystem, self)
+
+
+class SourceListSubsystem(TaskBuilderSubsystem):
+    def update(self):
+        self.srclist.update()
+
+    def __init__(self, manager, srclist):
+        super().__init__(manager)
+        self.srclist = srclist
