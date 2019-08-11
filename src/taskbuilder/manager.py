@@ -35,8 +35,6 @@ class RepositoryManager:
         self.sections = SectionManager(repo)
         self.makefile = Makefile(repo)
         self.makefile.default_rule.add_depend('all')
-        if not self.repo.is_task_dir():
-            self.repo.init_task()
         self.__subsystems = []
         self.add_subsystem(SectionsSubsystem)
 
