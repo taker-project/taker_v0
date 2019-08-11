@@ -2,6 +2,7 @@ import colorama
 from cli import ConsoleApp, app, register_app
 from taskbuilder import TaskDirNotFoundError
 from invoker import CompileSubcommand, RunSubcommand
+from taskbuilder import InitSubcommand, BuildSubcommand
 
 
 class TakerApp(ConsoleApp):
@@ -24,4 +25,6 @@ def main():
     colorama.init()
     app().add_subcommand(CompileSubcommand())
     app().add_subcommand(RunSubcommand())
+    app().add_subcommand(InitSubcommand())
+    app().add_subcommand(BuildSubcommand())
     app().run()
