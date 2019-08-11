@@ -1,6 +1,7 @@
 import shutil
 import pytest
 from compat import fspath
+import cli
 from cli import *
 from cli import consoleapp
 from ...pytest_fixtures import taker_app
@@ -19,8 +20,8 @@ class MySubcommand(Subcommand):
 
 
 def test_mock_app_exe(taker_app):
-    assert taker_app == app_exe()
-    assert fspath(app_exe()) == shutil.which('take')
+    assert taker_app == cli.app_exe()
+    assert fspath(cli.app_exe()) == shutil.which('take')
 
 
 def test_app():

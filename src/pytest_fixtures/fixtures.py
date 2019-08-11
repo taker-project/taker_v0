@@ -37,9 +37,9 @@ def language_manager(tmpdir, repo_manager):
 
 
 @pytest.fixture(scope='function')
-def taker_app():
+def taker_app(monkeypatch):
     def mock_app_exe(name=None):
         return Path(shutil.which('take'))
 
-    with mock.patch('cli.app_exe', new_callable=mock_app_exe):
-        yield mock_app_exe()
+    monkeypatch.setattr(cli, 'app_exe', mock_app_exe)
+    return cli.app_exe()
