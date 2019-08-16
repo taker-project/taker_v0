@@ -239,6 +239,7 @@ class SourceList:
         self._sys_files = set()
         self.__items = {}
         self.__subdir = Path(subdir)
+        self.name = self.__subdir.name
         self.config = Typini()
         self.config_path = self.path / SOURCE_CFG_FILE
         if self.config_path.exists():
@@ -249,9 +250,12 @@ class SourceList:
 
 
 class SourceListSubsystem(TaskBuilderSubsystem):
+    def _get_name(self):
+        return self.srclist.name
+
     def update(self):
         self.srclist.update()
 
     def __init__(self, manager, srclist):
-        super().__init__(manager)
         self.srclist = srclist
+        super().__init__(manager)

@@ -8,14 +8,26 @@ from .sections import SectionManager
 
 
 class TaskBuilderSubsystem:
+    def _get_name(self):
+        '''
+        Return the name of the subsystem. The subsystems with the name
+        starting with "_" are considered private and cannot be manipulated
+        from the CLI
+        '''
+        raise NotImplementedError()
+
     def update(self):
         pass
 
     def __init__(self, manager):
         self.manager = manager
+        self.name = self._get_name()
 
 
 class SectionsSubsystem(TaskBuilderSubsystem):
+    def _get_name(self):
+        return '_sections'
+
     def update(self):
         self.manager.sections.update()
 
