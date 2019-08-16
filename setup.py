@@ -30,7 +30,8 @@ setup(
     install_requires=['colorama', 'appdirs'],
     entry_points={
         'console_scripts': [
-            'take = taker:main'
+            'take = taker:main',
+            'take-invoke = invoker.cli:main'
         ]
     }
 )

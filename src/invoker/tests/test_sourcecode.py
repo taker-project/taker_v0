@@ -4,6 +4,7 @@ import pytest
 from compat import fspath
 from invoker.profiled_runner import AbstractRunProfile, CompilerRunProfile
 from invoker.compiler import CompileError
+from invoker.cli_base import invoker_exe
 from .test_common import tests_location
 from ...pytest_fixtures import *
 
@@ -48,7 +49,7 @@ def test_source_code(tmpdir, language_manager, repo_manager):
     assert src3.runner.stdout == 'hello world\n'
 
 
-def test_make_rules(tmpdir, language_manager, repo_manager, taker_app):
+def test_make_rules(tmpdir, language_manager, repo_manager):
     repo = repo_manager.repo
 
     tmpdir = Path(str(tmpdir))
@@ -91,7 +92,7 @@ def test_make_rules(tmpdir, language_manager, repo_manager, taker_app):
     repo_manager.makefile.all_rule.add_depend(rule5)
 
     make_template = (tests_location() / 'srcbuild.make').open('r').read()
-    make_template = make_template.format(taker_app)
+    make_template = make_template.format(invoker_exe())
 
     assert repo_manager.makefile.dump() == make_template
 
