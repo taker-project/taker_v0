@@ -9,10 +9,9 @@ from .sections import SectionManager
 
 class TaskBuilderSubsystem:
     def _get_name(self):
-        '''
-        Return the name of the subsystem. The subsystems with the name
+        '''Return the name of the subsystem. The subsystems with the name
         starting with "_" are considered private and cannot be manipulated
-        from the CLI
+        from the CLI.
         '''
         raise NotImplementedError()
 
@@ -52,6 +51,9 @@ class RepositoryManager:
 
     def add_subsystem(self, cls, *args, **kwargs):
         self.__subsystems.append(cls(self, *args, **kwargs))
+
+    def init_task(self):
+        self.repo.init_task
 
     def update(self):
         for subsys in reversed(self.__subsystems):
