@@ -3,6 +3,9 @@ import os
 from os import path
 import pytest
 from runners.runners import *
+from util import exe_ext
+
+# TODO : reorganize tests to allow testing any individual runner
 
 
 def test_parameters_to_json():
@@ -84,14 +87,15 @@ def tests_location():
 @pytest.fixture(scope='function')
 def runner():
     runner_path = path.abspath(path.join('src', 'runners', 'taker_unixrun',
-                                         'build', 'taker_unixrun'))
+                                         'build', 'taker_unixrun' + exe_ext()))
     return Runner(runner_path)
 
 
 def test_basic(runner):
     '''test_basic: check if program prints some output'''
     runner.capture_stdout = True
-    runner.parameters.executable = path.join(tests_location(), 'basic_test')
+    runner.parameters.executable = path.join(tests_location(),
+                                             'basic_test' + exe_ext())
     runner.run()
     assert runner.results.status == Status.OK
     assert runner.stdout == 'hello world\n'
@@ -99,7 +103,7 @@ def test_basic(runner):
 
 def test_workdir(monkeypatch, runner):
     runner.capture_stdout = True
-    runner.parameters.executable = 'basic_test'
+    runner.parameters.executable = 'basic_test' + exe_ext()
     runner.parameters.working_dir = tests_location()
     monkeypatch.chdir(os.path.dirname(fspath(runner.runner_path)))
     runner.run()
@@ -109,14 +113,16 @@ def test_workdir(monkeypatch, runner):
 
 def test_invalid(runner):
     '''test_invalid: check for RUN_FAIL for non-existing executables'''
-    runner.parameters.executable = path.join(tests_location(), 'invalid_test')
+    runner.parameters.executable = path.join(tests_location(),
+                                             'invalid_test' + exe_ext())
     runner.run()
     assert runner.results.status == Status.RUN_FAIL
 
 
 def test_sleepy(runner):
     '''test_sleepy: check for IDLE_LIMIT'''
-    runner.parameters.executable = path.join(tests_location(), 'sleepy_test')
+    runner.parameters.executable = path.join(tests_location(),
+                                             'sleepy_test' + exe_ext())
     runner.parameters.idle_limit = 0.5
     runner.run()
     assert runner.results.status == Status.IDLE_LIMIT
@@ -129,7 +135,8 @@ def test_sleepy(runner):
 
 def test_worky(runner):
     '''test_worky: check for TIME_LIMIT'''
-    runner.parameters.executable = path.join(tests_location(), 'worky_test')
+    runner.parameters.executable = path.join(tests_location(),
+                                             'worky_test' + exe_ext())
     runner.parameters.time_limit = 0.5
     runner.run()
     assert runner.results.status == Status.TIME_LIMIT
@@ -141,7 +148,8 @@ def test_worky(runner):
 
 def test_memory(runner):
     '''test_memory: check for MEMORY_LIMIT'''
-    runner.parameters.executable = path.join(tests_location(), 'memory_test')
+    runner.parameters.executable = path.join(tests_location(),
+                                             'memory_test' + exe_ext())
     runner.parameters.time_limit = 10.0
     # on taker_unixrun, this test fails with RUNTIME_ERROR
     # FIXME : better detect MEMORY_LIMIT and RUNTIME_ERROR for unixrun!
@@ -161,7 +169,8 @@ def test_memory(runner):
 def test_vector(runner):
     '''test_vector: another memory test, now with vectors
     memory allocations and deallocations are very fast here'''
-    runner.parameters.executable = path.join(tests_location(), 'vector_test')
+    runner.parameters.executable = path.join(tests_location(),
+                                             'vector_test' + exe_ext())
     runner.parameters.time_limit = 10.0
     # runner.parameters.memory_limit = 20.0
     # runner.run()
@@ -179,7 +188,7 @@ def test_vector(runner):
 def test_vector_pushback(runner):
     '''test_vector_pushback: memory tests with push_back() into vector'''
     runner.parameters.executable = path.join(
-        tests_location(), 'vector_pushback_test')
+        tests_location(), 'vector_pushback_test' + exe_ext())
     runner.parameters.time_limit = 15.0
     runner.parameters.memory_limit = 36.0
     runner.run()
@@ -193,7 +202,7 @@ def test_vector_pushback(runner):
 def test_alloc1(runner):
     '''test_alloc1: fast allocation/deallocation'''
     runner.parameters.executable = path.join(
-        tests_location(), 'alloc1_test')
+        tests_location(), 'alloc1_test' + exe_ext())
     runner.parameters.time_limit = 10.0
     runner.run()
     assert runner.results.status == Status.OK
@@ -204,7 +213,7 @@ def test_alloc1(runner):
 def test_alloc2(runner):
     '''test_alloc2: fast allocation/deallocation'''
     runner.parameters.executable = path.join(
-        tests_location(), 'alloc2_test')
+        tests_location(), 'alloc2_test' + exe_ext())
     runner.parameters.time_limit = 20.0
     runner.run()
     assert runner.results.status == Status.OK
@@ -215,7 +224,7 @@ def test_alloc2(runner):
 def test_env(runner):
     '''test_env: test for env and clear_env parameters'''
     runner.parameters.executable = path.join(
-        tests_location(), 'env_test')
+        tests_location(), 'env_test' + exe_ext())
     runner.capture_stdout = True
     runner.run()
     assert runner.results.status == Status.OK
@@ -250,7 +259,7 @@ def test_env(runner):
 def test_runerror(runner):
     '''test_runerror: test for RUNTIME_ERROR (both by exitcode and signal)'''
     runner.parameters.executable = path.join(
-        tests_location(), 'runerror_test')
+        tests_location(), 'runerror_test' + exe_ext())
     runner.pass_stdin = True
     runner.stdin = 'normal'
     runner.run()
@@ -267,7 +276,7 @@ def test_runerror(runner):
 def test_args(runner):
     '''test_args: test for args parameter'''
     runner.parameters.executable = path.join(
-        tests_location(), 'args_test')
+        tests_location(), 'args_test' + exe_ext())
     runner.capture_stdout = True
     runner.parameters.args = ['arg1', 'arg2']
     runner.run()
@@ -279,6 +288,6 @@ def test_args(runner):
 def test_broken(runner):
     '''test_broken: test for RUN_FAIL on bad executables'''
     runner.parameters.executable = path.join(
-        tests_location(), 'broken_test')
+        tests_location(), 'broken_test' + exe_ext())
     runner.run()
     assert runner.results.status == Status.RUN_FAIL
