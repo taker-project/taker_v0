@@ -60,9 +60,10 @@ class RepositoryManager:
             subsys.update()
         self.makefile.save()
 
-    def build(self, target=None):
+    def build(self, target=None, jobs=None):
         self.update()
-        jobs = config()['make']['jobs']
+        if jobs is None:
+            jobs = config()['make']['jobs']
         if jobs is None:
             jobs = os.cpu_count()
         args = ['make', '-j', str(jobs)]

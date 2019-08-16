@@ -31,7 +31,7 @@ class BuildSubcommand(Subcommand):
         if args.jobs is not None:
             if args.jobs < 0 or args.jobs > 512:
                 app().error('number of jobs must be between 0 and 512')
-        gs.repo_manager.build(args.jobs)
+        gs.repo_manager.build(args.target, args.jobs)
         return 0
 
     def __init__(self):
