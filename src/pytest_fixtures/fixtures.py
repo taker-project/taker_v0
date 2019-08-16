@@ -6,8 +6,6 @@ import pytest
 import configs
 from taskbuilder.manager import RepositoryManager
 from invoker import LanguageManager
-import cli
-import cli.consoleapp
 
 
 @pytest.fixture(scope='function')
