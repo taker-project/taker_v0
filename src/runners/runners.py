@@ -11,8 +11,6 @@ from .config import config
 from compat import fspath
 from pathlib import Path
 
-# TODO : the module architecture is not flexible enough, rewrite it!
-
 
 class Parameters:
     def __defaults(self):
@@ -207,7 +205,7 @@ class Runner:
 
     def __init__(self, runner_path=None):
         # TODO : runner must capture stdout instead of creating temp files (?)
-        # FIXME : add .exe extension for Windows executables (here + in tests)
+        # FIXME : add .exe extension for Windows runner executables
         if runner_path is None:
             runner_path = config()['path'].get('executable')
         if runner_path is None:

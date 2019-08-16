@@ -1,13 +1,15 @@
 import sys
 from pathlib import Path
+import colorama
 from colorama import Fore, Style
 from compat import fspath
-from cli import Subcommand
-from taskbuilder import RepositoryManager
+from cli import Subcommand, ConsoleApp, app, register_app
+from taskbuilder import RepositoryManager, TaskDirNotFoundError
 from invoker import LanguageManager
 from runners import Status
 from .compiler import CompileError
 from .profiled_runner import ProfiledRunner, list_profiles, create_profile
+from .cli_base import INVOKER_CMD_NAME
 
 
 class CompileSubcommand(Subcommand):
@@ -24,8 +26,6 @@ class CompileSubcommand(Subcommand):
                             help='Library to use with the source')
 
     def run(self, args):
-        # TODO: create global manager to initialize everything
-        # in one command (?)
         repo_manager = RepositoryManager()
         language_manager = LanguageManager(repo_manager)
 
@@ -100,3 +100,24 @@ class RunSubcommand(Subcommand):
 
     def __init__(self):
         super().__init__('run', 'Run a compiled program')
+
+
+class InvokerApp(ConsoleApp):
+    def run(self, args=None):
+        try:
+            super().run(args)
+        except TaskDirNotFoundError:
+            self.error('you must be in task directory')
+
+    def __init__(self):
+        super().__init__(INVOKER_CMD_NAME)
+        self.parser.description = \
+            'Compiles and runs source codes'
+
+
+def main():
+    register_app(InvokerApp())
+    colorama.init()
+    app().add_subcommand(CompileSubcommand())
+    app().add_subcommand(RunSubcommand())
+    app().run()

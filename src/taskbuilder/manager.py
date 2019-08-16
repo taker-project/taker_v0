@@ -8,14 +8,25 @@ from .sections import SectionManager
 
 
 class TaskBuilderSubsystem:
+    def _get_name(self):
+        '''Return the name of the subsystem. The subsystems with the name
+        starting with "_" are considered private and cannot be manipulated
+        from the CLI.
+        '''
+        raise NotImplementedError()
+
     def update(self):
         pass
 
     def __init__(self, manager):
         self.manager = manager
+        self.name = self._get_name()
 
 
 class SectionsSubsystem(TaskBuilderSubsystem):
+    def _get_name(self):
+        return '_sections'
+
     def update(self):
         self.manager.sections.update()
 
@@ -41,14 +52,18 @@ class RepositoryManager:
     def add_subsystem(self, cls, *args, **kwargs):
         self.__subsystems.append(cls(self, *args, **kwargs))
 
+    def init_task(self):
+        self.repo.init_task
+
     def update(self):
         for subsys in reversed(self.__subsystems):
             subsys.update()
         self.makefile.save()
 
-    def build(self, target=None):
+    def build(self, target=None, jobs=None):
         self.update()
-        jobs = config()['make']['jobs']
+        if jobs is None:
+            jobs = config()['make']['jobs']
         if jobs is None:
             jobs = os.cpu_count()
         args = ['make', '-j', str(jobs)]

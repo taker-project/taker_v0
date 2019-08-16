@@ -1,7 +1,8 @@
 from shutil import which
 from compat import fspath
+from util import is_valid_ext
+import util
 from .config import config
-from .utils import is_valid_ext, default_exe_ext
 
 
 class LanguageError(Exception):
@@ -79,7 +80,7 @@ class Language:
 
         self.exe_ext = self._lang_section().get('exe-ext')
         if exe_ext is None:
-            exe_ext = default_exe_ext()
+            exe_ext = util.exe_ext()
         if self.exe_ext is None:
             self.exe_ext = exe_ext
         if not is_valid_ext(exe_ext):

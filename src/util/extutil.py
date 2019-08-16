@@ -7,5 +7,5 @@ def is_valid_ext(ext):
     return ext.startswith('.')
 
 
-def default_exe_ext():
+def exe_ext():
     return '.exe' if os.name == 'nt' else ''

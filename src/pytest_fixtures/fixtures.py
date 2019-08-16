@@ -6,8 +6,6 @@ import pytest
 import configs
 from taskbuilder.manager import RepositoryManager
 from invoker import LanguageManager
-import cli
-import cli.consoleapp
 
 
 @pytest.fixture(scope='function')
@@ -35,13 +33,3 @@ def repo_manager(tmpdir, config_manager):
 @pytest.fixture(scope='function')
 def language_manager(tmpdir, repo_manager):
     return LanguageManager(repo_manager)
-
-
-@pytest.fixture(scope='function')
-def taker_app():
-    old_app = cli.consoleapp.__APP
-    try:
-        cli.consoleapp.__APP = cli.ConsoleApp('take')
-        yield cli.app_exe()
-    finally:
-        cli.consoleapp.__APP = old_app

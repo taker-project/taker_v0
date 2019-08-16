@@ -1,27 +1,12 @@
 import colorama
-from cli import ConsoleApp, app, register_app
-from taskbuilder import TaskDirNotFoundError
-from invoker import CompileSubcommand, RunSubcommand
-
-
-class TakerApp(ConsoleApp):
-    def run(self, args=None):
-        try:
-            super().run(args)
-        except TaskDirNotFoundError:
-            self.error('you must be in task directory')
-
-    def __init__(self):
-        super().__init__('take')
-        self.parser.description = \
-            'Taker - a task preparation system for competitive programming'
-
-
-register_app(TakerApp())
+from cli import app, register_app
+from .cmd_taskbuilder import InitSubcommand, BuildSubcommand
+from .taker_app import TakerApp
 
 
 def main():
+    register_app(TakerApp())
     colorama.init()
-    app().add_subcommand(CompileSubcommand())
-    app().add_subcommand(RunSubcommand())
+    app().add_subcommand(InitSubcommand())
+    app().add_subcommand(BuildSubcommand())
     app().run()

@@ -1,7 +1,7 @@
-from cli import app_exe
 from taskbuilder import InputFile, OutputFile, File
 from .profiled_runner import ProfiledRunner
 from .compiler import Compiler
+from .cli_base import invoker_exe
 
 
 class SourceCode:
@@ -28,7 +28,7 @@ class SourceCode:
         for dir in self.library_dirs:
             args.append(File(dir, prefix='--lib='))
         args += ['--', InputFile(self.src_file)]
-        rule.add_global_cmd(app_exe(), args)
+        rule.add_global_cmd(invoker_exe(), args)
         return rule
 
     def add_run_command(self, rule, profile, custom_args=None, stdin='',
@@ -45,7 +45,7 @@ class SourceCode:
         if custom_args is None:
             custom_args = []
         args += ['--', InputFile(self.exe_file)] + custom_args
-        rule.add_global_cmd(app_exe(), args)
+        rule.add_global_cmd(invoker_exe(), args)
 
     def __init__(self, manager, src_file, exe_file=None, language=None,
                  library_dirs=None):
