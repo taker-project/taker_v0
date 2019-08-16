@@ -12,7 +12,7 @@ class CustomRunProfile(ConfigRunProfile):
         return 'custom'
 
 
-def test_profiles(config_manager, repo_manager, monkeypatch, taker_app):
+def test_profiles(config_manager, repo_manager, monkeypatch):
     config_manager.user_config(CONFIG_NAME).open(
         'w', encoding='utf8').write('''
 [compiler]
@@ -79,11 +79,13 @@ memory-limit = 500.0
         nonlocal run_count
         run_count += 1
 
+    app_to_run = shutil.which('cp')
+
     monkeypatch.setattr(Runner, 'run', run)
     profiled_runner = ProfiledRunner(generator_profile)
     profiled_runner.stdin = 'some input'
     in_runner = profiled_runner._ProfiledRunner__runner
-    profiled_runner.run([fspath(taker_app)])
+    profiled_runner.run([app_to_run])
     assert run_count == 1
     assert in_runner.parameters.time_limit == 12.0
     assert in_runner.parameters.memory_limit == 400.0
@@ -92,9 +94,9 @@ memory-limit = 500.0
     assert in_runner.capture_stderr
     assert in_runner.stdin == 'some input'
     assert in_runner.stdin == profiled_runner.stdin
-    assert in_runner.parameters.working_dir == taker_app.parent
+    assert in_runner.parameters.working_dir == Path(app_to_run).parent
 
-    profiled_runner.run([fspath(taker_app)], repo_manager.task_dir)
+    profiled_runner.run([app_to_run], repo_manager.task_dir)
     assert run_count == 2
     assert in_runner.parameters.working_dir == repo_manager.task_dir
 

@@ -178,7 +178,7 @@ def test_is_filename_valid():
     assert not is_filename_valid('Makefile')
 
 
-def test_sourcelist_compile(srclist, repo_manager, taker_app):
+def test_sourcelist_compile(srclist, repo_manager):
     '''A simple smoke test for srclist'''
     srclist.rescan_add(True)
     repo_manager.build()

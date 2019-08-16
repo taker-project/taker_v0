@@ -4,7 +4,6 @@ from compat import fspath
 import cli
 from cli import *
 from cli import consoleapp
-from ...pytest_fixtures import taker_app
 
 
 class MySubcommand(Subcommand):
@@ -17,11 +16,6 @@ class MySubcommand(Subcommand):
     def __init__(self, callback):
         super().__init__('cmd', 'Just a command', ['c', 'cm'])
         self.callback = callback
-
-
-def test_mock_app_exe(taker_app):
-    assert taker_app == cli.app_exe()
-    assert fspath(cli.app_exe()) == shutil.which('take')
 
 
 def test_app():
