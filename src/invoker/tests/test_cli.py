@@ -1,10 +1,10 @@
 import subprocess
 from subprocess import PIPE
-import pytest
 import os
 import shutil
 from os import path
 from pathlib import Path
+import pytest
 from compat import fspath
 from invoker import default_exe_ext
 from invoker.cli_base import INVOKER_CMD_NAME

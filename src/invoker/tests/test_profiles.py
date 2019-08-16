@@ -79,6 +79,8 @@ memory-limit = 500.0
         nonlocal run_count
         run_count += 1
 
+    # don't care what to run
+    # just make sure that the execuatable exists
     app_to_run = shutil.which('cp')
 
     monkeypatch.setattr(Runner, 'run', run)
