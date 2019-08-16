@@ -1,8 +1,8 @@
 from pathlib import Path
 from cli import Subcommand, app
-from .manager import RepositoryManager
+from .global_state import GlobalState
 
-# TODO: move these commands to some other place (?)
+# FIXME : write tests for these commands
 
 
 class InitSubcommand(Subcommand):
@@ -10,7 +10,8 @@ class InitSubcommand(Subcommand):
         super()._update_parser(parser)
 
     def run(self, args):
-        manager = RepositoryManager(task_dir=Path.cwd())
+        gs = GlobalState(task_dir=Path.cwd())
+        gs.init_task()
         return 0
 
     def __init__(self):
@@ -26,11 +27,12 @@ class BuildSubcommand(Subcommand):
                             help='Number of jobs to run in parallel')
 
     def run(self, args):
+        gs = GlobalState()
         if args.jobs is not None:
             if args.jobs < 0 or args.jobs > 512:
                 app().error('number of jobs must be between 0 and 512')
         print(args)
-        # TODO
+        gs.build(args.jobs)
         return 0
 
     def __init__(self):

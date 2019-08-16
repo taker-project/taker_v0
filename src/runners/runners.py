@@ -11,8 +11,6 @@ from .config import config
 from compat import fspath
 from pathlib import Path
 
-# TODO : the module architecture is not flexible enough, rewrite it!
-
 
 class Parameters:
     def __defaults(self):
