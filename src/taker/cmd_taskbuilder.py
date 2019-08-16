@@ -11,7 +11,7 @@ class InitSubcommand(Subcommand):
 
     def run(self, args):
         gs = GlobalState(task_dir=Path.cwd())
-        gs.init_task()
+        gs.repo_manager.init_task()
         return 0
 
     def __init__(self):
@@ -31,8 +31,7 @@ class BuildSubcommand(Subcommand):
         if args.jobs is not None:
             if args.jobs < 0 or args.jobs > 512:
                 app().error('number of jobs must be between 0 and 512')
-        print(args)
-        gs.build(args.jobs)
+        gs.repo_manager.build(args.jobs)
         return 0
 
     def __init__(self):

@@ -1,5 +1,5 @@
 import colorama
-from cli import register_app
+from cli import app, register_app
 from .cmd_taskbuilder import InitSubcommand, BuildSubcommand
 from .taker_app import TakerApp
 
