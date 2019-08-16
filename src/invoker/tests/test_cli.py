@@ -6,7 +6,7 @@ from os import path
 from pathlib import Path
 import pytest
 from compat import fspath
-from invoker import default_exe_ext
+from util import exe_ext
 from invoker.cli_base import INVOKER_CMD_NAME
 from ...pytest_fixtures import *
 
@@ -17,7 +17,7 @@ def tests_location():
 
 def bad_exe_location():
     return Path(path.abspath(path.join('src', 'runners', 'tests', 'build',
-                                       'broken_test' + default_exe_ext())))
+                                       'broken_test' + exe_ext())))
 
 
 def make_source():
@@ -83,7 +83,7 @@ def test_run(repo_manager, monkeypatch):
     subprocess.run([INVOKER_CMD_NAME, 'compile', 'code_div.cpp'], check=True,
                    stdout=PIPE, stderr=PIPE, universal_newlines=True)
 
-    code_div_exe = 'code_div' + default_exe_ext()
+    code_div_exe = 'code_div' + exe_ext()
 
     open('input.txt', 'w').write('12 3')
     res = subprocess.run(

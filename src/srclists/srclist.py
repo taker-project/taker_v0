@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from compat import fspath
-from invoker import LanguageManager, default_exe_ext
+from invoker import LanguageManager
 from typini import Typini, TypiniSection
 from taskbuilder import Makefile, RepositoryManager, TaskBuilderSubsystem
 from .utils import is_filename_valid

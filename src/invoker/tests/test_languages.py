@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from compat import fspath
 from invoker.languages import *
-from invoker.utils import *
+from util import exe_ext
 from invoker.config import CONFIG_NAME
 from ...pytest_fixtures import *
 
@@ -66,7 +66,7 @@ active = false
     (tmpdir / 'file.exe').touch()
     (tmpdir / 'file.exe').chmod(0o755)
     assert run_arg_exp == lang.run_args(tmpdir / 'file.exe', ['arg1', 'arg2'])
-    assert lang.exe_ext == default_exe_ext()
+    assert lang.exe_ext == exe_ext()
 
     lang = lang_manager['cpp.g++']
     compile_arg_exp = [cpp_compiler, fspath(Path.cwd() / 'file.cpp'),

@@ -4,7 +4,7 @@ import pytest
 from compat import fspath
 from runners import Runner, Status
 from invoker.compiler import Compiler, CompileError
-from invoker.utils import default_exe_ext
+from util import exe_ext
 from .test_common import tests_location
 from ...pytest_fixtures import *
 
@@ -44,8 +44,8 @@ def test_compiler(tmpdir, repo_manager, language_manager):
     src_bad1 = src_dir / 'bad_code.py'
     src_bad2 = src_dir / 'bad_code2.py'
 
-    exe_cpp1 = src_dir / ('1-code' + default_exe_ext())
-    exe_py1 = src_dir / ('1-code' + default_exe_ext())
+    exe_cpp1 = src_dir / ('1-code' + exe_ext())
+    exe_py1 = src_dir / ('1-code' + exe_ext())
 
     with pytest.raises(CompileError):
         compiler = Compiler(repo, lang_cpp, src_cpp2)

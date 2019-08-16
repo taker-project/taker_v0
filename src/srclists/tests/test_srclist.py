@@ -4,7 +4,7 @@ import pytest
 from compat import fspath
 from pathlib import Path
 from invoker import CompileError, LanguageError
-from invoker import default_exe_ext
+from util import exe_ext
 from srclists.srclist import *
 from ...pytest_fixtures import *
 
@@ -153,9 +153,9 @@ def test_samefile(overwrite_config_samefile, language_manager, srclist):
     item1 = srclist.add('samename.c', 'c.gcc')
     item2 = srclist.add('samename.cpp', 'cpp.g++')
     item3 = srclist.add('samename.newpy', 'newpy.newpy')
-    assert item1.exe_name == 'samename' + default_exe_ext()
-    assert item2.exe_name == 'samename_1' + default_exe_ext()
-    assert item3.exe_name == 'samename_2' + default_exe_ext()
+    assert item1.exe_name == 'samename' + exe_ext()
+    assert item2.exe_name == 'samename_1' + exe_ext()
+    assert item3.exe_name == 'samename_2' + exe_ext()
     srclist.save()
 
 
@@ -182,5 +182,5 @@ def test_sourcelist_compile(srclist, repo_manager):
     '''A simple smoke test for srclist'''
     srclist.rescan_add(True)
     repo_manager.build()
-    assert (srclist.path / ('samename' + default_exe_ext())).is_file()
-    assert (srclist.path / ('samename_1' + default_exe_ext())).is_file()
+    assert (srclist.path / ('samename' + exe_ext())).is_file()
+    assert (srclist.path / ('samename_1' + exe_ext())).is_file()
